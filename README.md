@@ -20,7 +20,7 @@ To clean all temporary files:
     $ make clean
 
 Dependencies
-============
+------------
 
 The following programs and libraries are necessary to build Super Max:
 
@@ -36,3 +36,10 @@ The following programs and libraries are necessary to build Super Max:
     > Debian: `apt-get install chipmunk-dev`
     >
     > Gentoo: manual installation
+
+The fine print
+--------------
+
+Trademarks property of their respective owners.  Code owned by the
+commiter.  Super Max is licensed under the GNU General Public License
+Version 3 (see `LICENSE`) for details.
