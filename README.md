@@ -24,13 +24,15 @@ Dependencies
 
 The following programs and libraries are necessary to build Super Max:
 
-* (cmake)[http://www.cmake.org/]
+* [cmake](http://www.cmake.org/)
 
-    Debian: apt-get install cmake
-    Gentoo: emerge cmake
+    >  Debian: `apt-get install cmake`
+    >
+    >  Gentoo: `emerge cmake`
 
-* (Chipmunk)[http://chipmunk-physics.net/] (on
-  (GitHub)[https://github.com/slembcke/Chipmunk-Physics]
+* [Chipmunk](http://chipmunk-physics.net/) (on
+  [GitHub](https://github.com/slembcke/Chipmunk-Physics))
 
-    Debian: apt-get install chipmunk-dev
-    Gentoo: manual installation
+    > Debian: `apt-get install chipmunk-dev`
+    >
+    > Gentoo: manual installation
