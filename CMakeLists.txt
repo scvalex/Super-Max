@@ -2,12 +2,19 @@
 # =========
 
 cmake_minimum_required(VERSION 2.6)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 project(super_max)
+
+# External packages
+# -----------------
+
+find_package(Chipmunk REQUIRED)
 
 # Includes
 # --------
 
 set(super_max_include_dirs
+  ${CHIPMUNK_INCLUDE_DIRS}
 )
 
 include_directories(${super_max_include_dirs})
@@ -16,6 +23,7 @@ include_directories(${super_max_include_dirs})
 # ---------
 
 set(super_max_libraries
+  ${CHIPMUNK_LIBRARIES}
 )
 
 # Super Max program

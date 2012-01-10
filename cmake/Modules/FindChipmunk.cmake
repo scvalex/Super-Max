@@ -1,0 +1,17 @@
+# - Try to find Chipmunk
+# Once done this will define
+#  CHIPMUNK_FOUND - System has Chipmunk
+#  CHIPMUNK_INCLUDE_DIRS - The Chipmunk include directories
+#  CHIPMUNK_LIBRARIES - The libraries needed to use Chipmunk
+
+FIND_PATH(CHIPMUNK_INCLUDE_DIRS chipmunk)
+FIND_LIBRARY(CHIPMUNK_LIBRARIES NAMES chipmunk)
+IF (NOT CHIPMUNK_INCLUDE_DIRS OR NOT CHIPMUNK_LIBRARIES)
+  MESSAGE(SEND_ERROR "Chipmunk not found")
+ENDIF (NOT CHIPMUNK_INCLUDE_DIRS OR NOT CHIPMUNK_LIBRARIES)
+
+SET(CHIPMUNK_FOUND TRUE)
+
+IF (NOT Chipmunk_FIND_QUIETLY)
+  MESSAGE(STATUS "Found Chipmunk: ${CHIPMUNK_LIBRARIES}")
+ENDIF (NOT Chipmunk_FIND_QUIETLY)
