@@ -33,9 +33,16 @@ The following programs and libraries are necessary to build Super Max:
 * [Chipmunk](http://chipmunk-physics.net/) (on
   [GitHub](https://github.com/slembcke/Chipmunk-Physics))
 
-    > Debian: `apt-get install chipmunk-dev`
-    >
-    > Gentoo: manual installation
+  We use version `6.0.X`, which is not available in either Gentoo or
+  Debian, so you need to install it manually:
+
+        get the source from the Chipmunk website or GitHub
+        % cd Chipmunk-Physics
+        % mkdir build
+        % cd build
+        % cmake ..
+        % make
+        % sudo make install
 
 The fine print
 --------------
