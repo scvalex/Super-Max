@@ -50,6 +50,13 @@ The following relics are scattered around Kingdom College:
 
   - Uncertainty ::
 
+  - Hedgehog's Dilemma :: you get a destructive aura that damages
+                          other entities (including allies) as they
+                          get closer to you; allies get a healing aura
+                          that heals *you* the closer they get to you;
+                          ``Have you heard of the Hedgehog's
+                          Dilemma?'';
+
 Characters
 ----------
 
