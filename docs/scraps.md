@@ -28,11 +28,13 @@ Relics
 ------
 
 The following relics are scattered around Kingdom College:
+
   - Occam's Razor :: this battle-axe is located deep inside the Math
                      department; it deals critical damage to Rube
                      Goldberg automatons; ``You carefully size up the
                      weapon and find that understanding its purpose
                      requires no assumptions on your part.'';
+
   - Uncertainty ::
 
 Characters
@@ -40,6 +42,7 @@ Characters
 
 The following characters may be encountered in Kingdom College (these
 are the ones with back-stories):
+
   - The Professor/The Assistant :: ``Everybody calls him barkeep''.
        The enigmatic professor and his assistant are intimately
        connected to The Incident.  Their memories, of both before and
