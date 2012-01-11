@@ -24,6 +24,19 @@ machine.
 "No", replied the Assistant, removing himself from the inert metal.
 "No, that Thing has escaped.  It's only just began."
 
+Episode N: Opening
+------------------
+
+``Today started unusually.  I woke up in a locked room covered in
+blood.  There was also a bullet ridden corpse and semi on the floor.
+So, I did the only reasonable thing and stripped.  Some people would
+have stopped to ask questions; I'm not some people; I plan to survive
+the zombie apocalypse.''
+
+* Jump to: An automatic door is trying to close on a leg severed below
+  the knee. *
+* Fade in: Bio-engineering building\\Level 1 Start *
+
 Relics
 ------
 
@@ -48,10 +61,5 @@ are the ones with back-stories):
        connected to The Incident.  Their memories, of both before and
        after, are scattered throughout the departments.  The fallout
        of their various attempts to fix the problem are also found
-       everywhere.
-
-Notes
------
-
-I think each of the main characters should see the world differently.
-Alex sees a pessimistic realism.  Max is Kamina, of course.
+       everywhere.  I'd also go for multi-core personality catalyzed
+       by later-life stress (unless that's still taboo).
