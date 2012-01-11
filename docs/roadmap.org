@@ -1,0 +1,19 @@
+Roadmap
+=======
+
+Short-term
+----------
+
+ - [ ] Figure out what our Unique Value Proposition (UVP) is
+ - [ ] Figure out what our Minimum Viable Product (MVP) is
+ - [ ] Think of a comparison-based tag-line (e.g. "Super Mario meets
+   Diablo")
+ - [ ] Test that there exists a market for the above
+
+Medium-term
+-----------
+
+ - [ ] Build the MVP
+
+Long-term
+---------
