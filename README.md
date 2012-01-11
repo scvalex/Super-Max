@@ -28,9 +28,9 @@ The following programs and libraries are necessary to build Super Max:
 
 The minimum required version is `2.6`.
 
-    >  Debian: `apt-get install cmake`
-    >
-    >  Gentoo: `emerge cmake`
+>  Debian: `apt-get install cmake`
+>
+>  Gentoo: `emerge cmake`
 
 ### [Chipmunk](http://chipmunk-physics.net/) (on [GitHub](https://github.com/slembcke/Chipmunk-Physics))
 
@@ -49,9 +49,9 @@ Debian, so you need to install it manually:
 
 There shouldn't be any problems with recentish versions.
 
-    > Debian: apt-get install libsdl1.2-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev
-    >
-    > Gentoo: emerge libsdl sdl-image sdl-mixer sdl-ttf
+> Debian: apt-get install libsdl1.2-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev
+>
+> Gentoo: emerge libsdl sdl-image sdl-mixer sdl-ttf
 
 
 The fine print

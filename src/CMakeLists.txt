@@ -12,6 +12,7 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
 # -----------------
 
 find_package(Chipmunk REQUIRED)
+find_package(SDL REQUIRED)
 
 # Includes
 # --------
@@ -27,6 +28,7 @@ include_directories(${super_max_include_dirs})
 
 set(super_max_libraries
   ${CHIPMUNK_LIBRARIES}
+  ${SDL_LIBRARY}
 )
 
 # Super Max program
