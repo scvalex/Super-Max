@@ -1,8 +1,6 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
-//FIXME Make this some sort of singleton.
-
 #include "issurface.h"
 #include <string>
 
@@ -21,6 +19,8 @@ public:
 
 private:
         SDL_Surface *m_surface;
+
+        static bool initialised;
 };
 
 #endif
