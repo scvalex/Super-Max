@@ -13,7 +13,7 @@ Image::Image(const string &filename) {
                 throw runtime_error("Could not load " + filename + ": " + IMG_GetError());
         }
 
-        m_surface = SDL_DisplayFormat(aux);
+        m_surface = SDL_DisplayFormatAlpha(aux);
         SDL_FreeSurface(aux);
         if (!m_surface) {
                 throw runtime_error("Could not optimise " + filename + ": " + IMG_GetError());
