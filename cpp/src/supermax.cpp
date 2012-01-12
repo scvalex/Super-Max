@@ -1,38 +1,30 @@
 #include <chipmunk/chipmunk.h>
 #include <cstdio>
+#include "graphics.h"
+#include "image.h"
 #include <iostream>
-#include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
+#include "screen.h"
 #include <stdexcept>
 
 using namespace std;
 
+const int SCREEN_WIDTH = 640;
+const int SCREEN_HEIGHT = 480;
+
 int main(int argc, char *argv[]) {
         cout << "Starting Super Max" << endl;
 
-        SDL_Init(SDL_INIT_EVERYTHING);
+        Graphics graphics;
 
-        if (!IMG_Init(IMG_INIT_PNG)) {
-                throw new runtime_error("Could not initialise SDL_image");
-        }
+        Screen screen(SCREEN_WIDTH, SCREEN_HEIGHT);
+        screen.setTitle("Super Max");
 
+        Image hello("data/hello.png");
 
-        SDL_Surface *screen = SDL_SetVideoMode(640, 480, 32, SDL_SWSURFACE);
-        if (!screen) {
-                throw new runtime_error("SDL could not initialise");
-        }
+        hello.drawOntoAt(screen, 100, 0);
 
-        SDL_Surface *hello = IMG_LoadPNG_RW(SDL_RWFromFile("data/hello.png",
-                                                           "rb"));
-        if (!hello) {
-                throw runtime_error(string("Could not load hello.png: ") + IMG_GetError());
-        }
-
-        SDL_BlitSurface(hello, NULL, screen, NULL);
-        SDL_Flip(screen);
-        SDL_Delay(2000);
-
-        SDL_FreeSurface(hello);
+        screen.flip();
+        graphics.delay(2000);
 
         // cpVect is a 2D vector and cpv() is a shortcut for
         // initializing them.
@@ -101,9 +93,6 @@ int main(int argc, char *argv[]) {
         cpBodyFree(ballBody);
         cpShapeFree(ground);
         cpSpaceFree(space);
-
-        IMG_Quit();
-        SDL_Quit();
 
         return 0;
 }
