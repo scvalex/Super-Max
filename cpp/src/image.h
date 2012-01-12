@@ -12,6 +12,7 @@ public:
         virtual ~Image();
 
         void drawOnto(const IsSurface &canvas);
+        void drawOntoAt(const IsSurface &canvas, int x, int y);
 
         SDL_Surface* getSurface() const;
 

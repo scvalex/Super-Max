@@ -8,9 +8,15 @@
 using namespace std;
 
 Image::Image(const string &filename) {
-        m_surface = IMG_LoadPNG_RW(SDL_RWFromFile("data/hello.png", "rb"));
-        if (!m_surface) {
+        SDL_Surface *aux = IMG_LoadPNG_RW(SDL_RWFromFile("data/hello.png", "rb"));
+        if (!aux) {
                 throw runtime_error("Could not load " + filename + ": " + IMG_GetError());
+        }
+
+        m_surface = SDL_DisplayFormat(aux);
+        SDL_FreeSurface(aux);
+        if (!m_surface) {
+                throw runtime_error("Could not optimise " + filename + ": " + IMG_GetError());
         }
 }
 
@@ -19,9 +25,18 @@ Image::~Image() {
 }
 
 void Image::drawOnto(const IsSurface &canvas) {
-        int result = SDL_BlitSurface(getSurface(), NULL, canvas.getSurface(), NULL);
+        drawOntoAt(canvas, 0, 0);
+}
+
+void Image::drawOntoAt(const IsSurface &canvas, int x, int y) {
+        SDL_Rect offset;
+        offset.x = x;
+        offset.y = y;
+
+        int result = SDL_BlitSurface(getSurface(), NULL, canvas.getSurface(), &offset);
         if (result == -1) {
-                throw runtime_error(string("Could not blit surface: ") + SDL_GetError());
+                throw runtime_error(string("Could not blit surface: ") +
+                                    SDL_GetError());
         } else if (result == -2) {
                 cout << "BlitSurface returned -2; see docs" << endl;
         }

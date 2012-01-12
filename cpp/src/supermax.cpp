@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 
         Image hello("data/hello.png");
 
-        hello.drawOnto(screen);
+        hello.drawOntoAt(screen, 100, 0);
 
         screen.flip();
         graphics.delay(2000);
