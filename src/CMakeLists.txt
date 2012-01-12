@@ -13,6 +13,14 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
 
 find_package(Chipmunk REQUIRED)
 find_package(SDL REQUIRED)
+find_package(SDL_image REQUIRED)
+find_package(SDL_mixer REQUIRED)
+find_package(ALSA REQUIRED)
+find_package(JPEG REQUIRED)
+find_package(PNG REQUIRED)
+find_package(TIFF REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(LZMA REQUIRED)
 
 # Includes
 # --------
@@ -29,6 +37,16 @@ include_directories(${super_max_include_dirs})
 set(super_max_libraries
   ${CHIPMUNK_LIBRARIES}
   ${SDL_LIBRARY}
+  ${SDLIMAGE_LIBRARY}
+  ${SDLMIXER_LIBRARY}
+  ${ALSA_LIBRARIES}
+  ${JPEG_LIBRARIES}
+  ${PNG_LIBRARIES}
+  ${TIFF_LIBRARIES}
+  ${JPEG_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+  ${LZMA_LIBRARIES}
+  dl
 )
 
 # Super Max program

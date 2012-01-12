@@ -53,6 +53,22 @@ There shouldn't be any problems with recentish versions.
 >
 > Gentoo: emerge libsdl sdl-image sdl-mixer sdl-ttf
 
+Troubleshooting
+---------------
+
+### "No such file or directory"
+
+    % ./build/super-max
+    zsh: no such file or directory: ./build/super-max
+    % ldd build/super-max
+    /usr/bin/ldd: line 118: build/super-max: No such file or directory
+
+The compiled binary is *so* corrupted that `ldd` cannot even read it.
+It is actually a missing `ld` loader in `/lib/`.  Find a machine on
+which the `ldd` command works, find the name of the loader and do
+something like:
+
+    # ln -s /lib/ld-linux-x86-64.so.2 /lib/ld64.so.1
 
 The fine print
 --------------
