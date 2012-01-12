@@ -1,5 +1,6 @@
 #include <chipmunk/chipmunk.h>
 #include <cstdio>
+#include "event.h"
 #include "graphics.h"
 #include "image.h"
 #include <iostream>
@@ -28,7 +29,15 @@ int main(int argc, char *argv[]) {
         me.drawOntoAt(screen, 100, 0);
 
         screen.flip();
-        graphics.delay(2000);
+
+        bool quit(false);
+        while (!quit) {
+                Event e = Event::blockForEvent();
+                if (e.isQuit()) {
+                        cout << "Quitting" << endl;
+                        quit = true;
+                }
+        }
 
         // cpVect is a 2D vector and cpv() is a shortcut for
         // initializing them.
