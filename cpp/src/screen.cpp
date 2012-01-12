@@ -15,6 +15,10 @@ Screen::Screen(int width, int height) {
 Screen::~Screen() {
 }
 
+void Screen::setTitle(const string &title) {
+        SDL_WM_SetCaption(title.c_str(), NULL);
+}
+
 void Screen::flip() {
         if (SDL_Flip(m_surface) == -1) {
                 throw runtime_error("Could not flip screen.");

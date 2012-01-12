@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
         Graphics graphics;
 
         Screen screen(SCREEN_WIDTH, SCREEN_HEIGHT);
+        screen.setTitle("Super Max");
 
         Image hello("data/hello.png");
 
