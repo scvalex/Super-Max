@@ -1,0 +1,29 @@
+name:               SuperMax
+version:            0.0
+homepage:           https://github.com/scvalex/Super-Max
+synopsis:           Max, superheroes, etc.
+category:           Web
+license:            GPL-3
+author:             Francesco Mazzoli, Alexandru Scvortov
+maintainer:         Francesco Mazzoli <f@mazzo.li>
+cabal-version:      >= 1.6
+build-type:         Simple
+
+source-repository head
+  type:      git
+  location:  git://github.com/scvalex/Super-Max
+  branch:    master
+
+executable SuperMax
+  hs-source-dirs:    src
+  main-is:           Main.hs
+
+  build-depends:     base >= 4 && < 5
+                   , SDL >= 0.6 && < 0.7
+                   , SDL-image >= 0.6 && < 0.7
+                   , SDL-ttf >= 0.6 && < 0.7
+                   , Hipmunk >= 5 && < 6
+                   , filepath >= 1 && < 2
+                   , StateVar
+
+  GHC-options:       -Wall -fno-warn-unused-do-bind -threaded
