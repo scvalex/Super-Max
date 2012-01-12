@@ -19,9 +19,13 @@ int main(int argc, char *argv[]) {
         Screen screen(SCREEN_WIDTH, SCREEN_HEIGHT);
         screen.setTitle("Super Max");
 
-        Image hello("data/hello.png");
+        Image hills("data/hills_at_dawn.png");
+        Image me("data/hello.png");
 
-        hello.drawOntoAt(screen, 100, 0);
+        hills.drawOntoAt(screen, 0, 0);
+        hills.drawOntoAt(screen, 320, 0);
+
+        me.drawOntoAt(screen, 100, 0);
 
         screen.flip();
         graphics.delay(2000);

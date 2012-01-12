@@ -8,7 +8,7 @@
 using namespace std;
 
 Image::Image(const string &filename) {
-        SDL_Surface *aux = IMG_LoadPNG_RW(SDL_RWFromFile("data/hello.png", "rb"));
+        SDL_Surface *aux = IMG_LoadPNG_RW(SDL_RWFromFile(filename.c_str(), "rb"));
         if (!aux) {
                 throw runtime_error("Could not load " + filename + ": " + IMG_GetError());
         }
