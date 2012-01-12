@@ -8,6 +8,9 @@ public:
         virtual ~Graphics();
 
         void delay(int milli);
+
+private:
+        static bool initialised;
 };
 
 #endif

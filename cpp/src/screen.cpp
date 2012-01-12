@@ -1,5 +1,6 @@
 #include "screen.h"
 
+#include <cassert>
 #include <SDL/SDL.h>
 #include <stdexcept>
 
@@ -8,16 +9,13 @@ using namespace std;
 bool Screen::initialised = false;
 
 Screen::Screen(int width, int height) {
-        if (initialised) {
-                return;
-        }
+        assert(!initialised);
+        initialised = true;
 
         m_surface = SDL_SetVideoMode(width, height, 32, SDL_SWSURFACE);
         if (!m_surface) {
                 throw runtime_error("Could not create screen.");
         }
-
-        initialised = true;
 }
 
 Screen::~Screen() {
