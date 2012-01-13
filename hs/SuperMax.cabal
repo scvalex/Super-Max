@@ -19,11 +19,6 @@ executable SuperMax
   main-is:           Main.hs
 
   build-depends:     base >= 4 && < 5
-                   , SDL >= 0.6 && < 0.7
-                   , SDL-image >= 0.6 && < 0.7
-                   , SDL-ttf >= 0.6 && < 0.7
-                   , Hipmunk >= 5 && < 6
-                   , filepath >= 1 && < 2
-                   , StateVar
+                   , gloss >= 1 && < 2
 
   GHC-options:       -Wall -fno-warn-unused-do-bind -threaded
