@@ -11,6 +11,8 @@ public:
         Screen(int width, int height);
         virtual ~Screen();
 
+        static Screen& getScreen();
+
         void setTitle(const std::string &title);
 
         void flip();
@@ -20,7 +22,7 @@ public:
 private:
         SDL_Surface *m_surface;
 
-        static bool initialised;
+        static Screen* instance;
 };
 
 #endif

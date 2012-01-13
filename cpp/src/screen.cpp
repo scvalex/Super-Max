@@ -6,11 +6,11 @@
 
 using namespace std;
 
-bool Screen::initialised = false;
+Screen* Screen::instance = NULL;
 
 Screen::Screen(int width, int height) {
-        assert(!initialised);
-        initialised = true;
+        assert(!instance);
+        instance = this;
 
         m_surface = SDL_SetVideoMode(width, height, 32, SDL_SWSURFACE);
         if (!m_surface) {
@@ -19,6 +19,10 @@ Screen::Screen(int width, int height) {
 }
 
 Screen::~Screen() {
+}
+
+Screen& Screen::getScreen() {
+        return *instance;
 }
 
 void Screen::setTitle(const string &title) {

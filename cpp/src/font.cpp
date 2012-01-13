@@ -1,5 +1,6 @@
 #include "font.h"
 
+#include "assert.h"
 #include <SDL/SDL.h>
 #include <stdexcept>
 
@@ -18,6 +19,8 @@ Font::~Font() {
 }
 
 Image Font::drawText(const string &text) {
+        assert(text.size() > 0);
+
         SDL_Color textColor = {255, 255, 255};
         SDL_Surface *surface = TTF_RenderText_Solid(m_font, text.c_str(),
                                                     textColor);

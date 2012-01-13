@@ -13,6 +13,9 @@ public:
         Image(SDL_Surface *surface);
         virtual ~Image();
 
+        int getWidth() const;
+        int getHeight() const;
+
         void drawOnto(const IsSurface &canvas, int x = 0, int y = 0);
         void drawOntoClip(const IsSurface &canvas, int dx, int dy,
                           int sx, int sy, int sw, int sh);
