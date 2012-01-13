@@ -5,6 +5,7 @@ module Types
     , Static (..)
     , Path
     , Point
+    , Pos
     ) where
 
 import qualified Graphics.Gloss as G
