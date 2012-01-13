@@ -23,10 +23,10 @@ int main(int argc, char *argv[]) {
         Image hills("data/hills_at_dawn.png");
         Image me("data/hello.png");
 
-        hills.drawOntoAt(screen, 0, 0);
-        hills.drawOntoAt(screen, 320, 0);
+        hills.drawOnto(screen, 0, 0);
+        hills.drawOnto(screen, 320, 0);
 
-        me.drawOntoAt(screen, 100, 0);
+        me.drawOnto(screen, 100, 0);
 
         screen.flip();
 

@@ -11,8 +11,7 @@ public:
         Image(const std::string &filename);
         virtual ~Image();
 
-        void drawOnto(const IsSurface &canvas);
-        void drawOntoAt(const IsSurface &canvas, int x, int y);
+        void drawOnto(const IsSurface &canvas, int x = 0, int y = 0);
 
         SDL_Surface* getSurface() const;
 

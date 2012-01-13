@@ -24,11 +24,7 @@ Image::~Image() {
         SDL_FreeSurface(m_surface);
 }
 
-void Image::drawOnto(const IsSurface &canvas) {
-        drawOntoAt(canvas, 0, 0);
-}
-
-void Image::drawOntoAt(const IsSurface &canvas, int x, int y) {
+void Image::drawOnto(const IsSurface &canvas, int x, int y) {
         SDL_Rect offset;
         offset.x = x;
         offset.y = y;
