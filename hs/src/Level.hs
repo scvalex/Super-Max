@@ -1,6 +1,7 @@
 module Level
     ( Level (..)
     , Background
+    , tileEdge
     , Tile (..)
     , TileCol (..)
     , levelHeight
@@ -25,7 +26,11 @@ data Background = Background Color Picture
 tileEdge :: Int
 tileEdge = 30
 
--- | A tile is a 10x10 'Picture'. They're the building blocks for levels.
+-- | A tile is a 'tileEdge'x'tileEdge' 'Picture'. They're the building
+--   blocks for levels.
+--
+--   The image must use space coordinates [-15,15], on both axis. In other
+--   words, the tile is centerd on the axis.
 newtype Tile = Tile {unTile :: Picture}
     deriving (Show, Eq)
 
@@ -65,10 +70,12 @@ drawCol (TileCol {colUp = up, colDown = down}) =
     tiles = zip [0,tileEdge..] (map unTileM up) ++
             zip [-tileEdge,-tileEdge*2..] (map unTileM down)
 
-dummyLevel :: Level
-dummyLevel = Level { levelBgr  = Background black blank
-                   , levelCols = replicate 10 (TileCol [Just tile] [])
-                   }
+dummyLevel :: Picture -> Level
+dummyLevel pic =
+    Level { levelBgr  = Background black blank
+          , levelCols = replicate 10 (TileCol [Just tile] []) ++
+                        replicate 10 (TileCol [Just (Tile pic)] [])
+          }
   where
-    tile = Tile $ color red $
-           polygon [(0,0), (30,0), (30, -30), (0, -30)]
+    tile  = Tile $ color red $
+            polygon [(-15,15), (15,15), (15, -15), (-15, -15)]
