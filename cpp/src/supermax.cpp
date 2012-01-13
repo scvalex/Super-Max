@@ -9,6 +9,7 @@
 #include <SDL/SDL.h>
 #include <stdexcept>
 #include <string>
+#include "timer.h"
 
 using namespace std;
 
@@ -35,20 +36,21 @@ int main(int argc, char *argv[]) {
                         .drawOnto(screen, 300, 20);
                 screen.flip();
 
+                message = "" + to_string(Timer::getTicks());
                 Event e = Event::blockForEvent();
                 if (e.getKey()) {
                         switch (e.getKey()->keysym.sym) {
                         case SDLK_UP:
-                                message = "Up!";
+                                message += ": Up!";
                                 break;
                         case SDLK_DOWN:
-                                message = "Down!";
+                                message += ": Down!";
                                 break;
                         case SDLK_LEFT:
-                                message = "Left!";
+                                message += ": Left!";
                                 break;
                         case SDLK_RIGHT:
-                                message = "Right!";
+                                message += ": Right!";
                                 break;
                         }
                 } else if (e.isQuit()) {
