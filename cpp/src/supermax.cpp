@@ -1,6 +1,7 @@
 #include <chipmunk/chipmunk.h>
 #include <cstdio>
 #include "event.h"
+#include "font.h"
 #include "graphics.h"
 #include "image.h"
 #include <iostream>
@@ -27,6 +28,9 @@ int main(int argc, char *argv[]) {
         hills.drawOnto(screen, 320, 0);
 
         me.drawOnto(screen, 100, 0);
+
+        Image(Font("data/libertine.ttf", 16).drawText("Super Max"))
+                .drawOnto(screen, 300, 20);
 
         screen.flip();
 

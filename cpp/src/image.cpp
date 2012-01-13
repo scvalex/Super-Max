@@ -20,6 +20,11 @@ Image::Image(const string &filename) {
         }
 }
 
+Image::Image(SDL_Surface *surface) :
+        m_surface(surface)
+{
+}
+
 Image::~Image() {
         SDL_FreeSurface(m_surface);
 }

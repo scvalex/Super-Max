@@ -10,6 +10,7 @@ class SDL_Rect;
 class Image : public IsSurface {
 public:
         Image(const std::string &filename);
+        Image(SDL_Surface *surface);
         virtual ~Image();
 
         void drawOnto(const IsSurface &canvas, int x = 0, int y = 0);

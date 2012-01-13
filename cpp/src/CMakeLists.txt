@@ -12,6 +12,7 @@ find_package(Chipmunk REQUIRED)
 find_package(SDL REQUIRED)
 find_package(SDL_image REQUIRED)
 find_package(SDL_mixer REQUIRED)
+find_package(SDL_ttf REQUIRED)
 
 # Includes
 # --------
@@ -30,6 +31,7 @@ set(super_max_libraries
   ${SDL_LIBRARY}
   ${SDLIMAGE_LIBRARY}
   ${SDLMIXER_LIBRARY}
+  ${SDLTTF_LIBRARY}
 )
 
 # Super Max program
