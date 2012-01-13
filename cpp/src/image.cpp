@@ -29,7 +29,29 @@ void Image::drawOnto(const IsSurface &canvas, int x, int y) {
         offset.x = x;
         offset.y = y;
 
-        int result = SDL_BlitSurface(getSurface(), NULL, canvas.getSurface(), &offset);
+        drawInternal(getSurface(), canvas.getSurface(), NULL, &offset);
+}
+
+void Image::drawOntoClip(const IsSurface &canvas, int dx, int dy,
+                         int sx, int sy, int sw, int sh)
+{
+        SDL_Rect offset;
+        offset.x = dx;
+        offset.y = dy;
+
+        SDL_Rect clip;
+        clip.x = sx;
+        clip.y = sy;
+        clip.w = sw;
+        clip.h = sh;
+
+        drawInternal(getSurface(), canvas.getSurface(), &clip, &offset);
+}
+
+void Image::drawInternal(SDL_Surface *img, SDL_Surface *canvas,
+                         SDL_Rect *clip, SDL_Rect *offset)
+{
+        int result = SDL_BlitSurface(img, clip, canvas, offset);
         if (result == -1) {
                 throw runtime_error(string("Could not blit surface: ") +
                                     SDL_GetError());
