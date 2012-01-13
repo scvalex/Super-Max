@@ -1,16 +1,21 @@
 #include <chipmunk/chipmunk.h>
 #include <cstdio>
 #include "event.h"
+#include "font.h"
 #include "graphics.h"
 #include "image.h"
 #include <iostream>
 #include "screen.h"
+#include <SDL/SDL.h>
 #include <stdexcept>
+#include <string>
 
 using namespace std;
 
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
+
+void drawTiledBackground(Image &img, int count);
 
 int main(int argc, char *argv[]) {
         cout << "Starting Super Max" << endl;
@@ -21,19 +26,32 @@ int main(int argc, char *argv[]) {
         screen.setTitle("Super Max");
 
         Image hills("data/hills_at_dawn.png");
-        Image me("data/hello.png");
-
-        hills.drawOntoAt(screen, 0, 0);
-        hills.drawOntoAt(screen, 320, 0);
-
-        me.drawOntoAt(screen, 100, 0);
-
-        screen.flip();
-
         bool quit(false);
+        string message(" ");
+
         while (!quit) {
+                drawTiledBackground(hills, 2);
+                Image(Font("data/libertine.ttf", 16).drawText(message))
+                        .drawOnto(screen, 300, 20);
+                screen.flip();
+
                 Event e = Event::blockForEvent();
-                if (e.isQuit()) {
+                if (e.getKey()) {
+                        switch (e.getKey()->keysym.sym) {
+                        case SDLK_UP:
+                                message = "Up!";
+                                break;
+                        case SDLK_DOWN:
+                                message = "Down!";
+                                break;
+                        case SDLK_LEFT:
+                                message = "Left!";
+                                break;
+                        case SDLK_RIGHT:
+                                message = "Right!";
+                                break;
+                        }
+                } else if (e.isQuit()) {
                         cout << "Quitting" << endl;
                         quit = true;
                 }
@@ -108,4 +126,10 @@ int main(int argc, char *argv[]) {
         cpSpaceFree(space);
 
         return 0;
+}
+
+void drawTiledBackground(Image &img, int count) {
+        for (int i(0); i < count; ++i) {
+                img.drawOnto(Screen::getScreen(), i * img.getWidth(), 0);
+        }
 }
