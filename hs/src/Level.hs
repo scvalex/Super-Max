@@ -17,8 +17,10 @@ data Level = Level
      , levelCols :: [TileCol]
      } deriving (Show, Eq)
 
--- | A 'Background' is a 'Picture' that will be repeated on the x-axis.
-type Background = Picture
+-- | A 'Background' is a 'Color' and a 'Picture' that will be repeated on the
+--   x-axis.
+data Background = Background Color Picture
+    deriving (Show, Eq)
 
 tileEdge :: Int
 tileEdge = 30
@@ -36,6 +38,9 @@ data TileCol = TileCol
 levelHeight :: Level -> Int
 levelHeight = maximum . map colHeight . levelCols
 
+levelWidth :: Level -> Int
+levelWidth (Level {levelCols = cols}) = tileEdge * length cols
+
 colHeight :: TileCol -> Int
 colHeight (TileCol {colUp = up, colDown = down}) = tileEdge * (length up + length down)
 
@@ -43,9 +48,12 @@ fi :: (Integral a, Num b) => a -> b
 fi = fromIntegral
 
 drawLevel :: Level -> Picture
-drawLevel (Level {levelCols = cols}) =
-    pictures . map (\(i, c) -> translate (fi i) 0 c) . zip [0,tileEdge..] .
-    map drawCol $ cols
+drawLevel (Level {levelCols = cols, levelBgr = (Background _ bgrp)}) =
+    pictures [tiles, bgr]
+  where
+    tiles = pictures . map (\(i, c) -> translate (fi i) 0 c) .
+            zip [0,tileEdge..] . map drawCol $ cols
+    bgr   = blank
 
 drawCol :: TileCol -> Picture
 drawCol (TileCol {colUp = up, colDown = down}) =
@@ -58,7 +66,7 @@ drawCol (TileCol {colUp = up, colDown = down}) =
             zip [-tileEdge,-tileEdge*2..] (map unTileM down)
 
 dummyLevel :: Level
-dummyLevel = Level { levelBgr  = blank
+dummyLevel = Level { levelBgr  = Background black blank
                    , levelCols = replicate 10 (TileCol [Just tile] [])
                    }
   where
