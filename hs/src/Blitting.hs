@@ -3,6 +3,7 @@ module Blitting (blitGame) where
 import Control.Monad
 import Graphics.UI.SDL
 import Control.Exception
+import qualified Data.IntMap as IM
 
 import Game
 import Exception
@@ -16,7 +17,7 @@ blitObject o screen = do
 
 blitLevel :: Level -> Surface -> IO ()
 blitLevel (Level {levelObjects = os}) screen =
-    forM_ os $ \(LevelObject o) -> blitObject o screen
+    forM_ (map snd $ IM.toList os) $ \(LevelObject o) -> blitObject o screen
 
 blitGame :: Game -> Surface -> IO ()
 blitGame (Game {gamePlayer = p, gameLevel = lvl}) screen = do

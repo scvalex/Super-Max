@@ -1,7 +1,5 @@
 module Animated (Animated(..)) where
 
-import Graphics.UI.SDL (Rect(..))
-
 import Game
 
 -- | A static object, which might have an animation and movements but which does
@@ -10,7 +8,7 @@ data Animated = Animated
     { animatedAni  :: Ani
     , animatedMov  :: Mov
     , animatedDim  :: (Int, Int)
-    , animatedBBox :: Path
+    , animatedBBox :: BBox
     }
 
 instance Step Animated where
@@ -25,4 +23,4 @@ instance Object Animated where
     rect (Animated {animatedMov = mov, animatedDim = (w, h)}) =
         let (x, y) = movPos mov in Rect x y w h
     bbox (Animated {animatedMov = mov, animatedBBox = box}) =
-        map (translate $ movPos mov) box
+        map (uncurry translate $ movPos mov) box

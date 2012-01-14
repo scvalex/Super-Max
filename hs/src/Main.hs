@@ -1,29 +1,30 @@
-import Graphics.UI.SDL.Image (load)
-import Graphics.UI.SDL
 import Control.Exception
 import Prelude hiding (flip, init, span, max)
 
+import Graphics.UI.SDL
+import Graphics.UI.SDL.Image
+
 import Animated
-import Game
-import Exception
 import Blitting
-import Loop
 import Common
+import Exception
+import Game
+import Loop
 
 te :: Num a => a
 te = 30
 
-squarePath :: Num a => [(a, a)]
-squarePath = [(0,0),(te,0),(te,-te),(0,-te)]
+squareBox :: BBox
+squareBox = [Rect 0 0 te te]
 
 tile :: Surface -> Point -> Animated
 tile s (x, y) =
-    Animated (staticAni s) (staticMov (x*te, y*te)) (te, te) squarePath
+    Animated (staticAni s) (staticMov (x*te, y*te)) (te, te) squareBox
 
 movingTile :: Surface -> Animated
 movingTile s =
     Animated (staticAni s) (dynamicMov fmov ((te+span, 1), (te, 4*te)))
-             (te, te) squarePath
+             (te, te) squareBox
   where
     span = 4 * te
 
@@ -44,7 +45,7 @@ player :: Surface -> Player
 player s = Player { playerAni  = staticAni s
                   , playerPos  = (te, te)
                   , playerDim  = (te, te)
-                  , playerBBox = squarePath
+                  , playerBBox = squareBox
                   , playerDir  = Nothing
                   }
 

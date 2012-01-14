@@ -1,10 +1,12 @@
-{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ExistentialQuantification, Rank2Types, TupleSections #-}
 module Game
     ( Time
     , Step(..)
     , HasSurface(..)
     , Point
-    , Path
+    , BBox
+    , colliding
+    , Rect(..)
     , translate
     , Object(..)
 
@@ -29,12 +31,19 @@ module Game
     , Player(..)
     ) where
 
+import Control.Monad
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as IS
+import Data.IntMap (IntMap)
+import qualified Data.IntMap as IM
+import Data.Map (Map)
+import qualified Data.Map as M
+import Data.Word (Word32)
+import Prelude hiding (Either (..))
+
+import Graphics.UI.SDL (Surface, Rect(..))
 import Graphics.UI.SDL.Events
 import Graphics.UI.SDL.Keysym
-import Graphics.UI.SDL (Surface, Rect(..))
-import Data.Word (Word32)
-import Control.Monad
-import Prelude hiding (Either (..))
 
 import Common
 
@@ -51,17 +60,27 @@ class HasSurface a where
 -- | A point in space
 type Point = (Int, Int)
 
--- | A polygon path
-type Path = [Point]
+-- | A bounding box
+type BBox = [Rect]
 
-translate :: Point -> Point -> Point
-translate (x, y) (x', y') = (x' + x, y' + y)
+translate :: Int -> Int -> Rect -> Rect
+translate x' y' (Rect x y w h) = Rect (x' + x) (y' + y) w h
+
+colliding :: BBox -> BBox -> Bool
+colliding bs1 bs2 = or [f b1 b2 | b1 <- bs1, b2 <- bs2]
+  where
+    f (Rect l1 t1 w1 h1) (Rect l2 t2 w2 h2) =
+        let r1 = l1 + w1
+            b1 = t1 + h1
+            r2 = l2 + w2
+            b2 = t2 + h2
+        in  b1 <= t2 || t1 >= b2 || r1 <= l2 || l1 >= r2
 
 class (HasSurface o, Step o) => Object o where
     -- | The 'Rect' in which the object resides
     rect   :: o -> Rect
     -- | The bounding box of the object.
-    bbox   :: o -> Path
+    bbox   :: o -> BBox
 
 -------------------------------------------------------------------------------
 
@@ -79,18 +98,60 @@ stepGame delta ev g@(Game {gamePlayer = p, gameLevel = lvl}) = do
 
 -------------------------------------------------------------------------------
 
+type Tag = Int
+
+type Grid = Map (Int, Int) IntSet
+
+mkGrid :: [((Int, Int), Tag)]    -- ^ Initial tags
+       -> Grid
+mkGrid = go M.empty
+  where
+    go g []              = g
+    go g ((k, t) : rest) =
+        case M.lookup k g of
+            Nothing -> go (M.insert k (IS.singleton t) g) rest
+            Just s  -> go (M.insert k (IS.insert t s) g) rest
+
+-- lookupGrid :: (Int, Int) -> Grid -> IntSet
+-- lookupGrid k g =
+--     case M.lookup k g of
+--         Nothing -> IS.empty
+--         Just s  -> s
+
+gridEdge :: Int
+gridEdge = 30
+
+-------------------------------------------------------------------------------
+
 data LevelObject = forall o. Object o => LevelObject o
 
-newtype Level = Level {levelObjects :: [LevelObject]}
+data Level = Level
+    { levelObjects :: IntMap LevelObject
+    , levelGrid    :: Grid
+    }
 
 instance Step Level where
-    step d ev w l = do
-        os <- forM (levelObjects l) $
-              \(LevelObject o) -> fmap LevelObject (step d ev w o)
-        return $ l {levelObjects = os}
+    step d ev w (Level {levelObjects = los}) = do
+        let os = map snd $ IM.toList los
+        os' <- forM os $ \(LevelObject o) -> fmap LevelObject $ step d ev w o
+        return $ buildLevel os'
 
 buildLevel :: [LevelObject] -> Level
-buildLevel = Level
+buildLevel os = Level { levelObjects = im
+                      , levelGrid    = grid
+                      }
+  where
+    ost  = zip [1..] os
+    im   = IM.fromList ost
+    grid = mkGrid $ concat [map (,t) (cells $ rect o) | (t, LevelObject o) <- ost]
+
+cells :: Rect -> [(Int, Int)]
+cells (Rect x y w h) =
+    let x'    = x `div` gridEdge
+        y'    = y `div` gridEdge
+        spanx = (w + x `mod` gridEdge) `div` gridEdge
+        spany = (h + y `mod` gridEdge) `div` gridEdge
+    in  [(x'+cx, y'+cy) | cx <- [0..spanx], cy <- [0..spany]]
 
 -------------------------------------------------------------------------------
 
@@ -130,7 +191,7 @@ data Player = Player
     { playerAni  :: Ani
     , playerPos  :: Point
     , playerDim  :: (Int, Int)
-    , playerBBox :: Path
+    , playerBBox :: BBox
     , playerDir  :: Maybe Direction
     }
 
@@ -161,5 +222,5 @@ instance HasSurface Player where
 
 instance Object Player where
     rect (Player {playerPos = (x, y), playerDim = (w, h)}) = Rect x y w h
-    bbox (Player {playerPos = pos, playerBBox = box}) =
-        map (translate pos) box
+    bbox (Player {playerPos = (x, y), playerBBox = box})   =
+        map (translate x y) box

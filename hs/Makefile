@@ -2,11 +2,15 @@
 all: build
 
 clean:
-	rm -rf dist
+	cabal clean
 	rm -f SuperMax
 
 build:
-	cabal build ; cp dist/build/SuperMax/SuperMax ./
+	cabal build
+	cp dist/build/SuperMax/SuperMax ./
 
 run: build
 	./SuperMax
+
+configure:
+	cabal configure
