@@ -5,8 +5,6 @@ import Graphics.UI.SDL
 import Control.Exception
 
 import Game
-import Types
-import Level
 import Exception
 
 blitObject :: Object o => o -> Surface -> IO ()

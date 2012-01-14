@@ -3,14 +3,11 @@ import Graphics.UI.SDL
 import Control.Exception
 import Prelude hiding (flip, init, span, max)
 
-import Types
-import Level
+import Animated
 import Game
-import Objects
 import Exception
 import Blitting
 import Loop
-import Player
 import Common
 
 te :: Num a => a
@@ -81,4 +78,4 @@ main = do
                          , gameLevel  = l
                          }
                 draw g' = clearScreen screen >> blitGame g' screen >> flip screen
-            loop 60 g draw step
+            loop 60 g draw stepGame
