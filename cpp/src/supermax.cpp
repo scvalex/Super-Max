@@ -1,5 +1,6 @@
 #include <chipmunk/chipmunk.h>
 #include <cstdio>
+#include "demolevel.h"
 #include "event.h"
 #include "font.h"
 #include "graphics.h"
@@ -18,7 +19,6 @@ const int FRAMES_PER_SECOND = 30;
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
-void drawTiledBackground(Image &img, int count);
 void showFrameRate(int frame);
 void showPaused(bool paused);
 
@@ -30,14 +30,14 @@ int main(int argc, char *argv[]) {
         Screen screen(SCREEN_WIDTH, SCREEN_HEIGHT);
         screen.setTitle("Super Max");
 
-        Image hills("data/hills_at_dawn.png");
         bool quit(false);
         bool paused(false), pausable(true);
 
+        DemoLevel demo;
         for (int frame(0); !quit; (!paused) ? ++frame : frame) {
                 Timer fps;
 
-                drawTiledBackground(hills, 2);
+                demo.drawAll(screen);
                 showFrameRate(frame);
                 showPaused(paused);
                 screen.flip();
@@ -147,11 +147,6 @@ int main(int argc, char *argv[]) {
         return 0;
 }
 
-void drawTiledBackground(Image &img, int count) {
-        for (int i(0); i < count; ++i) {
-                img.drawOnto(Screen::screen(), i * img.width(), 0);
-        }
-}
 
 void showFrameRate(int frame) {
         stringstream text;
