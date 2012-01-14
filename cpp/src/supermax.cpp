@@ -9,6 +9,7 @@
 #include <SDL/SDL.h>
 #include <stdexcept>
 #include <string>
+#include <sstream>
 #include "timer.h"
 
 using namespace std;
@@ -150,8 +151,11 @@ void drawTiledBackground(Image &img, int count) {
 }
 
 void showFrameRate(int frame) {
+        stringstream text;
+        text << frame;
+
         Image msgImg(Font("data/libertine.ttf", 16)
-                     .drawText(to_string(frame)));
+                     .drawText(text.str()));
         msgImg.drawOnto(Screen::screen(),
                         SCREEN_WIDTH - msgImg.width() - 20, 20);
 }

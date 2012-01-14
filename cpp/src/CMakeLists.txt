@@ -38,6 +38,5 @@ set(super_max_libraries
 # -----------------
 
 file(GLOB super_max_source_files "*.cpp")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x")
 add_executable(super-max ${super_max_source_files})
 target_link_libraries(super-max ${super_max_libraries})
