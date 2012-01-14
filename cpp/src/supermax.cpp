@@ -18,6 +18,8 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 void drawTiledBackground(Image &img, int count);
+void showFrameRate(int frame);
+void showPaused(bool paused);
 
 int main(int argc, char *argv[]) {
         cout << "Starting Super Max" << endl;
@@ -29,37 +31,29 @@ int main(int argc, char *argv[]) {
 
         Image hills("data/hills_at_dawn.png");
         bool quit(false);
-        string message(" ");
         bool paused(false), pausable(true);
 
         for (int frame(0); !quit; (!paused) ? ++frame : frame) {
                 Timer fps;
 
                 drawTiledBackground(hills, 2);
-                Image msgImg(Font("data/libertine.ttf", 16).drawText(message));
-                msgImg.drawOnto(screen, ((SCREEN_WIDTH + msgImg.width() * 2) / FRAMES_PER_SECOND) * (frame % FRAMES_PER_SECOND) - msgImg.width(), 20);
+                showFrameRate(frame);
+                showPaused(paused);
                 screen.flip();
-
-                message = to_string(frame);
 
                 char *keys = Event::getKeyState();
                 if (keys[SDLK_UP]) {
-                        message += ": Up!";
                 }
                 if (keys[SDLK_DOWN]) {
-                        message += ": Down!";
                 }
                 if (keys[SDLK_LEFT]) {
-                        message += ": Left!";
                 }
                 if (keys[SDLK_RIGHT]) {
-                        message += ": Right!";
                 }
                 if (keys[SDLK_p]) {
                         if (pausable) {
                                 paused = !paused;
                                 pausable = false;
-                                cout << "toggle" << endl;
                         }
                 } else {
                         pausable = true;
@@ -152,5 +146,22 @@ int main(int argc, char *argv[]) {
 void drawTiledBackground(Image &img, int count) {
         for (int i(0); i < count; ++i) {
                 img.drawOnto(Screen::screen(), i * img.width(), 0);
+        }
+}
+
+void showFrameRate(int frame) {
+        Image msgImg(Font("data/libertine.ttf", 16)
+                     .drawText(to_string(frame)));
+        msgImg.drawOnto(Screen::screen(),
+                        SCREEN_WIDTH - msgImg.width() - 20, 20);
+}
+
+void showPaused(bool paused) {
+        if (paused) {
+                Image msgImg(Font("data/libertine.ttf", 32)
+                             .drawText("Paused"));
+                msgImg.drawOnto(Screen::screen(),
+                                (SCREEN_WIDTH - msgImg.width()) / 2,
+                                (SCREEN_HEIGHT - msgImg.height()) / 2);
         }
 }
