@@ -1,47 +1,68 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
-import Graphics.Gloss as G
-import Graphics.Gloss.Interface.Game as G
+import qualified Graphics.Gloss as G
+import qualified Graphics.Gloss.Interface.Game as G
 
 import Types
 import Level
+import Game
 
 te :: Num a => a
 te = fromIntegral tileEdge
 
-dummyObject :: Pos -> Static
-dummyObject pos = Static pic pos (3,1) path
-  where
-    path = [(0,0),(te*3,0),(te*3,-te),(0,-te)]
-    pic  = G.color G.red $ G.Polygon path
+squarePath :: Num a => [(a, a)]
+squarePath = [(0,0),(te,0),(te,-te),(0,-te)]
 
-transparencyTest :: IO Static
-transparencyTest = do
-    bmp <- fmap (G.translate 320 200) $ G.loadBMP "./resources/blah.bmp"
-    let path = [(0,0),(640,0),(640,-400),(0,-400)]
-    return (Static bmp (0,0) (64, 40) path)
+square :: G.Color -> G.Picture
+square col = G.color col $ G.Polygon squarePath
+
+dummyObject :: Point -> Static
+dummyObject (x, y) = Static (square G.red) (x*tileEdge, y*tileEdge) (30,30) squarePath
+
+-- transparencyTest :: IO Static
+-- transparencyTest = do
+--     bmp <- fmap (translate 320 200) $ loadBMP "./resources/blah.bmp"
+--     let path = [(0,0),(640,0),(640,-400),(0,-400)]
+--     return (Static bmp (0,0) (64, 40) path)
 
 displayMode :: G.Display
 displayMode = G.InWindow "SuperMax" (1024, 768) (10, 10)
 
-eventHandler :: G.Event -> Level -> Level
-eventHandler (EventKey (SpecialKey k) Down _ _)
-             l@(Level {levelCenter = (x, y)})
-    = case k of
-        KeyLeft  -> mov (-10, 0)
-        KeyRight -> mov (10, 0)
-        KeyUp    -> mov (0, 10)
-        KeyDown  -> mov (0, -10)
-        _        -> l
+eventHandler :: G.Event -> Game -> Game
+eventHandler (G.EventKey (G.SpecialKey k) G.Down _ _)
+             g@(Game {gamePlayer = p}) =
+    case k of
+        G.KeyLeft  -> mov (-10, 0)
+        G.KeyRight -> mov (10, 0)
+        G.KeyUp    -> mov (0, 10)
+        G.KeyDown  -> mov (0, -10)
+        _        -> g
   where
-    mov (x', y') = l {levelCenter = (x + x', y + y')}
-eventHandler _ l = l
+    mov m       = g {gamePlayer = movP m}
+    movP (x, y) = let (px, py) = animatedPos p
+                  in  p {animatedPos = (px + x, py + y)}
+eventHandler _ g = g
 
+player :: Animated
+player = Animated { animatedAni  = staticAni (square G.blue)
+                  , animatedPos  = (60, 60)
+                  , animatedDim  = (30, 30)
+                  , animatedBBox = squarePath
+                  }
 
 main :: IO ()
 main = do
-    tran <- transparencyTest
-    let l = buildLevel [ LevelObject (dummyObject (0,0))
-                       , LevelObject (dummyObject (3,1))
-                       , LevelObject tran
+    let l = buildLevel [ LevelObject (dummyObject (-1,1))
+                       , LevelObject (dummyObject (0,0))
+                       , LevelObject (dummyObject (1,0))
+                       , LevelObject (dummyObject (2,0))
+                       , LevelObject (dummyObject (3,0))
+                       , LevelObject (dummyObject (4,1))
+                       , LevelObject (dummyObject (5,1))
+                       , LevelObject (dummyObject (6,1))
+                       , LevelObject (dummyObject (7,1))
                        ]
-    G.play displayMode G.black 60 l drawLevel eventHandler step
+        g = Game { gamePlayer = player
+                 , gameActDir = []
+                 , gameLevel  = l
+                 }
+    G.play displayMode G.black 60 g draw eventHandler step
