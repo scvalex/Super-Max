@@ -1,4 +1,3 @@
-{-# LANGUAGE DoAndIfThenElse #-}
 module Loop (loop) where
 
 import Graphics.UI.SDL hiding (update)
@@ -13,14 +12,18 @@ loopTime :: Word32               -- ^ Millisecond step
 loopTime step pt world draw update = do
     t <- getTicks
     let delta = t - pt
-    if delta < step then do
-        delay delta
-        loopTime step pt world draw update
-    else do
-        ev <- pollEvent
-        world' <- update ev delta world
-        draw world'
-        loopTime step t world' draw update
+    if delta < step
+       then do
+           delay delta
+           loopTime step pt world draw update
+       else do
+           ev <- pollEvent
+           case ev of
+               Quit -> return ()
+               _    -> do
+                   world' <- update ev delta world
+                   draw world'
+                   loopTime step t world' draw update
 
 loop :: Int                      -- ^ FPS
      -> world                    -- ^ The initial world
