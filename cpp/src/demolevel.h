@@ -10,6 +10,9 @@ public:
         DemoLevel();
         virtual ~DemoLevel();
 
+        static const int width = 640;
+        static const int height = 480;
+
         void drawBackground(const IsSurface &canvas);
         void drawStage(const IsSurface &canvas);
         void step();
@@ -19,7 +22,6 @@ private:
         Image hello;
 
         int x, y;
-        int vx, vy;
 };
 
 #endif

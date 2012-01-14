@@ -9,8 +9,7 @@ DemoLevel::DemoLevel() :
         Level(),
         hills("data/hills_at_dawn.png"),
         hello("data/hello.png"),
-        x(20), y(20),
-        vx(0), vy(0)
+        x(20), y(20)
 {
 }
 
@@ -19,7 +18,7 @@ DemoLevel::~DemoLevel() {
 
 void DemoLevel::drawBackground(const IsSurface &canvas) {
         Level::drawBackground(canvas);
-        for (int i(0); i < 2; ++i) {
+        for (int i(0); i < ((width + 1) / hills.width()); ++i) {
                 hills.drawOnto(canvas, i * hills.width(), 0);
         }
 }
@@ -33,21 +32,24 @@ void DemoLevel::step() {
         Level::step();
 
         char *keys = Event::getKeyState();
+        int nx(x), ny(y);
         if (keys[SDLK_UP]) {
-                vy -= 1;
+                ny -= 4;
         }
         if (keys[SDLK_DOWN]) {
-                vy += 1;
+                ny += 4;
         }
         if (keys[SDLK_LEFT]) {
-                vx -= 1;
+                nx -= 4;
         }
         if (keys[SDLK_RIGHT]) {
-                vx += 1;
+                nx += 4;
         }
 
-        cout << "V: " << vx << ", " << vy << endl;
-
-        x += vx;
-        y += vy;
+        if (0 <= nx && nx < width - hello.width()) {
+                x = nx;
+        }
+        if (0 <= ny && ny < height - hello.height()) {
+                y = ny;
+        }
 }
