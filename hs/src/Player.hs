@@ -1,4 +1,7 @@
-module Player where
+module Player
+    ( Direction(..)
+    , Player(..)
+    ) where
 
 import Graphics.UI.SDL.Events
 import Graphics.UI.SDL.Keysym
@@ -37,13 +40,13 @@ instance Step Player where
             SDLK_RIGHT -> movePlayer delta $ p {playerDir = Just Right}
             _          -> p
     step delta (KeyUp k) p@(Player {playerDir = Just dir})
-        | (symKey k == SDLK_LEFT && dir == Left) || (symKey k == SDLK_RIGHT && dir == Right) =
+        | symKey k == SDLK_LEFT && dir == Left || symKey k == SDLK_RIGHT && dir == Right =
           return $ p {playerDir = Nothing}
         | otherwise = return $ movePlayer delta p
     step delta _ p = return $ movePlayer delta p
 
 instance HasSurface Player where
-    surface (Player {playerAni = ani}) = animationSur ani
+    surface (Player {playerAni = ani}) = aniSur ani
 
 instance Object Player where
     rect (Player {playerPos = (x, y), playerDim = (w, h)}) = Rect x y w h

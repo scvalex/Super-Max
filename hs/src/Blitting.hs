@@ -1,4 +1,4 @@
-module Blitting where
+module Blitting (blitGame) where
 
 import Control.Monad
 import Graphics.UI.SDL

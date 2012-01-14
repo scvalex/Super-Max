@@ -1,13 +1,15 @@
 {-# LANGUAGE ExistentialQuantification, StandaloneDeriving, Rank2Types #-}
-module Level where
+module Level
+    ( LevelObject(..)
+    , Level(..)
+    , buildLevel
+    ) where
 
 import Control.Monad
 
 import Types
 
 data LevelObject = forall o. Object o => LevelObject o
-
-type Tag = Int
 
 newtype Level = Level {levelObjects :: [LevelObject]}
 

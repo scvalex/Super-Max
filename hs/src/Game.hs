@@ -1,4 +1,6 @@
-module Game where
+module Game
+    ( Game(..)
+    ) where
 
 import Types
 import Level
@@ -12,6 +14,6 @@ data Game = Game
 
 instance Step Game where
     step delta ev g@(Game {gamePlayer = p, gameLevel = lvl}) = do
-        p'   <- step delta ev p
         lvl' <- step delta ev lvl
+        p'   <- step delta ev p
         return $ g {gamePlayer = p', gameLevel = lvl'}

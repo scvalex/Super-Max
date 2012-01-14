@@ -1,4 +1,17 @@
-module Objects where
+module Objects
+    ( Ani(..)
+    , applyAni
+    , aniSur
+    , staticAni
+
+    , Mov(..)
+    , applyMov
+    , movPos
+    , staticMov
+    , dynamicMov
+
+    , Animated(..)
+    ) where
 
 import Graphics.UI.SDL (Surface, Rect(..))
 
@@ -10,8 +23,8 @@ data Ani = Ani Surface (Time -> Ani)
 applyAni :: Ani -> Time -> Ani
 applyAni (Ani _ f) fl = f fl
 
-animationSur :: Ani -> Surface
-animationSur (Ani sur _) = sur
+aniSur :: Ani -> Surface
+aniSur (Ani sur _) = sur
 
 staticAni :: Surface -> Ani
 staticAni s = Ani s (\_ -> staticAni s)
@@ -46,7 +59,7 @@ instance Step Animated where
         a {animatedAni = applyAni ani delta, animatedMov = applyMov mov delta}
 
 instance HasSurface Animated where
-    surface (Animated {animatedAni = ani}) = animationSur ani
+    surface (Animated {animatedAni = ani}) = aniSur ani
 
 instance Object Animated where
     rect (Animated {animatedMov = mov, animatedDim = (w, h)}) =

@@ -1,5 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module Exception where
+module Exception
+    ( SDLException(..)
+    ) where
 
 import Data.Data (Typeable)
 import Control.Exception

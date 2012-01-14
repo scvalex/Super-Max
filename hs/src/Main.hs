@@ -1,5 +1,3 @@
-{-# LANGUAGE NoMonomorphismRestriction, ScopedTypeVariables #-}
-
 import Graphics.UI.SDL.Image (load)
 import Graphics.UI.SDL
 import Control.Exception
@@ -22,7 +20,8 @@ squarePath :: Num a => [(a, a)]
 squarePath = [(0,0),(te,0),(te,-te),(0,-te)]
 
 tile :: Surface -> Point -> Animated
-tile s (x, y) = Animated (staticAni s) (staticMov (x*te, y*te)) (te, te) squarePath
+tile s (x, y) =
+    Animated (staticAni s) (staticMov (x*te, y*te)) (te, te) squarePath
 
 movingTile :: Surface -> Animated
 movingTile s =
@@ -55,6 +54,18 @@ player s = Player { playerAni  = staticAni s
 clearScreen :: Surface -> IO ()
 clearScreen screen = fillRect screen Nothing (Pixel 0) >> return ()
 
+level :: Surface -> Level
+level s = buildLevel [ LevelObject (tile s (0,1))
+                     , LevelObject (tile s (1,2))
+                     , LevelObject (tile s (2,2))
+                     , LevelObject (tile s (3,2))
+                     , LevelObject (tile s (4,2))
+                     , LevelObject (tile s (5,1))
+                     , LevelObject (tile s (6,1))
+                     , LevelObject (tile s (7,1))
+                     , LevelObject (tile s (8,1))
+                     , LevelObject (movingTile s)
+                     ]
 main :: IO ()
 main = do
     init [InitEverything]
@@ -64,17 +75,7 @@ main = do
         Just screen -> do
             s <- load "./resources/red.png"
             p <- load "./resources/player.png"
-            let l = buildLevel [ LevelObject (tile s (0,1))
-                               , LevelObject (tile s (1,2))
-                               , LevelObject (tile s (2,2))
-                               , LevelObject (tile s (3,2))
-                               , LevelObject (tile s (4,2))
-                               , LevelObject (tile s (5,1))
-                               , LevelObject (tile s (6,1))
-                               , LevelObject (tile s (7,1))
-                               , LevelObject (tile s (8,1))
-                               , LevelObject (movingTile s)
-                               ]
+            let l = level s
                 g = Game { gamePlayer = player p
                          , gameActDir = []
                          , gameLevel  = l

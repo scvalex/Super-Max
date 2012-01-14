@@ -1,4 +1,13 @@
-module Types where
+module Types
+    ( Time
+    , Step(..)
+    , HasSurface(..)
+    , Point
+    , Path
+    , translate
+    , Dimension
+    , Object(..)
+    ) where
 
 import Data.Word (Word32)
 import Graphics.UI.SDL (Surface, Rect(..), Event)
