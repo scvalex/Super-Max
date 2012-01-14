@@ -29,6 +29,9 @@ player s = Animated { animatedAni  = staticAni s
                     , animatedBBox = squarePath
                     }
 
+clearScreen :: Surface -> IO ()
+clearScreen screen = fillRect screen Nothing (Pixel 0) >> return ()
+
 main :: IO ()
 main = do
     init [InitEverything]
@@ -52,4 +55,5 @@ main = do
                          , gameActDir = []
                          , gameLevel  = l
                          }
-            loop 60 g (\g' -> blitGame g' screen >> flip screen) updateGame
+                draw g' = clearScreen screen >> blitGame g' screen >> flip screen
+            loop 60 g draw updateGame
