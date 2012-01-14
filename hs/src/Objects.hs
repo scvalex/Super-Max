@@ -28,6 +28,9 @@ movPos (Mov p _) = p
 staticMov :: Point -> Mov
 staticMov p = Mov p (\_ -> staticMov p)
 
+dynamicMov :: (a -> Time -> Point -> (a, Point)) -> (a, Point) -> Mov
+dynamicMov f (x, p) = Mov p $ \delta -> dynamicMov f (f x delta p)
+
 -- | A static object, which might have an animation and movements but which does
 --   not responds to events.
 data Animated = Animated

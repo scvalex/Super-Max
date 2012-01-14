@@ -21,7 +21,7 @@ data Player = Player
     }
 
 velocity :: Float
-velocity = 0.5
+velocity = 0.3
 
 movePlayer :: Time -> Player -> Player
 movePlayer _ p@(Player {playerDir = Nothing}) = p
