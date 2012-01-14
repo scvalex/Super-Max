@@ -11,6 +11,7 @@ import Game
 import Objects
 import Exception
 import Blitting
+import Loop
 
 te :: Num a => a
 te = 30
@@ -51,6 +52,4 @@ main = do
                          , gameActDir = []
                          , gameLevel  = l
                          }
-            blitGame g screen
-            flip screen
-            delay 2000
+            loop 60 g (\g' -> blitGame g' screen >> flip screen) updateGame

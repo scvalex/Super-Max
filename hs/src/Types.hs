@@ -1,9 +1,10 @@
 module Types where
 
+import Data.Word (Word32)
 import Graphics.UI.SDL (Surface, Rect(..))
 
 class TimeStep ts where
-    step :: Float -> ts -> ts
+    step :: Word32 -> ts -> ts
 
 class HasSurface a where
     surface :: a -> Surface

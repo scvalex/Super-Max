@@ -1,6 +1,7 @@
 module Objects where
 
 import Graphics.UI.SDL (Surface, Rect(..))
+import Data.Word (Word32)
 
 import Types
 
@@ -23,9 +24,9 @@ instance Object Static where
     bbox (Static {staticPos = pos, staticBBox = box})
         = map (translate pos) box
 
-data Ani = Ani Surface (Float -> Ani)
+data Ani = Ani Surface (Word32 -> Ani)
 
-applyAni :: Ani -> Float -> Ani
+applyAni :: Ani -> Word32 -> Ani
 applyAni (Ani _ f) fl = f fl
 
 animationSur :: Ani -> Surface
@@ -33,6 +34,9 @@ animationSur (Ani sur _) = sur
 
 staticAni :: Surface -> Ani
 staticAni s = Ani s (\_ -> staticAni s)
+
+dynamicAny :: (Word32 -> Surface -> Surface) -> Surface -> Ani
+dynamicAny f sur = Ani sur $ \delta -> dynamicAny f (f delta sur)
 
 data Animated = Animated
     { animatedAni  :: Ani
