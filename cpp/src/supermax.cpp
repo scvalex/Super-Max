@@ -70,6 +70,9 @@ int main(int argc, char *argv[]) {
                 if (fps.ticks() < 1000 / FRAMES_PER_SECOND) {
                         Timer::delay((1000 / FRAMES_PER_SECOND) -
                                      fps.ticks());
+                } else {
+                        cout << "Frame " << frame << " took too long."
+                             << endl;
                 }
         }
 
