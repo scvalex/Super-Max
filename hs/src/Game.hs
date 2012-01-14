@@ -38,6 +38,7 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IM
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe (maybeToList)
 import Data.Word (Word32)
 import Prelude hiding (Either (..))
 
@@ -112,11 +113,11 @@ mkGrid = go M.empty
             Nothing -> go (M.insert k (IS.singleton t) g) rest
             Just s  -> go (M.insert k (IS.insert t s) g) rest
 
--- lookupGrid :: (Int, Int) -> Grid -> IntSet
--- lookupGrid k g =
---     case M.lookup k g of
---         Nothing -> IS.empty
---         Just s  -> s
+lookupGrid :: (Int, Int) -> Grid -> IntSet
+lookupGrid k g =
+    case M.lookup k g of
+        Nothing -> IS.empty
+        Just s  -> s
 
 gridEdge :: Int
 gridEdge = 30
@@ -152,6 +153,10 @@ cells (Rect x y w h) =
         spanx = (w + x `mod` gridEdge) `div` gridEdge
         spany = (h + y `mod` gridEdge) `div` gridEdge
     in  [(x'+cx, y'+cy) | cx <- [0..spanx], cy <- [0..spany]]
+
+cellObjects :: (Int, Int) -> Level -> [LevelObject]
+cellObjects k (Level {levelObjects = im, levelGrid = grid}) =
+    concatMap (\t -> maybeToList $ IM.lookup t im) . IS.toList . lookupGrid k $ grid
 
 -------------------------------------------------------------------------------
 
@@ -198,24 +203,41 @@ data Player = Player
 velocity :: Float
 velocity = 0.3
 
-movePlayer :: Time -> Player -> Player
-movePlayer _ p@(Player {playerDir = Nothing}) = p
-movePlayer d p@(Player {playerDir = Just dir, playerPos = (x, y)}) =
+movePlayerPt :: Int -> Level -> Player -> Maybe Player
+movePlayerPt d lvl p@(Player {playerPos = (x, y)})
+    | coll      = Nothing
+    | otherwise = Just $ p {playerPos = (x + d, y)}
+  where
+    os   = concatMap (`cellObjects` lvl) $ cells (rect p)
+    coll = or $ map (\(LevelObject o) -> colliding (bbox p) (bbox o)) os
+
+movePlayer :: Time -> Level -> Player -> Player
+movePlayer _ _ p@(Player {playerDir = Nothing})    = p
+movePlayer d lvl p@(Player {playerDir = Just dir}) =
     case dir of
-        Left  -> p {playerPos = (round (fi x - fi d * velocity), y)}
-        Right -> p {playerPos = (round (fi x + fi d * velocity), y)}
+        Left  -> move 1
+        Right -> move (-1)
+  where
+    move sign =
+        case movePlayerPt (sign * round (fi d * velocity)) lvl p of
+            Nothing -> attach p
+            Just p' -> p'
+    attach p' =
+        case movePlayerPt 1 lvl p' of
+            Nothing  -> p'
+            Just p'' -> attach p''
 
 instance Step Player where
-    step delta (KeyDown k) _ p = return $
+    step delta (KeyDown k) (Game {gameLevel = lvl}) p = return $
         case symKey k of
-            SDLK_LEFT  -> movePlayer delta $ p {playerDir = Just Left}
-            SDLK_RIGHT -> movePlayer delta $ p {playerDir = Just Right}
+            SDLK_LEFT  -> movePlayer delta lvl $ p {playerDir = Just Left}
+            SDLK_RIGHT -> movePlayer delta lvl $ p {playerDir = Just Right}
             _          -> p
-    step delta (KeyUp k) _ p@(Player {playerDir = Just dir})
+    step delta (KeyUp k) (Game {gameLevel = lvl}) p@(Player {playerDir = Just dir})
         | symKey k == SDLK_LEFT && dir == Left || symKey k == SDLK_RIGHT && dir == Right =
           return $ p {playerDir = Nothing}
-        | otherwise = return $ movePlayer delta p
-    step delta _ _ p = return $ movePlayer delta p
+        | otherwise = return $ movePlayer delta lvl p
+    step delta _ (Game {gameLevel = lvl}) p = return $ movePlayer delta lvl p
 
 instance HasSurface Player where
     surface (Player {playerAni = ani}) = aniSur ani
