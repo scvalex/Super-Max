@@ -1,10 +1,5 @@
-{-# LANGUAGE ExistentialQuantification, StandaloneDeriving #-}
+{-# LANGUAGE ExistentialQuantification, StandaloneDeriving, Rank2Types #-}
 module Level where
-
-import Data.Array.IArray
-import Data.IntMap (IntMap)
-import qualified Data.IntMap as IM
-import qualified Graphics.Gloss as G
 
 import Types
 
@@ -14,40 +9,12 @@ deriving instance Show LevelObject
 
 type Tag = Int
 
-data Level = Level
-     { levelGrid    :: Array (Int, Int) (Maybe Tag)
-     , levelObjects :: IntMap LevelObject
-     } deriving (Show)
+newtype Level = Level {levelObjects :: [LevelObject]}
+    deriving (Show)
 
 instance TimeStep Level where
-    step f l = l {levelObjects = IM.map (\(LevelObject o) -> LevelObject (step f o))
-                                        (levelObjects l)}
+    step f l = l {levelObjects = map (\(LevelObject o) -> LevelObject (step f o))
+                                     (levelObjects l)}
 
 buildLevel :: [LevelObject] -> Level
-buildLevel [] = Level { levelGrid    = array ((0,0), (0,0)) []
-                      , levelObjects = IM.empty
-                      }
-buildLevel os = Level { levelGrid    = grid
-                      , levelObjects = IM.fromList osix
-                      }
-  where
-    osix = zip [1..] os
-    poss = map (\(LevelObject o) -> position o) os
-    bl   = minimum poss
-    tr   = maximum poss
-    base = array (bl, tr) [ ((x, y), Nothing)
-                          | x <- [fst bl..fst tr]
-                          , y <- [snd bl..snd tr]
-                          ]
-    grid = base // map (\(t, LevelObject o) -> (position o, Just t)) osix
-
-fi :: (Integral a, Num b) => a -> b
-fi = fromIntegral
-
-drawLevel :: Level -> G.Picture
-drawLevel (Level {levelObjects = os}) =
-    G.pictures . map trans . map snd . IM.toList $ os
-  where
-    trans (LevelObject o) =
-        let (x, y) = position o
-        in G.translate (fi (tileEdge * x)) (fi (tileEdge * y)) $ draw o
+buildLevel = Level
