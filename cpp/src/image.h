@@ -13,14 +13,14 @@ public:
         Image(SDL_Surface *surface);
         virtual ~Image();
 
-        int getWidth() const;
-        int getHeight() const;
+        int width() const;
+        int height() const;
 
         void drawOnto(const IsSurface &canvas, int x = 0, int y = 0);
         void drawOntoClip(const IsSurface &canvas, int dx, int dy,
                           int sx, int sy, int sw, int sh);
 
-        SDL_Surface* getSurface() const;
+        SDL_Surface* surface() const;
 
 private:
         void drawInternal(SDL_Surface *img, SDL_Surface *canvas,

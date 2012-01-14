@@ -9,11 +9,12 @@ public:
         int pause();
         void unpause();
 
-        int getTicks();
+        int ticks();
 
         bool paused();
 
-        static int getGlobalTicks();
+        static int globalTicks();
+        static void delay(int milli);
 
 private:
         int m_startTicks;

@@ -32,7 +32,3 @@ Graphics::~Graphics() {
         IMG_Quit();
         SDL_Quit();
 }
-
-void Graphics::delay(int milli) {
-        SDL_Delay(milli);
-}

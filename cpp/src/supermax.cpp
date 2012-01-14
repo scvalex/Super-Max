@@ -13,6 +13,7 @@
 
 using namespace std;
 
+const int FRAMES_PER_SECOND = 30;
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
@@ -30,40 +31,47 @@ int main(int argc, char *argv[]) {
         bool quit(false);
         string message(" ");
 
-        Timer timer;
-        while (!quit) {
+        for (int frame(0); !quit; ++frame) {
+                Timer fps;
+
                 drawTiledBackground(hills, 2);
-                Image(Font("data/libertine.ttf", 16).drawText(message))
-                        .drawOnto(screen, 300, 20);
+                Image msgImg(Font("data/libertine.ttf", 16).drawText(message));
+                msgImg.drawOnto(screen, ((SCREEN_WIDTH + msgImg.width() * 2) / FRAMES_PER_SECOND) * (frame % FRAMES_PER_SECOND) - msgImg.width(), 20);
                 screen.flip();
 
-                message = to_string(timer.getTicks());
-                Event e = Event::blockForEvent();
-                if (e.getKeyDown()) {
-                        switch (e.getKeyDown()->keysym.sym) {
-                        case SDLK_UP:
-                                message += ": Up!";
-                                break;
-                        case SDLK_DOWN:
-                                message += ": Down!";
-                                break;
-                        case SDLK_LEFT:
-                                message += ": Left!";
-                                break;
-                        case SDLK_RIGHT:
-                                message += ": Right!";
-                                break;
-                        case SDLK_p:
-                                if (timer.paused()) {
-                                        timer.unpause();
-                                } else {
-                                        timer.pause();
+                message = to_string(frame);
+                while (Event *e = Event::pollForEvent()) {
+                        if (e && e->toKeyDown()) {
+                                switch (e->toKeyDown()->keysym.sym) {
+                                case SDLK_UP:
+                                        message += ": Up!";
+                                        break;
+                                case SDLK_DOWN:
+                                        message += ": Down!";
+                                        break;
+                                case SDLK_LEFT:
+                                        message += ": Left!";
+                                        break;
+                                case SDLK_RIGHT:
+                                        message += ": Right!";
+                                        break;
+                                case SDLK_p:
+                                        /*if (timer.paused()) {
+                                          timer.unpause();
+                                          } else {
+                                          timer.pause();
+                                          }*/
+                                        break;
                                 }
-                                break;
+                        } else if (e->isQuit()) {
+                                cout << "Quitting" << endl;
+                                quit = true;
                         }
-                } else if (e.isQuit()) {
-                        cout << "Quitting" << endl;
-                        quit = true;
+                }
+
+                if (fps.ticks() < 1000 / FRAMES_PER_SECOND) {
+                        Timer::delay((1000 / FRAMES_PER_SECOND) -
+                                     fps.ticks());
                 }
         }
 
@@ -140,6 +148,6 @@ int main(int argc, char *argv[]) {
 
 void drawTiledBackground(Image &img, int count) {
         for (int i(0); i < count; ++i) {
-                img.drawOnto(Screen::getScreen(), i * img.getWidth(), 0);
+                img.drawOnto(Screen::screen(), i * img.width(), 0);
         }
 }

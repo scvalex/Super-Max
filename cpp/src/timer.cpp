@@ -29,7 +29,7 @@ void Timer::unpause() {
         m_pausedTicks = 0;
 }
 
-int Timer::getTicks() {
+int Timer::ticks() {
         if (m_paused) {
                 return m_pausedTicks;
         } else {
@@ -41,6 +41,10 @@ bool Timer::paused() {
         return m_paused;
 }
 
-int Timer::getGlobalTicks() {
+int Timer::globalTicks() {
         return SDL_GetTicks();
+}
+
+void Timer::delay(int milli) {
+        SDL_Delay(milli);
 }

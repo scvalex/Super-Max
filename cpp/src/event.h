@@ -14,7 +14,7 @@ public:
         static Event* pollForEvent();
 
         bool isQuit() const;
-        SDL_KeyboardEvent* getKeyDown();
+        SDL_KeyboardEvent* toKeyDown();
 
 private:
         SDL_Event m_event;

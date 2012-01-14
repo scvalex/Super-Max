@@ -29,11 +29,11 @@ Image::~Image() {
         SDL_FreeSurface(m_surface);
 }
 
-int Image::getWidth() const {
+int Image::width() const {
         return m_surface->w;
 }
 
-int Image::getHeight() const {
+int Image::height() const {
         return m_surface->h;
 }
 
@@ -42,7 +42,7 @@ void Image::drawOnto(const IsSurface &canvas, int x, int y) {
         offset.x = x;
         offset.y = y;
 
-        drawInternal(m_surface, canvas.getSurface(), NULL, &offset);
+        drawInternal(m_surface, canvas.surface(), NULL, &offset);
 }
 
 void Image::drawOntoClip(const IsSurface &canvas, int dx, int dy,
@@ -58,7 +58,7 @@ void Image::drawOntoClip(const IsSurface &canvas, int dx, int dy,
         clip.w = sw;
         clip.h = sh;
 
-        drawInternal(m_surface, canvas.getSurface(), &clip, &offset);
+        drawInternal(m_surface, canvas.surface(), &clip, &offset);
 }
 
 void Image::drawInternal(SDL_Surface *img, SDL_Surface *canvas,
@@ -73,6 +73,6 @@ void Image::drawInternal(SDL_Surface *img, SDL_Surface *canvas,
         }
 }
 
-SDL_Surface* Image::getSurface() const{
+SDL_Surface* Image::surface() const{
         return m_surface;
 }

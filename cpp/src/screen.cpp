@@ -21,7 +21,7 @@ Screen::Screen(int width, int height) {
 Screen::~Screen() {
 }
 
-Screen& Screen::getScreen() {
+Screen& Screen::screen() {
         return *instance;
 }
 
@@ -35,6 +35,6 @@ void Screen::flip() {
         }
 }
 
-SDL_Surface* Screen::getSurface() const {
+SDL_Surface* Screen::surface() const {
         return m_surface;
 }

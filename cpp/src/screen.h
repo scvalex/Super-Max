@@ -11,13 +11,13 @@ public:
         Screen(int width, int height);
         virtual ~Screen();
 
-        static Screen& getScreen();
+        static Screen& screen();
 
         void setTitle(const std::string &title);
 
         void flip();
 
-        SDL_Surface* getSurface() const;
+        SDL_Surface* surface() const;
 
 private:
         SDL_Surface *m_surface;
