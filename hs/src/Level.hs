@@ -17,6 +17,7 @@ type Tag = Int
 data Level = Level
      { levelGrid    :: Array (Int, Int) (Maybe Tag)
      , levelObjects :: IntMap LevelObject
+     , levelCenter  :: Point
      } deriving (Show)
 
 instance TimeStep Level where
@@ -26,9 +27,11 @@ instance TimeStep Level where
 buildLevel :: [LevelObject] -> Level
 buildLevel [] = Level { levelGrid    = array ((0,0), (0,0)) []
                       , levelObjects = IM.empty
+                      , levelCenter  = (0, 0)
                       }
 buildLevel os = Level { levelGrid    = grid
                       , levelObjects = IM.fromList osix
+                      , levelCenter  = (0, 0)
                       }
   where
     osix = zip [1..] os
@@ -45,8 +48,9 @@ fi :: (Integral a, Num b) => a -> b
 fi = fromIntegral
 
 drawLevel :: Level -> G.Picture
-drawLevel (Level {levelObjects = os}) =
-    G.pictures . map trans . map snd . IM.toList $ os
+drawLevel (Level {levelObjects = os, levelCenter = (cx, cy)}) =
+    G.translate (fi cx) (fi cy) . G.pictures . map trans . map snd .
+    IM.toList $ os
   where
     trans (LevelObject o) =
         let (x, y) = position o
