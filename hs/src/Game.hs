@@ -1,6 +1,7 @@
 module Game where
 
 import Graphics.UI.SDL.Events
+import Graphics.UI.SDL.Keysym
 import Data.Word (Word32)
 import Prelude hiding (Either (..))
 
@@ -22,4 +23,15 @@ instance TimeStep Game where
         g {gamePlayer = step f p, gameLevel = step f lvl}
 
 updateGame :: Event -> Word32 -> Game -> IO Game
+updateGame (KeyDown k) delta g@(Game {gamePlayer = p}) = return $
+    case symKey k of
+         SDLK_LEFT  -> mov (-10) 0
+         SDLK_RIGHT -> mov 10 0
+         SDLK_UP    -> mov 0 (-10)
+         SDLK_DOWN  -> mov 0 10
+         _          -> g'
+  where
+    g'       = step delta g
+    (gx, gy) = animatedPos p
+    mov x y  = g' {gamePlayer = p {animatedPos = (gx+x, gy+y)}}
 updateGame _ delta g = return $ step delta g
