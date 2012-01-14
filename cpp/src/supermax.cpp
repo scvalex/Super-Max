@@ -9,13 +9,18 @@
 #include <SDL/SDL.h>
 #include <stdexcept>
 #include <string>
+#include <sstream>
+#include "timer.h"
 
 using namespace std;
 
+const int FRAMES_PER_SECOND = 30;
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 void drawTiledBackground(Image &img, int count);
+void showFrameRate(int frame);
+void showPaused(bool paused);
 
 int main(int argc, char *argv[]) {
         cout << "Starting Super Max" << endl;
@@ -27,33 +32,44 @@ int main(int argc, char *argv[]) {
 
         Image hills("data/hills_at_dawn.png");
         bool quit(false);
-        string message(" ");
+        bool paused(false), pausable(true);
 
-        while (!quit) {
+        for (int frame(0); !quit; (!paused) ? ++frame : frame) {
+                Timer fps;
+
                 drawTiledBackground(hills, 2);
-                Image(Font("data/libertine.ttf", 16).drawText(message))
-                        .drawOnto(screen, 300, 20);
+                showFrameRate(frame);
+                showPaused(paused);
                 screen.flip();
 
-                Event e = Event::blockForEvent();
-                if (e.getKey()) {
-                        switch (e.getKey()->keysym.sym) {
-                        case SDLK_UP:
-                                message = "Up!";
-                                break;
-                        case SDLK_DOWN:
-                                message = "Down!";
-                                break;
-                        case SDLK_LEFT:
-                                message = "Left!";
-                                break;
-                        case SDLK_RIGHT:
-                                message = "Right!";
-                                break;
+                char *keys = Event::getKeyState();
+                if (keys[SDLK_UP]) {
+                }
+                if (keys[SDLK_DOWN]) {
+                }
+                if (keys[SDLK_LEFT]) {
+                }
+                if (keys[SDLK_RIGHT]) {
+                }
+                if (keys[SDLK_p]) {
+                        if (pausable) {
+                                paused = !paused;
+                                pausable = false;
                         }
-                } else if (e.isQuit()) {
-                        cout << "Quitting" << endl;
-                        quit = true;
+                } else {
+                        pausable = true;
+                }
+
+                while (Event *e = Event::pollForEvent()) {
+                        if (e->isQuit()) {
+                                cout << "Quitting" << endl;
+                                quit = true;
+                        }
+                }
+
+                if (fps.ticks() < 1000 / FRAMES_PER_SECOND) {
+                        Timer::delay((1000 / FRAMES_PER_SECOND) -
+                                     fps.ticks());
                 }
         }
 
@@ -130,6 +146,26 @@ int main(int argc, char *argv[]) {
 
 void drawTiledBackground(Image &img, int count) {
         for (int i(0); i < count; ++i) {
-                img.drawOnto(Screen::getScreen(), i * img.getWidth(), 0);
+                img.drawOnto(Screen::screen(), i * img.width(), 0);
+        }
+}
+
+void showFrameRate(int frame) {
+        stringstream text;
+        text << frame;
+
+        Image msgImg(Font("data/libertine.ttf", 16)
+                     .drawText(text.str()));
+        msgImg.drawOnto(Screen::screen(),
+                        SCREEN_WIDTH - msgImg.width() - 20, 20);
+}
+
+void showPaused(bool paused) {
+        if (paused) {
+                Image msgImg(Font("data/libertine.ttf", 32)
+                             .drawText("Paused"));
+                msgImg.drawOnto(Screen::screen(),
+                                (SCREEN_WIDTH - msgImg.width()) / 2,
+                                (SCREEN_HEIGHT - msgImg.height()) / 2);
         }
 }

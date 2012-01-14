@@ -5,7 +5,7 @@
 
 class IsSurface {
 public:
-        virtual SDL_Surface* getSurface() const = 0;
+        virtual SDL_Surface* surface() const = 0;
 };
 
 #endif

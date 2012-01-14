@@ -12,9 +12,9 @@ public:
 
         static Event blockForEvent();
         static Event* pollForEvent();
+        static char* getKeyState();
 
         bool isQuit() const;
-        SDL_KeyboardEvent* getKey();
 
 private:
         SDL_Event m_event;

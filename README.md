@@ -44,6 +44,11 @@ Debian, so you need to install it manually:
      % cmake ..
      % make
      % sudo make install
+     
+For Debian you will also need to install glut, libxmu:
+
+> Debian: `apt-get install libxmu-dev libxi-dev freeglut3-dev libglut3-dev`
+
 
 ### [SDL](http://www.libsdl.org/)
 
