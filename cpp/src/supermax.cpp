@@ -30,16 +30,17 @@ int main(int argc, char *argv[]) {
         bool quit(false);
         string message(" ");
 
+        Timer timer;
         while (!quit) {
                 drawTiledBackground(hills, 2);
                 Image(Font("data/libertine.ttf", 16).drawText(message))
                         .drawOnto(screen, 300, 20);
                 screen.flip();
 
-                message = "" + to_string(Timer::getTicks());
+                message = to_string(timer.getTicks());
                 Event e = Event::blockForEvent();
-                if (e.getKey()) {
-                        switch (e.getKey()->keysym.sym) {
+                if (e.getKeyDown()) {
+                        switch (e.getKeyDown()->keysym.sym) {
                         case SDLK_UP:
                                 message += ": Up!";
                                 break;
@@ -51,6 +52,13 @@ int main(int argc, char *argv[]) {
                                 break;
                         case SDLK_RIGHT:
                                 message += ": Right!";
+                                break;
+                        case SDLK_p:
+                                if (timer.paused()) {
+                                        timer.unpause();
+                                } else {
+                                        timer.pause();
+                                }
                                 break;
                         }
                 } else if (e.isQuit()) {

@@ -31,8 +31,8 @@ bool Event::isQuit() const {
         return (m_event.type == SDL_QUIT);
 }
 
-SDL_KeyboardEvent* Event::getKey() {
-        if (m_event.type == SDL_KEYDOWN || m_event.type == SDL_KEYUP) {
+SDL_KeyboardEvent* Event::getKeyDown() {
+        if (m_event.type == SDL_KEYDOWN) {
                 return &m_event.key;
         }
         return NULL;
