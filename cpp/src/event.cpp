@@ -27,13 +27,11 @@ Event* Event::pollForEvent() {
         return e;
 }
 
-bool Event::isQuit() const {
-        return (m_event.type == SDL_QUIT);
+char* Event::getKeyState() {
+        SDL_PumpEvents();
+        return (char*)SDL_GetKeyState(NULL);
 }
 
-SDL_KeyboardEvent* Event::toKeyDown() {
-        if (m_event.type == SDL_KEYDOWN) {
-                return &m_event.key;
-        }
-        return NULL;
+bool Event::isQuit() const {
+        return (m_event.type == SDL_QUIT);
 }

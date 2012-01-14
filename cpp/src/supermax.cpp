@@ -30,8 +30,9 @@ int main(int argc, char *argv[]) {
         Image hills("data/hills_at_dawn.png");
         bool quit(false);
         string message(" ");
+        bool paused(false), pausable(true);
 
-        for (int frame(0); !quit; ++frame) {
+        for (int frame(0); !quit; (!paused) ? ++frame : frame) {
                 Timer fps;
 
                 drawTiledBackground(hills, 2);
@@ -40,30 +41,32 @@ int main(int argc, char *argv[]) {
                 screen.flip();
 
                 message = to_string(frame);
+
+                char *keys = Event::getKeyState();
+                if (keys[SDLK_UP]) {
+                        message += ": Up!";
+                }
+                if (keys[SDLK_DOWN]) {
+                        message += ": Down!";
+                }
+                if (keys[SDLK_LEFT]) {
+                        message += ": Left!";
+                }
+                if (keys[SDLK_RIGHT]) {
+                        message += ": Right!";
+                }
+                if (keys[SDLK_p]) {
+                        if (pausable) {
+                                paused = !paused;
+                                pausable = false;
+                                cout << "toggle" << endl;
+                        }
+                } else {
+                        pausable = true;
+                }
+
                 while (Event *e = Event::pollForEvent()) {
-                        if (e && e->toKeyDown()) {
-                                switch (e->toKeyDown()->keysym.sym) {
-                                case SDLK_UP:
-                                        message += ": Up!";
-                                        break;
-                                case SDLK_DOWN:
-                                        message += ": Down!";
-                                        break;
-                                case SDLK_LEFT:
-                                        message += ": Left!";
-                                        break;
-                                case SDLK_RIGHT:
-                                        message += ": Right!";
-                                        break;
-                                case SDLK_p:
-                                        /*if (timer.paused()) {
-                                          timer.unpause();
-                                          } else {
-                                          timer.pause();
-                                          }*/
-                                        break;
-                                }
-                        } else if (e->isQuit()) {
+                        if (e->isQuit()) {
                                 cout << "Quitting" << endl;
                                 quit = true;
                         }
