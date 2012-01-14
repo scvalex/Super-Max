@@ -11,9 +11,15 @@ public:
         virtual ~DemoLevel();
 
         void drawBackground(const IsSurface &canvas);
+        void drawStage(const IsSurface &canvas);
+        void step();
 
 private:
         Image hills;
+        Image hello;
+
+        int x, y;
+        int vx, vy;
 };
 
 #endif

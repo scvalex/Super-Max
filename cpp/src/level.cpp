@@ -24,3 +24,6 @@ void Level::drawAll(const IsSurface &canvas) {
         drawStage(canvas);
         drawForeground(canvas);
 }
+
+void Level::step() {
+}

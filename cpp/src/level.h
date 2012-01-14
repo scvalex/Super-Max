@@ -13,6 +13,8 @@ public:
         virtual void drawStage(const IsSurface &canvas);
         virtual void drawForeground(const IsSurface &canvas);
         virtual void drawAll(const IsSurface &canvas);
+
+        virtual void step();
 };
 
 #endif

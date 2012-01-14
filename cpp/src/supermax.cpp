@@ -43,14 +43,6 @@ int main(int argc, char *argv[]) {
                 screen.flip();
 
                 char *keys = Event::getKeyState();
-                if (keys[SDLK_UP]) {
-                }
-                if (keys[SDLK_DOWN]) {
-                }
-                if (keys[SDLK_LEFT]) {
-                }
-                if (keys[SDLK_RIGHT]) {
-                }
                 if (keys[SDLK_p]) {
                         if (pausable) {
                                 paused = !paused;
@@ -59,6 +51,8 @@ int main(int argc, char *argv[]) {
                 } else {
                         pausable = true;
                 }
+
+                demo.step();
 
                 while (Event *e = Event::pollForEvent()) {
                         if (e->isQuit()) {
