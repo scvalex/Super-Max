@@ -12,6 +12,7 @@ import Objects
 import Exception
 import Blitting
 import Loop
+import Player
 
 te :: Num a => a
 te = 30
@@ -19,15 +20,16 @@ te = 30
 squarePath :: Num a => [(a, a)]
 squarePath = [(0,0),(te,0),(te,-te),(0,-te)]
 
-tile :: Surface -> Point -> Static
-tile s (x, y) = Static s (x*te, y*te) (te, te) squarePath
+tile :: Surface -> Point -> Animated
+tile s (x, y) = Animated (staticAni s) (staticMov (x*te, y*te)) (te, te) squarePath
 
-player :: Surface -> Animated
-player s = Animated { animatedAni  = staticAni s
-                    , animatedPos  = (te, te)
-                    , animatedDim  = (te, te)
-                    , animatedBBox = squarePath
-                    }
+player :: Surface -> Player
+player s = Player { playerAni  = staticAni s
+                  , playerPos  = (te, te)
+                  , playerDim  = (te, te)
+                  , playerBBox = squarePath
+                  , playerDir  = Nothing
+                  }
 
 clearScreen :: Surface -> IO ()
 clearScreen screen = fillRect screen Nothing (Pixel 0) >> return ()
@@ -56,4 +58,4 @@ main = do
                          , gameLevel  = l
                          }
                 draw g' = clearScreen screen >> blitGame g' screen >> flip screen
-            loop 60 g draw updateGame
+            loop 60 g draw step

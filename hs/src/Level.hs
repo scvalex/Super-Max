@@ -1,20 +1,21 @@
 {-# LANGUAGE ExistentialQuantification, StandaloneDeriving, Rank2Types #-}
 module Level where
 
+import Control.Monad
+
 import Types
 
-data LevelObject = forall o. (Object o, Show o) => LevelObject o
-
-deriving instance Show LevelObject
+data LevelObject = forall o. Object o => LevelObject o
 
 type Tag = Int
 
 newtype Level = Level {levelObjects :: [LevelObject]}
-    deriving (Show)
 
-instance TimeStep Level where
-    step f l = l {levelObjects = map (\(LevelObject o) -> LevelObject (step f o))
-                                     (levelObjects l)}
+instance Step Level where
+    step d ev l = do
+        os <- forM (levelObjects l) $
+              \(LevelObject o) -> fmap LevelObject (step d ev o)
+        return $ l {levelObjects = os}
 
 buildLevel :: [LevelObject] -> Level
 buildLevel = Level

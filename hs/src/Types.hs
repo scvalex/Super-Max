@@ -1,10 +1,12 @@
 module Types where
 
 import Data.Word (Word32)
-import Graphics.UI.SDL (Surface, Rect(..))
+import Graphics.UI.SDL (Surface, Rect(..), Event)
 
-class TimeStep ts where
-    step :: Word32 -> ts -> ts
+type Time = Word32
+
+class Step a where
+    step :: Time -> Event -> a -> IO a
 
 class HasSurface a where
     surface :: a -> Surface
@@ -21,8 +23,8 @@ translate (x, y) (x', y') = (x' + x, y' + y)
 -- | The amount of tiles that the object occupies
 type Dimension = (Int, Int)
 
-class (TimeStep o, HasSurface o) => Object o where
+class (Step o, HasSurface o) => Object o where
     -- | The 'Rect' in which the object resides
-    rect :: o -> Rect
+    rect   :: o -> Rect
     -- | The bounding box of the object.
-    bbox :: o -> Path
+    bbox   :: o -> Path
