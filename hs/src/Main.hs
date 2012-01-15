@@ -47,7 +47,8 @@ player s = Player { playerAni  = staticAni s
                   , playerDim  = (te-1, te-1)
                   , playerBBox = squareBox
                   , playerDir  = Nothing
-                  , playerVel  = 0.3
+                  , playerWalk = 0.3
+                  , playerVec  = (0, 0)
                   }
 
 clearScreen :: Surface -> IO ()

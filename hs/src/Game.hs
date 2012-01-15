@@ -40,6 +40,7 @@ import Graphics.UI.SDL.Events
 import Graphics.UI.SDL.Keysym
 
 import Common
+import Vector
 
 -------------------------------------------------------------------------------
 
@@ -96,7 +97,7 @@ data LevelObject = forall o. Object o => LevelObject o
 
 data Level = Level
     { levelObjects :: [LevelObject]
-    , levelGravity :: Float
+    , levelGravity :: Vector
     }
 
 instance Step Level where
@@ -104,9 +105,9 @@ instance Step Level where
         os' <- forM os $ \(LevelObject o) -> fmap LevelObject $ step d ev w o
         return $ Level {levelObjects = os', levelGravity = g}
 
-buildLevel :: Float -> [LevelObject] -> Level
+buildLevel :: Double -> [LevelObject] -> Level
 buildLevel g os = Level { levelObjects = os
-                        , levelGravity = g
+                        , levelGravity = (0, g)
                         }
 
 -------------------------------------------------------------------------------
@@ -145,37 +146,53 @@ data Direction = Left | Right
 
 data Player = Player
     { playerAni  :: Ani
-    , playerPos  :: Point
-    , playerDim  :: (Int, Int)
+    , playerPos  :: Vector
+    , playerDim  :: Vector
     , playerBBox :: BBox
-    , playerDir  :: Maybe Direction
-    , playerVel  :: Float
+    , playerWalk :: Double          -- ^ The walking velocity
+    , playerDir  :: Maybe Direction -- ^ The key that the user is pressing
+    , playerVec  :: Vector          -- ^ The vector storing the player direction
+                                   --   and velocity
     }
 
-movePlayerPt :: Int -> Level -> Player -> Maybe Player
-movePlayerPt d lvl p@(Player {playerPos = (x, y)})
+movePlayerPt :: Vector -> Level -> Player -> Maybe Player
+movePlayerPt d lvl p@(Player {playerPos = pos})
     | coll      = Just p'
     | otherwise = Nothing
   where
-    p'   = p {playerPos = (x + d, y)}
+    p'   = p {playerPos = d `addV` pos}
     coll = and $ map (\(LevelObject o) -> distinct (bbox p') (bbox o))
                      (levelObjects lvl)
 
+-- movePlayer :: Time -> Level -> Player -> Player
+-- movePlayer _ _ p@(Player {playerDir = Nothing})    = p
+-- movePlayer d lvl p@(Player {playerDir = Just dir, playerWalk = walk}) =
+--     case dir of
+--         Left  -> move (-1, 0)
+--         Right -> move (1, 0)
+--   where
+--     move vec =
+--         case movePlayerPt (fi d `mulSV` (walk `mulSV` vec)) lvl p of
+--             Nothing -> attach vec p
+--             Just p' -> p'
+--     attach vec p' =
+--         case movePlayerPt vec lvl p' of
+--             Nothing  -> p'
+--             Just p'' -> attach vec p''
+
 movePlayer :: Time -> Level -> Player -> Player
-movePlayer _ _ p@(Player {playerDir = Nothing})    = p
-movePlayer d lvl p@(Player {playerDir = Just dir, playerVel = vel}) =
-    case dir of
-        Left  -> move (-1)
-        Right -> move 1
+movePlayer t lvl p =
+    case movePlayerPt vec lvl p of
+        Nothing -> attach (normaliseV vec) p
+        Just p' -> p'
   where
-    move sign =
-        case movePlayerPt (sign * round (fi d * vel)) lvl p of
-            Nothing -> attach sign p
-            Just p' -> p'
-    attach sign p' =
-        case movePlayerPt sign lvl p' of
+    g    = levelGravity lvl
+    vec  = g `addV` playerVec p
+
+    attach vec' p' =
+        case movePlayerPt vec' lvl p' of
             Nothing  -> p'
-            Just p'' -> attach sign p''
+            Just p'' -> attach vec' p''
 
 instance Step Player where
     step delta (KeyDown k) (Game {gameLevel = lvl}) p = return $
@@ -193,6 +210,7 @@ instance HasSurface Player where
     surface (Player {playerAni = ani}) = aniSur ani
 
 instance Object Player where
-    rect (Player {playerPos = (x, y), playerDim = (w, h)}) = Rect x y w h
+    rect (Player {playerPos = (x, y), playerDim = (w, h)}) =
+        Rect (round x) (round y) (round w) (round h)
     bbox (Player {playerPos = (x, y), playerBBox = box})   =
-        map (translate x y) box
+        map (translate (round x) (round y)) box
