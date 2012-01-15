@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, Rank2Types, TupleSections #-}
+{-# LANGUAGE ExistentialQuantification #-}
 module Game
     ( Time
     , Step(..)
@@ -66,8 +66,8 @@ class (HasSurface o, Step o) => Object o where
     -- | The bounding box of the object.
     bbox   :: o -> BBox
 
-distinct :: (Object o1, Object o2) => o1 -> o2 -> Bool
-distinct o1 o2 = or [f b1 b2 | b1 <- bbox o1, b2 <- bbox o2]
+distinct :: BBox -> BBox -> Bool
+distinct bb1 bb2 = or [f b1 b2 | b1 <- bb1, b2 <- bb2]
   where
     f (Rect l1 t1 w1 h1) (Rect l2 t2 w2 h2) =
         let r1 = l1 + w1
@@ -155,7 +155,8 @@ movePlayerPt d lvl p@(Player {playerPos = (x, y)})
     | otherwise = Nothing
   where
     p'   = p {playerPos = (x + d, y)}
-    coll = and $ map (\(LevelObject o) -> distinct p' o) (levelObjects lvl)
+    coll = and $ map (\(LevelObject o) -> distinct (bbox p') (bbox o))
+                     (levelObjects lvl)
 
 movePlayer :: Time -> Level -> Player -> Player
 movePlayer _ _ p@(Player {playerDir = Nothing})    = p
