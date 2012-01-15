@@ -15,11 +15,11 @@ te :: Num a => a
 te = 30
 
 squareBox :: BBox
-squareBox = [Rect 0 0 te te]
+squareBox = [Rect 0 0 (te-1) (te-1)]
 
 tile :: Surface -> Point -> Animated
 tile s (x, y) =
-    Animated (staticAni s) (staticMov (x*te, y*te)) (te, te) squareBox
+    Animated (staticAni s) (staticMov (x*te, y*te)) (te-1, te-1) squareBox
 
 movingTile :: Surface -> Animated
 movingTile s =
@@ -44,26 +44,28 @@ movingTile s =
 player :: Surface -> Player
 player s = Player { playerAni  = staticAni s
                   , playerPos  = (te, te)
-                  , playerDim  = (te, te)
+                  , playerDim  = (te-1, te-1)
                   , playerBBox = squareBox
                   , playerDir  = Nothing
+                  , playerVel  = 0.3
                   }
 
 clearScreen :: Surface -> IO ()
 clearScreen screen = fillRect screen Nothing (Pixel 0) >> return ()
 
 level :: Surface -> Level
-level s = buildLevel [ LevelObject (tile s (0,1))
-                     , LevelObject (tile s (1,2))
-                     , LevelObject (tile s (2,2))
-                     , LevelObject (tile s (3,2))
-                     , LevelObject (tile s (4,2))
-                     , LevelObject (tile s (5,1))
-                     , LevelObject (tile s (6,1))
-                     , LevelObject (tile s (7,1))
-                     , LevelObject (tile s (8,1))
-                     , LevelObject (movingTile s)
-                     ]
+level s = buildLevel 9.0 [ LevelObject (tile s (0,20))
+                         , LevelObject (tile s (1,21))
+                         , LevelObject (tile s (2,21))
+                         , LevelObject (tile s (3,21))
+                         , LevelObject (tile s (4,21))
+                         , LevelObject (tile s (5,20))
+                         , LevelObject (tile s (6,20))
+                         , LevelObject (tile s (7,20))
+                         , LevelObject (tile s (8,20))
+                         , LevelObject (movingTile s)
+                         ]
+
 main :: IO ()
 main = do
     init [InitEverything]

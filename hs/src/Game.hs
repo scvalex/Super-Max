@@ -1,11 +1,11 @@
-{-# LANGUAGE ExistentialQuantification, Rank2Types, TupleSections #-}
+{-# LANGUAGE ExistentialQuantification #-}
 module Game
     ( Time
     , Step(..)
     , HasSurface(..)
     , Point
     , BBox
-    , colliding
+    , distinct
     , Rect(..)
     , translate
     , Object(..)
@@ -32,13 +32,6 @@ module Game
     ) where
 
 import Control.Monad
-import Data.IntSet (IntSet)
-import qualified Data.IntSet as IS
-import Data.IntMap (IntMap)
-import qualified Data.IntMap as IM
-import Data.Map (Map)
-import qualified Data.Map as M
-import Data.Maybe (maybeToList)
 import Data.Word (Word32)
 import Prelude hiding (Either (..))
 
@@ -67,8 +60,14 @@ type BBox = [Rect]
 translate :: Int -> Int -> Rect -> Rect
 translate x' y' (Rect x y w h) = Rect (x' + x) (y' + y) w h
 
-colliding :: BBox -> BBox -> Bool
-colliding bs1 bs2 = or [f b1 b2 | b1 <- bs1, b2 <- bs2]
+class (HasSurface o, Step o) => Object o where
+    -- | The 'Rect' in which the object resides
+    rect   :: o -> Rect
+    -- | The bounding box of the object.
+    bbox   :: o -> BBox
+
+distinct :: BBox -> BBox -> Bool
+distinct bb1 bb2 = or [f b1 b2 | b1 <- bb1, b2 <- bb2]
   where
     f (Rect l1 t1 w1 h1) (Rect l2 t2 w2 h2) =
         let r1 = l1 + w1
@@ -76,12 +75,6 @@ colliding bs1 bs2 = or [f b1 b2 | b1 <- bs1, b2 <- bs2]
             r2 = l2 + w2
             b2 = t2 + h2
         in  b1 <= t2 || t1 >= b2 || r1 <= l2 || l1 >= r2
-
-class (HasSurface o, Step o) => Object o where
-    -- | The 'Rect' in which the object resides
-    rect   :: o -> Rect
-    -- | The bounding box of the object.
-    bbox   :: o -> BBox
 
 -------------------------------------------------------------------------------
 
@@ -99,64 +92,22 @@ stepGame delta ev g@(Game {gamePlayer = p, gameLevel = lvl}) = do
 
 -------------------------------------------------------------------------------
 
-type Tag = Int
-
-type Grid = Map (Int, Int) IntSet
-
-mkGrid :: [((Int, Int), Tag)]    -- ^ Initial tags
-       -> Grid
-mkGrid = go M.empty
-  where
-    go g []              = g
-    go g ((k, t) : rest) =
-        case M.lookup k g of
-            Nothing -> go (M.insert k (IS.singleton t) g) rest
-            Just s  -> go (M.insert k (IS.insert t s) g) rest
-
-lookupGrid :: (Int, Int) -> Grid -> IntSet
-lookupGrid k g =
-    case M.lookup k g of
-        Nothing -> IS.empty
-        Just s  -> s
-
-gridEdge :: Int
-gridEdge = 30
-
--------------------------------------------------------------------------------
-
 data LevelObject = forall o. Object o => LevelObject o
 
 data Level = Level
-    { levelObjects :: IntMap LevelObject
-    , levelGrid    :: Grid
+    { levelObjects :: [LevelObject]
+    , levelGravity :: Float
     }
 
 instance Step Level where
-    step d ev w (Level {levelObjects = los}) = do
-        let os = map snd $ IM.toList los
+    step d ev w (Level {levelObjects = os, levelGravity = g}) = do
         os' <- forM os $ \(LevelObject o) -> fmap LevelObject $ step d ev w o
-        return $ buildLevel os'
+        return $ Level {levelObjects = os', levelGravity = g}
 
-buildLevel :: [LevelObject] -> Level
-buildLevel os = Level { levelObjects = im
-                      , levelGrid    = grid
-                      }
-  where
-    ost  = zip [1..] os
-    im   = IM.fromList ost
-    grid = mkGrid $ concat [map (,t) (cells $ rect o) | (t, LevelObject o) <- ost]
-
-cells :: Rect -> [(Int, Int)]
-cells (Rect x y w h) =
-    let x'    = x `div` gridEdge
-        y'    = y `div` gridEdge
-        spanx = (w + x `mod` gridEdge) `div` gridEdge
-        spany = (h + y `mod` gridEdge) `div` gridEdge
-    in  [(x'+cx, y'+cy) | cx <- [0..spanx], cy <- [0..spany]]
-
-cellObjects :: (Int, Int) -> Level -> [LevelObject]
-cellObjects k (Level {levelObjects = im, levelGrid = grid}) =
-    concatMap (\t -> maybeToList $ IM.lookup t im) . IS.toList . lookupGrid k $ grid
+buildLevel :: Float -> [LevelObject] -> Level
+buildLevel g os = Level { levelObjects = os
+                        , levelGravity = g
+                        }
 
 -------------------------------------------------------------------------------
 
@@ -198,34 +149,33 @@ data Player = Player
     , playerDim  :: (Int, Int)
     , playerBBox :: BBox
     , playerDir  :: Maybe Direction
+    , playerVel  :: Float
     }
-
-velocity :: Float
-velocity = 0.3
 
 movePlayerPt :: Int -> Level -> Player -> Maybe Player
 movePlayerPt d lvl p@(Player {playerPos = (x, y)})
-    | coll      = Nothing
-    | otherwise = Just $ p {playerPos = (x + d, y)}
+    | coll      = Just p'
+    | otherwise = Nothing
   where
-    os   = concatMap (`cellObjects` lvl) $ cells (rect p)
-    coll = or $ map (\(LevelObject o) -> colliding (bbox p) (bbox o)) os
+    p'   = p {playerPos = (x + d, y)}
+    coll = and $ map (\(LevelObject o) -> distinct (bbox p') (bbox o))
+                     (levelObjects lvl)
 
 movePlayer :: Time -> Level -> Player -> Player
 movePlayer _ _ p@(Player {playerDir = Nothing})    = p
-movePlayer d lvl p@(Player {playerDir = Just dir}) =
+movePlayer d lvl p@(Player {playerDir = Just dir, playerVel = vel}) =
     case dir of
-        Left  -> move 1
-        Right -> move (-1)
+        Left  -> move (-1)
+        Right -> move 1
   where
     move sign =
-        case movePlayerPt (sign * round (fi d * velocity)) lvl p of
-            Nothing -> attach p
+        case movePlayerPt (sign * round (fi d * vel)) lvl p of
+            Nothing -> attach sign p
             Just p' -> p'
-    attach p' =
-        case movePlayerPt 1 lvl p' of
+    attach sign p' =
+        case movePlayerPt sign lvl p' of
             Nothing  -> p'
-            Just p'' -> attach p''
+            Just p'' -> attach sign p''
 
 instance Step Player where
     step delta (KeyDown k) (Game {gameLevel = lvl}) p = return $
