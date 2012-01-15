@@ -94,15 +94,20 @@ stepGame delta ev g@(Game {gamePlayer = p, gameLevel = lvl}) = do
 
 data LevelObject = forall o. Object o => LevelObject o
 
-newtype Level = Level {levelObjects :: [LevelObject]}
+data Level = Level
+    { levelObjects :: [LevelObject]
+    , levelGravity :: Float
+    }
 
 instance Step Level where
-    step d ev w (Level {levelObjects = os}) = do
+    step d ev w (Level {levelObjects = os, levelGravity = g}) = do
         os' <- forM os $ \(LevelObject o) -> fmap LevelObject $ step d ev w o
-        return $ buildLevel os'
+        return $ Level {levelObjects = os', levelGravity = g}
 
-buildLevel :: [LevelObject] -> Level
-buildLevel = Level
+buildLevel :: Float -> [LevelObject] -> Level
+buildLevel g os = Level { levelObjects = os
+                        , levelGravity = g
+                        }
 
 -------------------------------------------------------------------------------
 
@@ -144,10 +149,8 @@ data Player = Player
     , playerDim  :: (Int, Int)
     , playerBBox :: BBox
     , playerDir  :: Maybe Direction
+    , playerVel  :: Float
     }
-
-velocity :: Float
-velocity = 0.3
 
 movePlayerPt :: Int -> Level -> Player -> Maybe Player
 movePlayerPt d lvl p@(Player {playerPos = (x, y)})
@@ -160,13 +163,13 @@ movePlayerPt d lvl p@(Player {playerPos = (x, y)})
 
 movePlayer :: Time -> Level -> Player -> Player
 movePlayer _ _ p@(Player {playerDir = Nothing})    = p
-movePlayer d lvl p@(Player {playerDir = Just dir}) =
+movePlayer d lvl p@(Player {playerDir = Just dir, playerVel = vel}) =
     case dir of
         Left  -> move (-1)
         Right -> move 1
   where
     move sign =
-        case movePlayerPt (sign * round (fi d * velocity)) lvl p of
+        case movePlayerPt (sign * round (fi d * vel)) lvl p of
             Nothing -> attach sign p
             Just p' -> p'
     attach sign p' =
