@@ -8,8 +8,7 @@ using namespace std;
 DemoLevel::DemoLevel() :
         Level(),
         hills("data/hills_at_dawn.png"),
-        hello("data/hello.png"),
-        x(20), y(20)
+        sans(100, 100)
 {
 }
 
@@ -25,31 +24,35 @@ void DemoLevel::drawBackground(const IsSurface &canvas) {
 
 void DemoLevel::drawStage(const IsSurface &canvas) {
         Level::drawStage(canvas);
-        hello.drawOnto(canvas, x, y);
+        sans.drawOnto(canvas);
 }
 
 void DemoLevel::step() {
         Level::step();
+        sans.step();
 
         char *keys = Event::getKeyState();
-        int nx(x), ny(y);
+        int dx(0), dy(0);
         if (keys[SDLK_UP]) {
-                ny -= 4;
+                dy = -4;
         }
         if (keys[SDLK_DOWN]) {
-                ny += 4;
+                dy = 4;
         }
         if (keys[SDLK_LEFT]) {
-                nx -= 4;
+                dx = -4;
         }
         if (keys[SDLK_RIGHT]) {
-                nx += 4;
+                dx = 4;
         }
 
-        if (0 <= nx && nx < width - hello.width()) {
-                x = nx;
+        Rect bound = sans.boundingRect();
+        if (bound.x() + dx < 0 || width < bound.x() + bound.width() + dx) {
+                dx = 0;
         }
-        if (0 <= ny && ny < height - hello.height()) {
-                y = ny;
+        if (bound.y() + dy < 0 ||  height < bound.y() + bound.height() + dy) {
+                dy = 0;
         }
+
+        sans.move(dx, dy);
 }

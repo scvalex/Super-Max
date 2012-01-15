@@ -4,6 +4,7 @@
 #include "image.h"
 #include "issurface.h"
 #include "level.h"
+#include "sans.h"
 
 class DemoLevel : public Level {
 public:
@@ -19,9 +20,7 @@ public:
 
 private:
         Image hills;
-        Image hello;
-
-        int x, y;
+        Sans sans;
 };
 
 #endif
