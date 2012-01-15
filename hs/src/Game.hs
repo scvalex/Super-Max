@@ -164,35 +164,28 @@ movePlayerPt d lvl p@(Player {playerPos = pos})
     coll = and $ map (\(LevelObject o) -> distinct (bbox p') (bbox o))
                      (levelObjects lvl)
 
--- movePlayer :: Time -> Level -> Player -> Player
--- movePlayer _ _ p@(Player {playerDir = Nothing})    = p
--- movePlayer d lvl p@(Player {playerDir = Just dir, playerWalk = walk}) =
---     case dir of
---         Left  -> move (-1, 0)
---         Right -> move (1, 0)
---   where
---     move vec =
---         case movePlayerPt (fi d `mulSV` (walk `mulSV` vec)) lvl p of
---             Nothing -> attach vec p
---             Just p' -> p'
---     attach vec p' =
---         case movePlayerPt vec lvl p' of
---             Nothing  -> p'
---             Just p'' -> attach vec p''
-
-movePlayer :: Time -> Level -> Player -> Player
-movePlayer t lvl p =
+movePlayerG :: Time -> Level -> Vector -> Player -> Player
+movePlayerG t lvl oldVec p =
     case movePlayerPt vec lvl p of
         Nothing -> attach (normaliseV vec) p
         Just p' -> p'
   where
-    g    = levelGravity lvl
-    vec  = g `addV` playerVec p
+    g    = fi t `mulSV` levelGravity lvl
+    vec  = g `addV` oldVec
 
     attach vec' p' =
         case movePlayerPt vec' lvl p' of
             Nothing  -> p'
             Just p'' -> attach vec' p''
+
+movePlayer :: Time -> Level -> Player -> Player
+movePlayer t lvl p@(Player {playerDir = Nothing}) = movePlayerG t lvl (0,0) p
+movePlayer t lvl p@(Player {playerDir = Just dir, playerWalk = walk}) =
+    movePlayerG t lvl (fi t `mulSV` (walk `mulSV` vec)) p
+  where
+    vec = case dir of
+              Left  -> (-1, 0)
+              Right -> (1, 0)
 
 instance Step Player where
     step delta (KeyDown k) (Game {gameLevel = lvl}) p = return $
