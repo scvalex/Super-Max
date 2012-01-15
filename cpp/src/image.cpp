@@ -42,7 +42,7 @@ void Image::drawOnto(const IsSurface &canvas, int x, int y) {
         offset.x = x;
         offset.y = y;
 
-        drawInternal(m_surface, canvas.surface(), NULL, &offset);
+        drawInternal(m_surface, canvas.surface(), canvas.clip(), &offset);
 }
 
 void Image::drawOntoClip(const IsSurface &canvas, int dx, int dy,
