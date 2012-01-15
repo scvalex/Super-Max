@@ -24,4 +24,4 @@ executable SuperMax
                    , containers
 
 
-  GHC-options:       -Wall -Werror -fno-warn-unused-do-bind -threaded
+  GHC-options:       -Wall -fno-warn-unused-do-bind -threaded

@@ -15,11 +15,11 @@ te :: Num a => a
 te = 30
 
 squareBox :: BBox
-squareBox = [Rect 0 0 te te]
+squareBox = [Rect 0 0 (te-1) (te-1)]
 
 tile :: Surface -> Point -> Animated
 tile s (x, y) =
-    Animated (staticAni s) (staticMov (x*te, y*te)) (te, te) squareBox
+    Animated (staticAni s) (staticMov (x*te, y*te)) (te-1, te-1) squareBox
 
 movingTile :: Surface -> Animated
 movingTile s =
@@ -44,7 +44,7 @@ movingTile s =
 player :: Surface -> Player
 player s = Player { playerAni  = staticAni s
                   , playerPos  = (te, te)
-                  , playerDim  = (te, te)
+                  , playerDim  = (te-1, te-1)
                   , playerBBox = squareBox
                   , playerDir  = Nothing
                   }
