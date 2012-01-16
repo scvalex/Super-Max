@@ -47,14 +47,15 @@ player s = Player { playerAni  = staticAni s
                   , playerDim  = (te-1, te-1)
                   , playerBBox = squareBox
                   , playerDir  = Nothing
-                  , playerVel  = 0.3
+                  , playerWalk = 0.3
+                  , playerVec  = (0, 0)
                   }
 
 clearScreen :: Surface -> IO ()
 clearScreen screen = fillRect screen Nothing (Pixel 0) >> return ()
 
 level :: Surface -> Level
-level s = buildLevel 9.0 [ LevelObject (tile s (0,20))
+level s = buildLevel 0.1 [ LevelObject (tile s (0,20))
                          , LevelObject (tile s (1,21))
                          , LevelObject (tile s (2,21))
                          , LevelObject (tile s (3,21))
