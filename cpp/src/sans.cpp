@@ -29,6 +29,14 @@ Sans::~Sans() {
         }
 }
 
+int Sans::x() const {
+        return m_x;
+}
+
+int Sans::y() const {
+        return m_y;
+}
+
 Rect Sans::boundingRect() {
         Image* img = currentImage();
         return Rect(m_x - (img->width() / 2), m_y - (img->height() / 2),
@@ -60,9 +68,8 @@ void Sans::step() {
         }
 }
 
-void Sans::drawOnto(const IsSurface &canvas) {
-        Rect bound = boundingRect();
-        currentImage()->drawOnto(canvas, bound.x(), bound.y());
+void Sans::drawOnto(const IsSurface &canvas, int x, int y) {
+        currentImage()->drawOnto(canvas, x, y);
 }
 
 Image* Sans::currentImage() {

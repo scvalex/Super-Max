@@ -36,16 +36,7 @@
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient2990"
-       id="linearGradient2996"
-       x1="305.71429"
-       y1="332.36044"
-       x2="305.71429"
-       y2="990.89563"
-       gradientUnits="userSpaceOnUse" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient2990"
-       id="linearGradient3776"
+       id="linearGradient3778"
        gradientUnits="userSpaceOnUse"
        x1="305.71429"
        y1="332.36044"
@@ -54,8 +45,19 @@
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient2990"
-       id="linearGradient3778"
+       id="linearGradient2993"
        gradientUnits="userSpaceOnUse"
+       x1="305.71429"
+       y1="332.36044"
+       x2="305.71429"
+       y2="990.89563"
+       gradientTransform="matrix(0.69349846,0,0,0.86153852,23.206542,116.63472)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2990"
+       id="linearGradient3005"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.69349846,0,0,0.86153852,23.206542,116.63472)"
        x1="305.71429"
        y1="332.36044"
        x2="305.71429"
@@ -91,7 +93,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -101,21 +103,42 @@
      id="layer1"
      transform="translate(-75.714283,-362.36216)">
     <g
-       id="g3766"
-       transform="matrix(0.69349846,0,0,0.86153852,23.206542,116.63472)">
+       id="g2995"
+       inkscape:export-filename="/home/scvalex/proj/super-max/cpp/data/hills_at_dawn.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90">
       <rect
-         y="285.21933"
+         y="362.36215"
          x="75.714287"
-         height="557.14282"
-         width="461.42856"
+         height="480"
+         width="320"
          id="rect2985"
-         style="fill:url(#linearGradient3778);fill-opacity:1;stroke:none" />
+         style="fill:url(#linearGradient2993);fill-opacity:1;stroke:none" />
       <path
          sodipodi:nodetypes="ccccc"
          inkscape:connector-curvature="0"
          id="rect2987"
-         d="m 75.714287,625.21933 c 91.347183,90.60735 264.320173,-96.64474 461.428563,0 l 0,217.14282 -461.428563,0 z"
+         d="m 75.714283,588.36933 c 63.349127,105.98378 183.305637,-113.04575 319.999997,0 l 0,253.99283 -319.999997,0 z"
          style="fill:#1a1a1a;fill-opacity:1;stroke:none" />
+    </g>
+    <g
+       id="g3013"
+       inkscape:export-filename="/home/scvalex/proj/super-max/cpp/data/hills_at_dawn_bg.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90">
+      <rect
+         style="fill:none;fill-opacity:1;stroke:none"
+         id="rect3001"
+         width="320"
+         height="480"
+         x="-280"
+         y="360.93359" />
+      <path
+         style="fill:#17280b;fill-opacity:1;stroke:none"
+         d="m -280.00001,679.10799 c 166.91206,-91.2714 181.033508,26.35781 320,0 l 0,161.8256 -320,0 z"
+         id="path3003"
+         inkscape:connector-curvature="0"
+         sodipodi:nodetypes="ccccc" />
     </g>
   </g>
 </svg>
