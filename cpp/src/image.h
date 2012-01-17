@@ -16,7 +16,7 @@ public:
         int width() const;
         int height() const;
 
-        SDL_Surface* surface() const;
+        SDL_Surface* sdlSurface() const;
 
 private:
         SDL_Surface *m_surface;

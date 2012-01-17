@@ -37,6 +37,6 @@ int Image::height() const {
         return m_surface->h;
 }
 
-SDL_Surface* Image::surface() const{
+SDL_Surface* Image::sdlSurface() const{
         return m_surface;
 }

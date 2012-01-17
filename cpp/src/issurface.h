@@ -5,7 +5,7 @@
 
 class IsSurface {
 public:
-        virtual SDL_Surface* surface() const = 0;
+        virtual SDL_Surface* sdlSurface() const = 0;
         virtual SDL_Rect* clip() const;
         virtual int width() const;
         virtual int height() const;

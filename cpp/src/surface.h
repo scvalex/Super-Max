@@ -12,7 +12,7 @@ public:
 
         Surface clip(int x, int y, int w, int h);
 
-        SDL_Surface* surface() const;
+        SDL_Surface* sdlSurface() const;
         SDL_Rect* clip() const;
 
 private:

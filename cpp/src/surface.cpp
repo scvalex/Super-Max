@@ -40,7 +40,7 @@ Surface Surface::clip(int x, int y, int w, int h) {
         return s;
 }
 
-SDL_Surface* Surface::surface() const {
+SDL_Surface* Surface::sdlSurface() const {
         return m_surface;
 }
 

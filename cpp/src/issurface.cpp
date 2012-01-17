@@ -15,15 +15,15 @@ void IsSurface::drawOnto(const IsSurface &canvas, int x, int y) {
         offset.x = x;
         offset.y = y;
 
-        drawInternal(surface(), canvas.surface(), clip(), &offset);
+        drawInternal(sdlSurface(), canvas.sdlSurface(), clip(), &offset);
 }
 
 int IsSurface::width() const {
-        return surface()->w;
+        return sdlSurface()->w;
 }
 
 int IsSurface::height() const {
-        return surface()->h;
+        return sdlSurface()->h;
 }
 
 void IsSurface::drawInternal(SDL_Surface *img, SDL_Surface *canvas,
