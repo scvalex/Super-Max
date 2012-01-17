@@ -192,8 +192,13 @@ movePlayer :: Time -> Level -> Player -> Player
 movePlayer tw lvl
            p@(Player {playerX = px, playerAcc = acc, playerMaxX = maxx}) =
     case movePlayerG t (x * t, 0) lvl p of
-        Left (p', _) -> p'
-        Right p'     -> p'
+        Left (p1, _) ->
+            if playerPos p1 == playerPos p then
+                case movePlayerVec (x * t, 0) lvl p of
+                    Left (p2, _) -> p2
+                    Right p2     -> p2
+            else p1
+        Right p1     -> p1
   where
     t = fi tw
     x = case playerDir p of
