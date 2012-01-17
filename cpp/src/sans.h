@@ -10,10 +10,13 @@ public:
         Sans(int x, int y);
         ~Sans();
 
+        int x() const;
+        int y() const;
+
         Rect boundingRect();
         void move(int dx, int dy);
         void step();
-        void drawOnto(const IsSurface &canvas);
+        void drawOnto(const IsSurface &canvas, int x, int y);
 
 private:
         enum State {

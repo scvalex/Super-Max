@@ -35,6 +35,6 @@ void Screen::flip() {
         }
 }
 
-SDL_Surface* Screen::surface() const {
+SDL_Surface* Screen::sdlSurface() const {
         return m_surface;
 }

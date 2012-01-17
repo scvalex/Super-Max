@@ -12,7 +12,7 @@ public:
         virtual Rect boundingRect() = 0;
         virtual void move(int dx, int dy) = 0;
         virtual void step() = 0;
-        virtual void drawOnto(const IsSurface &canvas) = 0;
+        virtual void drawOnto(const IsSurface &canvas, int x, int y) = 0;
 };
 
 #endif
