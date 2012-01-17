@@ -41,8 +41,6 @@ import Graphics.UI.SDL.Keysym
 import Vector
 import Common
 
-import Debug.Trace (trace)
-
 -------------------------------------------------------------------------------
 
 type Time = Word32
@@ -185,16 +183,27 @@ movePlayerVec origVec lvl origP =
             Right p'  -> attach p'
             Left coll -> (p, coll)
 
-movePlayerG :: Time -> Vector -> Level -> Player
+movePlayerG :: Double -> Vector -> Level -> Player
             -> Either (Player, Collision) Player
 movePlayerG t vec lvl@(Level {levelGravity = g}) p
-    = movePlayerVec (vec `addV` (fi t `mulSV` g)) lvl p
+    = movePlayerVec (vec `addV` (t `mulSV` g)) lvl p
 
 movePlayer :: Time -> Level -> Player -> Player
-movePlayer t lvl p =
-    case movePlayerG t (0, 0) lvl p of
-        Left (p', _) -> trace "colliding" p'
-        Right p'     -> trace "going" p'
+movePlayer tw lvl
+           p@(Player {playerX = px, playerAcc = acc, playerMaxX = maxx}) =
+    case movePlayerG t (x * t, 0) lvl p of
+        Left (p', _) -> p'
+        Right p'     -> p'
+  where
+    t = fi tw
+    x = case playerDir p of
+            Nothing       -> 0
+            Just DirRight -> if px <= 0 then
+                                 min acc maxx
+                             else min (px + acc) maxx
+            Just DirLeft  -> if px >= 0 then
+                                 max (-acc) (-maxx)
+                             else max (px - acc) (-maxx)
 
 -- movePlayerG :: Time -> Level -> Vector -> Player -> Player
 -- movePlayerG t lvl oldVec p =
