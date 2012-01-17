@@ -5,7 +5,7 @@ module Game
     , HasSurface(..)
     , Point
     , BBox
-    , distinct
+    , colliding
     , Rect(..)
     , translate
     , Object(..)
@@ -33,14 +33,15 @@ module Game
 
 import Control.Monad
 import Data.Word (Word32)
-import Prelude hiding (Either (..))
 
 import Graphics.UI.SDL (Surface, Rect(..))
 import Graphics.UI.SDL.Events
 import Graphics.UI.SDL.Keysym
 
-import Common
 import Vector
+import Common
+
+import Debug.Trace (trace)
 
 -------------------------------------------------------------------------------
 
@@ -67,21 +68,25 @@ class (HasSurface o, Step o) => Object o where
     -- | The bounding box of the object.
     bbox   :: o -> BBox
 
-distinct :: BBox -> BBox -> Bool
-distinct bb1 bb2 = or [f b1 b2 | b1 <- bb1, b2 <- bb2]
+data Collision
+    = North | South | East | West
+    deriving (Eq, Show)
+
+colliding :: BBox -> BBox -> Maybe Collision
+colliding bb1 bb2 = msum [f b1 b2 | b1 <- bb1, b2 <- bb2]
   where
     f (Rect l1 t1 w1 h1) (Rect l2 t2 w2 h2) =
         let r1 = l1 + w1
             b1 = t1 + h1
             r2 = l2 + w2
             b2 = t2 + h2
-        in  b1 <= t2 || t1 >= b2 || r1 <= l2 || l1 >= r2
+            r  = b1 <= t2 || t1 >= b2 || r1 <= l2 || l1 >= r2
+        in  if r then Nothing else Just South
 
 -------------------------------------------------------------------------------
 
 data Game = Game
     { gamePlayer :: Player
-    , gameActDir :: [Direction]
     , gameLevel  :: Level
     }
 
@@ -141,7 +146,7 @@ dynamicMov f (x, p) = Mov p $ \delta -> dynamicMov f (f x delta p)
 
 -------------------------------------------------------------------------------
 
-data Direction = Left | Right
+data Direction = DirLeft | DirRight
     deriving (Eq, Show)
 
 data Player = Player
@@ -149,55 +154,83 @@ data Player = Player
     , playerPos  :: Vector
     , playerDim  :: Vector
     , playerBBox :: BBox
-    , playerWalk :: Double          -- ^ The walking velocity
+    , playerAcc  :: Double          -- ^ The walking acceleration
     , playerDir  :: Maybe Direction -- ^ The key that the user is pressing
-    , playerVec  :: Vector          -- ^ The vector storing the player direction
-                                   --   and velocity
+    , playerX    :: Double          -- ^ The X velocity
+    , playerY    :: Double          -- ^ The Y velocity
+    , playerMaxX :: Double          -- ^ The maximum velocity on the X axis
     }
 
-movePlayerPt :: Vector -> Level -> Player -> Maybe Player
-movePlayerPt d lvl p@(Player {playerPos = pos})
-    | coll      = Just p'
-    | otherwise = Nothing
+-- | Moves the player by a certain 'Vector'.
+movePlayerVec :: Vector -> Level -> Player
+              -> Either (Player, Collision) Player
+              -- ^ Right if the movement has succeeded, Left if the player has
+              --   hit a collision at some point, including the collision and
+              --   the new player.
+movePlayerVec origVec lvl origP =
+    case move origVec origP of
+        Right p -> Right p
+        Left _  -> Left $ attach origP
   where
-    p'   = p {playerPos = d `addV` pos}
-    coll = and $ map (\(LevelObject o) -> distinct (bbox p') (bbox o))
-                     (levelObjects lvl)
+    move vec p =
+        let p'    = p {playerPos = vec `addV` playerPos p}
+            collM = msum $ map (\(LevelObject o) -> colliding (bbox p') (bbox o))
+                           (levelObjects lvl)
+        in  case collM of
+                Nothing   -> Right p'
+                Just coll -> Left coll
 
-movePlayerG :: Time -> Level -> Vector -> Player -> Player
-movePlayerG t lvl oldVec p =
-    case movePlayerPt vec lvl p of
-        Nothing -> attach (normaliseV vec) p
-        Just p' -> p'
-  where
-    g    = fi t `mulSV` levelGravity lvl
-    vec  = g `addV` oldVec
+    attach p =
+        case move (normaliseV origVec) p of
+            Right p'  -> attach p'
+            Left coll -> (p, coll)
 
-    attach vec' p' =
-        case movePlayerPt vec' lvl p' of
-            Nothing  -> p'
-            Just p'' -> attach vec' p''
+movePlayerG :: Time -> Vector -> Level -> Player
+            -> Either (Player, Collision) Player
+movePlayerG t vec lvl@(Level {levelGravity = g}) p
+    = movePlayerVec (vec `addV` (fi t `mulSV` g)) lvl p
 
 movePlayer :: Time -> Level -> Player -> Player
-movePlayer t lvl p@(Player {playerDir = Nothing}) = movePlayerG t lvl (0,0) p
-movePlayer t lvl p@(Player {playerDir = Just dir, playerWalk = walk}) =
-    movePlayerG t lvl (fi t `mulSV` (walk `mulSV` vec)) p
-  where
-    vec = case dir of
-              Left  -> (-1, 0)
-              Right -> (1, 0)
+movePlayer t lvl p =
+    case movePlayerG t (0, 0) lvl p of
+        Left (p', _) -> trace "colliding" p'
+        Right p'     -> trace "going" p'
+
+-- movePlayerG :: Time -> Level -> Vector -> Player -> Player
+-- movePlayerG t lvl oldVec p =
+--     case movePlayerPt vec lvl p of
+--         Nothing -> attach (normaliseV vec) p
+--         Just p' -> p'
+--   where
+--     g    = fi t `mulSV` levelGravity lvl
+--     vec  = g `addV` oldVec
+
+--     attach vec' p' =
+--         case movePlayerPt vec' lvl p' of
+--             Nothing  -> p'
+--             Just p'' -> attach vec' p''
+
+-- movePlayer :: Time -> Level -> Player -> Player
+-- movePlayer t lvl p@(Player {playerDir = Nothing}) = movePlayerG t lvl (0,0) p
+-- movePlayer t lvl p@(Player {playerDir = Just dir, playerWalk = walk}) =
+--     movePlayerG t lvl (fi t `mulSV` (walk `mulSV` vec)) p
+--   where
+--     vec = case dir of
+--               Left  -> (-1, 0)
+--               Right -> (1, 0)
 
 instance Step Player where
-    step delta (KeyDown k) (Game {gameLevel = lvl}) p = return $
+    step t (KeyDown k) (Game {gameLevel = lvl}) p = return $
         case symKey k of
-            SDLK_LEFT  -> movePlayer delta lvl $ p {playerDir = Just Left}
-            SDLK_RIGHT -> movePlayer delta lvl $ p {playerDir = Just Right}
+            SDLK_LEFT  -> movePlayer t lvl $ p {playerDir = Just DirLeft}
+            SDLK_RIGHT -> movePlayer t lvl $ p {playerDir = Just DirRight}
             _          -> p
-    step delta (KeyUp k) (Game {gameLevel = lvl}) p@(Player {playerDir = Just dir})
-        | symKey k == SDLK_LEFT && dir == Left || symKey k == SDLK_RIGHT && dir == Right =
+    step t (KeyUp k) (Game {gameLevel = lvl}) p@(Player {playerDir = Just dir})
+        | symKey k == SDLK_LEFT && dir == DirLeft ||
+          symKey k == SDLK_RIGHT && dir == DirRight =
           return $ p {playerDir = Nothing}
-        | otherwise = return $ movePlayer delta lvl p
-    step delta _ (Game {gameLevel = lvl}) p = return $ movePlayer delta lvl p
+        | otherwise = return $ movePlayer t lvl p
+    step t _ (Game {gameLevel = lvl}) p = return $ movePlayer t lvl p
 
 instance HasSurface Player where
     surface (Player {playerAni = ani}) = aniSur ani

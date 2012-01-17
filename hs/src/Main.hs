@@ -46,16 +46,18 @@ player s = Player { playerAni  = staticAni s
                   , playerPos  = (te, te)
                   , playerDim  = (te-1, te-1)
                   , playerBBox = squareBox
+                  , playerAcc  = 0.15
                   , playerDir  = Nothing
-                  , playerWalk = 0.3
-                  , playerVec  = (0, 0)
+                  , playerX    = 0
+                  , playerY    = 9
+                  , playerMaxX = 0.3
                   }
 
 clearScreen :: Surface -> IO ()
 clearScreen screen = fillRect screen Nothing (Pixel 0) >> return ()
 
 level :: Surface -> Level
-level s = buildLevel 0.1 [ LevelObject (tile s (0,20))
+level s = buildLevel 0.3 [ LevelObject (tile s (0,20))
                          , LevelObject (tile s (1,21))
                          , LevelObject (tile s (2,21))
                          , LevelObject (tile s (3,21))
@@ -78,7 +80,6 @@ main = do
             p <- load "./resources/player.png"
             let l = level s
                 g = Game { gamePlayer = player p
-                         , gameActDir = []
                          , gameLevel  = l
                          }
                 draw g' = clearScreen screen >> blitGame g' screen >> flip screen
