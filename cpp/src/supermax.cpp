@@ -3,7 +3,6 @@
 #include "demolevel.h"
 #include "event.h"
 #include "font.h"
-#include "graphics.h"
 #include "image.h"
 #include <iostream>
 #include "screen.h"
@@ -24,8 +23,6 @@ void showPaused(bool paused);
 
 int main(int argc, char *argv[]) {
         cout << "Starting Super Max" << endl;
-
-        Graphics graphics;
 
         Screen screen(SCREEN_WIDTH, SCREEN_HEIGHT);
         screen.setTitle("Super Max");
