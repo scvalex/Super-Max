@@ -57,6 +57,12 @@ The following relics are scattered around Kingdom College:
                           ``Have you heard of the Hedgehog's
                           Dilemma?'';
 
+  - Bavarian Fire Drill :: see the Illuminatus! Trilogy for the
+                           reference; this weapon takes the form a
+                           HUGE drill on fire made by the Germans (it
+                           has ``Das Drill'' written on it) that mind
+                           controls enemies;
+
 Characters
 ----------
 
