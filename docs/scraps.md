@@ -63,6 +63,47 @@ The following relics are scattered around Kingdom College:
                            has ``Das Drill'' written on it) that mind
                            controls enemies;
 
+  - Bilateral Symmetry :: you can only equip one weapon at a time and
+                          it's mirrored to your other hand and you
+                          dual-wield, whether you have the skill or
+                          not; ``You recall Prof. Francesco saying
+                          that symmetry is an evolutionary
+                          advantage.'';
+
+Skills
+------
+
+  - Axe-Fu :: ``Through arduous training, you have achieved oneness
+              with the axe.''
+    * 0 Axe Kata :: you go through a series of predefined moves,
+                    dealing critical damage with every hit; ``You
+                    remember your training days at the Dojo of a
+                    Thousand Axes.  You go through the moves the
+                    Master taught you on the first night.'';
+    * 1 Axe Hyper-Wielding :: for a short period of time, your axes
+                              are double; coupled with Bilateral
+                              Symmetry, you can thus quadruple an axe;
+                              ``You remember the axe wielders of
+                              India, and how they could take advantage
+                              of the time their hands were free to
+                              equip even more axes.''
+    * 2 Zen Axeology :: your axe attacks deal more damage, especially
+                        the first strike; ``You once asked the Master,
+                        `How do I axe harder?'.  He replied, `Axe
+                        harder.''';
+    * 3 Axe Analogy :: all enemies automagically have a weakness to
+                       axe attacks; ``When all you have is an axe,
+                       everything looks like a chopping board.  Your
+                       enemies agree, whether they like it or not.''
+    * 4 The Axe Effect :: for a short period of time, four Valkyries
+                          help you; ``You raise your mighty axe to the
+                          heavens and four scantly-clad Valkyrie
+                          maidens come to your rescue.'';
+    * 5 Axe Crazy :: for a very short period of time, all your attacks
+                     deal super-critical damage; ``You feel the rage
+                     welling up inside you.  You focus on it and it
+                     takes the shape of an.. AXE.'';
+
 Characters
 ----------
 
