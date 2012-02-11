@@ -67,7 +67,9 @@ The following relics are scattered around Kingdom College:
                            reference; this weapon takes the form a
                            HUGE drill on fire made by the Germans (it
                            has ``Das Drill'' written on it) that mind
-                           controls enemies;
+                           controls enemies into standing still and
+                           doing repetitive tasks; that's right, it's
+                           a purely defensive weapon;
 
   - Bilateral Symmetry :: you can only equip one weapon at a time and
                           it's mirrored to your other hand and you
