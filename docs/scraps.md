@@ -37,6 +37,12 @@ the zombie apocalypse.''
   the knee. *
 * Fade in: Bio-engineering building\\Level 1 Start *
 
+* You fall down from a vent in the middle of the hallway.  There are 4
+zombies.
+
+``Interview brain-teaser time!  You're in a narrow hallway.  You have
+3 bullets and there are 4 zombies.  What do you do?''
+
 Relics
 ------
 
