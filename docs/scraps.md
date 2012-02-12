@@ -47,6 +47,25 @@ least. *turns corner*''
   normal building, but here and there, the colour/texture is falling
   off the wall to reveal a Tron-like environment. *
 
+* Fade out. *
+
+Episode M: Tutorial
+-------------------
+
+* Fade in. *
+
+* An Eliza appears. *
+
+``Oh.  A woman in translucent nightgown.  Actually, a translucent
+woman in a nightgown.  What the...''
+
+* Eliza shrieks and lunges towards you. ***
+
+``WWPD?  (What would Piccolo do?) Dodge! *lunges away from Eliza* I
+need to get out of here.''
+
+* Control switches to player *
+
 Episode N: Opening
 ------------------
 
@@ -88,6 +107,8 @@ The following HI implements are used by the various characters:
                  it as a staff-type weapon;
   - Nigel :: it's an umbrella, a weather-controlling umbrella; it's
              various attacks are electric-themed;
+  - Beatrice :: it's battle-axe: cold, hard and unforgiving; in other
+                words, just like my ex;
 
 Relics
 ------
@@ -123,6 +144,9 @@ The following relics are scattered around Kingdom College:
                           not; ``You recall Prof. Francesco saying
                           that symmetry is an evolutionary
                           advantage.'';
+
+  - Turing Fragment :: assemble several of these into a Turing
+                       Complete;
 
 Skills
 ------
