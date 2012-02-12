@@ -24,6 +24,29 @@ machine.
 "No", replied the Assistant, removing himself from the inert metal.
 "No, that Thing has escaped.  It's only just began."
 
+Episode M: Opening
+------------------
+
+``*walking quickly on the street* Dammit, I'm late. *turns corner* I
+wonder how late. *lifts left hand* No, checking the time won't get me
+there faster. *looks up; dark cloudy sky* Nice weather, at
+least. *turns corner*''
+
+* The university is 100m ahead, it's covered by a black (not dark,
+  black) cloud out of which purple light is illuminating the
+  buildings.  In front of the doors, there's a huge crowd, and police
+  siren lights are clearly visible beyond the crows. *
+
+* Zoom in character's eyes: surprise; split screen; second screen:
+  phone chirps, message from `Your Princess': `Help!  I'm in the
+  labs!'; character's eyes: determination. *
+
+* Character sprints, whistles, the crowd parts, a police car is
+  visible, character jumps onto the hood, onto the top, off, and
+  through the building's glass front doors.  The inside looks like a
+  normal building, but here and there, the colour/texture is falling
+  off the wall to reveal a Tron-like environment. *
+
 Episode N: Opening
 ------------------
 
@@ -35,13 +58,36 @@ the zombie apocalypse.''
 
 * Jump to: An automatic door is trying to close on a leg severed below
   the knee. *
+
 * Fade in: Bio-engineering building\\Level 1 Start *
 
 * You fall down from a vent in the middle of the hallway.  There are 4
-zombies.
+zombies. *
 
 ``Interview brain-teaser time!  You're in a narrow hallway.  You have
 3 bullets and there are 4 zombies.  What do you do?''
+
+Monsters
+--------
+
+These are the monsters one encounters in the Computing themed
+building.  Note, that they are monsters, not bosses, so, even though
+some have names, they are repeated.
+  - Eliza :: a ghostly/holographic woman who looks almost real, but
+             not quite; uncanny valley; her touch chills you to the
+             bone;
+  - Mx Doctor :: bigger than Eliza; a holographic man in a lab coat;
+                 with a lisp!
+
+Heroic Implements
+-----------------
+
+The following HI implements are used by the various characters:
+  - Sebastian :: ostentatiously a sniper rifle; of course, since the
+                 character doesn't know how to use a firearm, he uses
+                 it as a staff-type weapon;
+  - Nigel :: it's an umbrella, a weather-controlling umbrella; it's
+             various attacks are electric-themed;
 
 Relics
 ------

@@ -68,3 +68,15 @@ I think each of the main characters should see the world differently.
 Alex sees a pessimistic realism.  Max is Kamina, of course. This is
 effectively replay levels on different "planes", BUT the repercussions
 of character's actions on the world should be felt by the others.
+
+Weapons
+-------
+
+I think allowing characters to equip different weapons detracts from
+the fun of the game (not to mention it makes animations harder; just
+look at Dungeons of Dredmor; regardless of what weapon you equip, your
+attack still looks like you whack something with a big stick).  So, I
+think each character should have a primary and a secondary weapon
+(possibly just another use for the primary).  Let's call these "Heroic
+Implements"; the rule of thumb is, a character cannot replace their
+HI, but they can (un)mod it.
