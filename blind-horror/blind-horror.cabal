@@ -1,0 +1,29 @@
+Name:           blind-horror
+Version:        0.5
+Cabal-Version:  >= 1.8
+License:        GPL-3
+License-File:   LICENSE
+Stability:      experimental
+Author:         Alexandru Scvortov <scvalex@gmail.com>
+Maintainer:     scvalex@gmail.com
+Homepage:       https://github.com/scvalex/super-max
+Category:       Games
+Synopsis:       A horror-survival game
+Build-Type:     Simple
+Description:
+        See the @README.md@ file and the homepage for details.
+
+Extra-Source-Files:     Makefile
+
+Data-Files:             README.md, LICENSE
+
+Source-repository head
+  Type:                 git
+  Location:             https://github.com/scvalex/super-max.git
+
+Executable blind-horror
+  Build-depends:        base >= 4 && < 5
+  Ghc-options:          -Wall
+  Hs-Source-Dirs:       src/
+  Extensions:           ScopedTypeVariables, OverloadedStrings
+  Main-is:              blind-horror.hs
