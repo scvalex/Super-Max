@@ -4,7 +4,7 @@ blind-horror
 > A horror-survival game
 
 Büild
-=====
+-----
 
 The build system is driven by the top-level `Makefile` (it's Cabal and
 `cabal-dev` underneath).  To build everything, just run:
@@ -12,3 +12,10 @@ The build system is driven by the top-level `Makefile` (it's Cabal and
     make
 
 See the other `make` targets other options.
+
+Rün
+---
+
+To build and run the game, just run:
+
+    make run

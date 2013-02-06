@@ -29,5 +29,8 @@ p:
 	             *.cabal \
 	             Makefile
 
+run: build
+	./blind-horror
+
 ghci: build
 	cabal-dev ghci
