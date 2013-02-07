@@ -1,8 +1,13 @@
 module Main where
 
+import Prelude hiding ( foldl )
+
+import Data.Foldable ( foldl )
 import Data.Monoid ( Monoid(..) )
+import Data.Set ( Set )
+import qualified Data.Set as S
 import Graphics.Gloss.Interface.Pure.Game ( play
-                                          , Event(..), Key(..)
+                                          , Event(..), Key(..), KeyState(..)
                                           , Display(..)
                                           , Picture(..), Path
                                           , black, greyN, white, orange )
@@ -11,10 +16,17 @@ import Text.Printf ( printf )
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
 -- 'tickWorld').
-data World = G { getLevel  :: Int
-               , getTime   :: Float
-               , getArea   :: Area
-               , getPlayer :: Player
+data World = G { getLevel        :: Int
+               , getTime         :: Float
+               , getArea         :: Area
+               , getPlayer       :: Player
+               , getHeldDownKeys :: Set Key -- ^ We get key up and key down events, but we
+                                            -- need to handle holding down a key
+                                            -- ourselves.  We keep track of which keys are
+                                            -- being held down at any time.  When we
+                                            -- update the world, we process those keys as
+                                            -- well as all the keys that were pressed and
+                                            -- released.
                } deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
@@ -22,7 +34,7 @@ data Area = Room { getRoomBounds :: (Int, Int, Int, Int) -- ^ the bounds of the 
                                                          -- (these coordinates are not
                                                          -- related to the display ones)
                  , getRoomStart  :: (Int, Int)           -- ^ the player's starting point
-                 , getRoomExit   :: (Int, Int)            -- ^ the area's exit point
+                 , getRoomExit   :: (Int, Int)           -- ^ the area's exit point
                  } deriving ( Eq, Show )
 
 data Player = Player { getPlayerPosition :: (Int, Int)
@@ -73,6 +85,7 @@ initWorld area = G { getLevel = 1
                    , getPlayer = Player { getPlayerPosition = getRoomStart area
                                         , getPlayerMovement = Nothing
                                         }
+                   , getHeldDownKeys = S.empty
                    }
 
 worldToScene :: World -> Picture
@@ -141,23 +154,50 @@ worldToScene w =
     -- Other text sizes (relative to huge text)
     bigText    = Scale 0.5 0.5 . hugeText
     mediumText = Scale 0.25 0.25 . hugeText
-    smallText  = Scale 0.1 0.1 . hugeText
 
 handleEvent :: Event -> World -> World
 handleEvent ev w =
-    let p = getPlayer w
-        (x, y) = getPlayerPosition p in
+    let keys = getHeldDownKeys w in
     case ev of
-        (EventKey (Char 'a') _ _ _) ->
-            w { getPlayer = p { getPlayerPosition = inBounds (x - 1, y) } }
-        (EventKey (Char 'd') _ _ _) ->
-            w { getPlayer = p { getPlayerPosition = inBounds (x + 1, y) } }
-        (EventKey (Char 's') _ _ _) ->
-            w { getPlayer = p { getPlayerPosition = inBounds (x, y - 1) } }
-        (EventKey (Char 'w') _ _ _) ->
-            w { getPlayer = p { getPlayerPosition = inBounds (x, y + 1) } }
+        EventKey key Down _ _ ->
+            processKey (w { getHeldDownKeys = S.insert key keys }) key
+        EventKey key Up _ _ ->
+            w { getHeldDownKeys = S.delete key keys }
         _ ->
             w
+
+-- | A key is pressed -- update the world accordingly.
+processKey :: World -> Key -> World
+processKey w key =
+    let p = getPlayer w in
+    case key of
+        Char 'a' ->
+            w { getPlayer = p { getPlayerMovement = Just W } }
+        Char 'd' ->
+            w { getPlayer = p { getPlayerMovement = Just E } }
+        Char 's' ->
+            w { getPlayer = p { getPlayerMovement = Just S } }
+        Char 'w' ->
+            w { getPlayer = p { getPlayerMovement = Just N } }
+        _ ->
+            w
+
+tickWorld :: Float -> World -> World
+tickWorld t w =
+    let p = getPlayer w
+        (x, y) = getPlayerPosition p
+        (x', y') =
+            case getPlayerMovement p of
+                Nothing -> inBounds (x, y)
+                Just m ->
+                    let (xd, yd) = movementDisplacement m
+                    in inBounds (x + xd, y + yd)
+        w' = w { getTime = getTime w + t
+               , getPlayer = p { getPlayerPosition = (x', y')
+                               , getPlayerMovement = Nothing }
+               }
+        w'' = foldl processKey w' (getHeldDownKeys w')
+    in w''
   where
     -- Force the coordinates back in the area's bounds.
     inBounds :: (Int, Int) -> (Int, Int)
@@ -165,9 +205,6 @@ handleEvent ev w =
         case getArea w of
             r@(Room {}) -> let (x1, y1, x2, y2) = getRoomBounds r
                            in (max x1 (min x x2), max y1 (min y y2))
-
-tickWorld :: Float -> World -> World
-tickWorld t w = w { getTime = getTime w + t }
 
 -- | How much does the player move for each movement command.
 movementDisplacement :: Movement -> (Int, Int)
