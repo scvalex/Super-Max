@@ -155,7 +155,7 @@ worldToScene w =
                 mempty
             pg@(PostGame {}) ->
                 mconcat [ Translate 0.36 0.45 $ bigText (getConclusion pg)
-                        , Translate 0.38 0.40 $ mediumText "<press space>"
+                        , Translate 0.39 0.40 $ mediumText "<press space>"
                         ]
 
     -- All the non-player entities.
