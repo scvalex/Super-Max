@@ -13,15 +13,19 @@ import Graphics.Gloss.Interface.Pure.Game ( play
                                           , Display(..)
                                           , Picture(..), Path
                                           , dim, black, greyN, white, yellow, orange, red )
+import System.Random ( StdGen, newStdGen, randomR )
 import Text.Printf ( printf )
 
 type NpcId = Int
+
+type Level = Int
 
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
 -- 'tickWorld').
 data World = Game { getState        :: GameState
                   , getLevel        :: Int
+                  , getGen          :: StdGen
                   , getTime         :: Float
                   , getArea         :: Area
                   , getPlayer       :: Player
@@ -34,7 +38,7 @@ data World = Game { getState        :: GameState
                                                -- pressed and released.
                   , getNpcs         :: Map NpcId Npc
                   }
-           deriving ( Eq, Show )
+           deriving ( Show )
 
 data GameState = PreGame { getObjective :: String }
                | InGame
@@ -47,7 +51,6 @@ data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ the bounds of the
                                                           -- related to the display ones)
                  , getRoomStart   :: (Int, Int)           -- ^ the player's starting point
                  , getRoomExit    :: (Int, Int)           -- ^ the area's exit point
-                 , getInitialNpcs :: [Npc]                -- ^ the area's initial NPCs
                  } deriving ( Eq, Show )
 
 data Player = Player { getPlayerPosition :: (Int, Int)
@@ -67,11 +70,13 @@ main = do
     putStrLn "There is nothing to worry about."
     putStrLn "ohgod ohgod ohgod"
 
+    gen <- newStdGen
+
     play
         windowParams
         black
         fps
-        (initWorld area1)
+        (initWorld gen area1 1)
         worldToScene
         handleEvent
         tickWorld
@@ -93,21 +98,28 @@ area1 :: Area
 area1 = Room { getRoomBounds = (0, 0, 100, 100)
              , getRoomStart = (49, 5)
              , getRoomExit = (49, 94)
-             , getInitialNpcs = [] -- [ Zombie 0 (25, 25), Zombie 1 (25, 75)
-                                -- , Zombie 2 (75, 75), Zombie 3 (75, 25) ]
              }
 
-initWorld :: Area -> World
-initWorld area =
-    Game { getState = PreGame "Get to the exit"
-         , getLevel = 1
-         , getTime  = 0.0
-         , getArea  = area
-         , getPlayer = Player { getPlayerPosition = getRoomStart area
-                              , getPlayerMovement = Nothing
-                              }
+initWorld :: StdGen -> Area -> Level -> World
+initWorld gen area lvl =
+    let (x1, y1, x2, y2) = getRoomBounds area
+        (npcs, gen') =
+            foldl (\(ns, gen0) i ->
+                    let (xz, gen1) = randomR (x1, x2) gen0
+                        (yz, gen2) = randomR (y1, y2) gen1
+                        z = Zombie { getNpcId = i, getNpcPosition = (xz, yz) } in
+                    (M.insert i z ns, gen2)) (M.empty, gen) [1..2^(lvl - 1)]
+    in
+    Game { getState        = PreGame "Get to the exit"
+         , getLevel        = lvl
+         , getGen          = gen'
+         , getTime         = 0.0
+         , getArea         = area
          , getHeldDownKeys = S.empty
-         , getNpcs = M.fromList $ map (\npc -> (getNpcId npc, npc)) $ getInitialNpcs area
+         , getNpcs         = npcs
+         , getPlayer       = Player { getPlayerPosition = getRoomStart area
+                                    , getPlayerMovement = Nothing
+                                    }
          }
 
 worldToScene :: World -> Picture
@@ -221,7 +233,7 @@ handleEvent ev w =
         PostGame {} ->
             case ev of
                 EventKey (SpecialKey KeySpace) Up _ _ ->
-                    (initWorld (getArea w)) { getLevel = getLevel w + 1 }
+                    initWorld (getGen w) (getArea w) (getLevel w + 1)
                 _ ->
                     w
 
