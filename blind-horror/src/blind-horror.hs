@@ -93,8 +93,8 @@ area1 :: Area
 area1 = Room { getRoomBounds = (0, 0, 100, 100)
              , getRoomStart = (49, 5)
              , getRoomExit = (49, 94)
-             , getInitialNpcs = [ Zombie 0 (25, 25), Zombie 1 (25, 75)
-                                , Zombie 2 (75, 75), Zombie 3 (75, 25) ]
+             , getInitialNpcs = [] -- [ Zombie 0 (25, 25), Zombie 1 (25, 75)
+                                -- , Zombie 2 (75, 75), Zombie 3 (75, 25) ]
              }
 
 initWorld :: Area -> World
@@ -216,7 +216,13 @@ handleEvent ev w =
                 EventKey _ Up _ _                      -> w { getState = InGame }
                 _                                      -> w
         InGame      -> handleInGameEvent
-        PostGame {} -> w
+        PostGame {} ->
+            case ev of
+                EventKey (SpecialKey KeySpace) Up _ _ ->
+                    (initWorld (getArea w)) { getLevel = getLevel w + 1 }
+                _ ->
+                    w
+
   where
     handleInGameEvent =
         let keys = getHeldDownKeys w in
