@@ -10,7 +10,8 @@ import Text.Printf ( printf )
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
 -- 'tickWorld').
-data World = W { getTime :: Float
+data World = W { getLevel :: Int
+               , getTime  :: Float
                } deriving ( Eq, Show )
 
 main :: IO ()
@@ -42,7 +43,8 @@ fps :: Int
 fps = 10
 
 initWorld :: World
-initWorld = W { getTime = 0.0
+initWorld = W { getLevel = 1
+              , getTime  = 0.0
               }
 
 worldToScene :: World -> Picture
@@ -51,19 +53,33 @@ worldToScene w =
     Translate (fromIntegral (-canvasSize `div` 2)) (fromIntegral (-canvasSize `div` 2)) $
     -- We draw on a (x = 0.0 -- 1.0, y = 0.0 -- 1.0) sized canvas.
     Scale (fromIntegral canvasSize) (fromIntegral canvasSize) $
+    -- Just default all the foreground colours to white.
+    Color white $
     mconcat [ wireframe
-            , survivalTime
+            , hud
             ]
   where
-    wireframe = Color white (Line [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)])
+    -- The wireframe in the background.
+    wireframe = Line [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]
+
+    -- The HUD is overlayed on the game.
+    hud = mconcat [ survivalTime
+                  , currentLevel
+                  ]
 
     -- Survival time in top-left corner
-    survivalTime = Translate 0.04 0.9 $ Color white (bigText (formatSeconds (getTime w)))
+    survivalTime = Translate 0.04 0.9 $ (bigText (formatSeconds (getTime w)))
+
+    -- Current level in the top-left corner
+    currentLevel = Translate 0.04 0.86 $ (mediumText (printf "Level: %d" (getLevel w)))
 
     -- I don't know exactly how big this is, but it's pretty huge.
     hugeText = Scale (1.0 / fromIntegral canvasSize) (1.0 / fromIntegral canvasSize) . Text
 
-    bigText = Scale 0.5 0.5 . hugeText
+    -- Other text sizes (relative to huge text)
+    bigText    = Scale 0.5 0.5 . hugeText
+    mediumText = Scale 0.25 0.25 . hugeText
+    smallText  = Scale 0.1 0.1 . hugeText
 
 handleEvent :: Event -> World -> World
 handleEvent _ w = w
@@ -78,7 +94,6 @@ tickWorld t w = w { getTime = getTime w + t }
 formatSeconds :: Float -> String
 formatSeconds t = let secs = floor t :: Int
                       mins = secs `div` 60
-                      hs   = mins `div` 60
-                  in printf "%02d:%02d:%02d.%d"
-                         hs (mins `mod` 60)
+                  in printf "%02d:%02d.%d"
+                         (mins `mod` 60)
                          (secs `mod` 60) ((floor ((t - fromIntegral secs) * 10.0) :: Int) `mod` 10)
