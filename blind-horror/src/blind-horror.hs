@@ -4,7 +4,7 @@ import Data.Monoid ( Monoid(..) )
 import Graphics.Gloss.Interface.Pure.Game ( Event, play
                                           , Display(..)
                                           , Picture(..)
-                                          , black, white )
+                                          , black, greyN, white )
 import Text.Printf ( printf )
 
 -- | The state of the world is used to generate the scene, and is
@@ -74,10 +74,22 @@ worldToScene w =
             ]
   where
     -- The wireframe in the background.
-    wireframe = Line [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]
+    wireframe = Color (greyN 0.1) $
+                Line [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]
 
     -- The current room/map/area.
-    room = mempty
+    room =
+        let (x1, y1, x2, y2) = getRoomBounds (getArea w) in
+        Translate (fromIntegral x1) (fromIntegral y1) $
+        Scale (1.0 / fromIntegral (x2 - x1)) (1.0 / fromIntegral (y2 - y1)) $
+        mconcat [ roomWalls
+                , roomExit
+                ]
+
+    roomWalls = let (x1, y1, x2, y2) = getRoomBounds (getArea w)
+                in intLine [(x1, y1), (x1, y2), (x2, y2), (x2, y1), (x1, y1)]
+
+    roomExit = mempty
 
     -- The HUD is overlayed on the game.
     hud = mconcat [ survivalTime
@@ -97,6 +109,9 @@ worldToScene w =
     bigText    = Scale 0.5 0.5 . hugeText
     mediumText = Scale 0.25 0.25 . hugeText
     smallText  = Scale 0.1 0.1 . hugeText
+
+    intLine :: [(Int, Int)] -> Picture
+    intLine = Line . map (\(u, v) -> (fromIntegral u, fromIntegral v))
 
 handleEvent :: Event -> World -> World
 handleEvent _ w = w
