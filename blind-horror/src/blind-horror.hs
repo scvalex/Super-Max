@@ -42,7 +42,8 @@ data World = Game { getState        :: GameState
 
 data GameState = PreGame { getObjective :: String }
                | InGame
-               | PostGame { getConclusion :: String }
+               | PostGame { getConclusion  :: String
+                          , getHasContinue :: Bool }
                deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
@@ -153,9 +154,11 @@ worldToScene w =
                         ]
             InGame {} ->
                 mempty
-            pg@(PostGame {}) ->
+            pg@(PostGame { getHasContinue = c }) ->
                 mconcat [ Translate 0.36 0.45 $ bigText (getConclusion pg)
-                        , Translate 0.39 0.40 $ mediumText "<press space>"
+                        , if c
+                          then Translate 0.39 0.40 $ mediumText "<press space>"
+                          else mempty
                         ]
 
     -- All the non-player entities.
@@ -230,9 +233,9 @@ handleEvent ev w =
                 EventKey (SpecialKey KeySpace) Up _ _ -> w { getState = InGame }
                 _                                     -> w
         InGame      -> handleInGameEvent
-        PostGame {} ->
+        PostGame { getHasContinue = c } ->
             case ev of
-                EventKey (SpecialKey KeySpace) Up _ _ ->
+                EventKey (SpecialKey KeySpace) Up _ _ | c ->
                     initWorld (getGen w) (getArea w) (getLevel w + 1)
                 _ ->
                     w
@@ -285,9 +288,11 @@ tickWorld t w0 =
         let npcPoss = map getNpcPosition $ M.elems (getNpcs w)
             pos = getPlayerPosition (getPlayer w) in
         if pos `elem` npcPoss
-        then w { getState = PostGame { getConclusion = "You died" } }
+        then w { getState = PostGame { getConclusion  = "You died"
+                                     , getHasContinue = False } }
         else if pos == getRoomExit (getArea w)
-             then w { getState = PostGame { getConclusion = "You win" } }
+             then w { getState = PostGame { getConclusion  = "You win"
+                                          , getHasContinue = True } }
              else w
 
     -- Increment the ticker by the elapsed amount of time.
