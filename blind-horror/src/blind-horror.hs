@@ -122,9 +122,9 @@ worldToScene w =
     -- The player.
     player =
         fromRoomCoordinates $
-        let (xp, yp) = getPlayerPosition (getPlayer w)
-        in Color orange $
-           intPolygon [(xp, yp), (xp, yp + 1), (xp + 1, yp + 1), (xp + 1, yp)]
+        let (xp, yp) = getPlayerPosition (getPlayer w) in
+        Color orange $
+        intPolygon [(xp, yp), (xp, yp + 1), (xp + 1, yp + 1), (xp + 1, yp)]
 
     -- The current room/map/area.
     room =
@@ -133,13 +133,13 @@ worldToScene w =
                 , roomExit
                 ]
 
-    roomWalls = let (x1, y1, x2, y2) = getRoomBounds (getArea w)
-                in intLine [(x1, y1), (x1, y2), (x2, y2), (x2, y1), (x1, y1)]
+    roomWalls = let (x1, y1, x2, y2) = getRoomBounds (getArea w) in
+                intLine [(x1, y1), (x1, y2), (x2, y2), (x2, y1), (x1, y1)]
 
-    roomExit = let (xe, ye) = getRoomExit (getArea w)
-               in mconcat [ intPolygon [(xe, ye), (xe + 2, ye), (xe + 2, ye + 1), (xe, ye + 1)]
-                          , Translate (fromIntegral (xe - 1)) (fromIntegral (ye + 2)) $ Scale 0.02 0.01 $ Text "Exit"
-                          ]
+    roomExit = let (xe, ye) = getRoomExit (getArea w) in
+               mconcat [ intPolygon [(xe, ye), (xe + 2, ye), (xe + 2, ye + 1), (xe, ye + 1)]
+                       , Translate (fromIntegral (xe - 1)) (fromIntegral (ye + 2)) $ Scale 0.02 0.01 $ Text "Exit"
+                       ]
 
     -- The HUD is overlayed on the game.
     hud = mconcat [ survivalTime
@@ -199,8 +199,8 @@ tickWorld t w0 =
         p' = movePlayer w1
         w2 = w1 { getTime = getTime w1 + t
                 , getPlayer = p'
-                }
-    in w2
+                } in
+    w2
   where
     movePlayer w =
         let p = getPlayer w
@@ -209,16 +209,16 @@ tickWorld t w0 =
             Nothing ->
                 p
             Just m ->
-                    let (xd, yd) = movementDisplacement m
-                    in p { getPlayerPosition = inBounds w (x + xd, y + yd)
-                         , getPlayerMovement = Nothing }
+                    let (xd, yd) = movementDisplacement m in
+                    p { getPlayerPosition = inBounds w (x + xd, y + yd)
+                      , getPlayerMovement = Nothing }
 
     -- Force the coordinates back in the area's bounds.
     inBounds :: World -> (Int, Int) -> (Int, Int)
     inBounds w (x, y) =
         case getArea w of
-            r@(Room {}) -> let (x1, y1, x2, y2) = getRoomBounds r
-                           in (max x1 (min x x2), max y1 (min y y2))
+            r@(Room {}) -> let (x1, y1, x2, y2) = getRoomBounds r in
+                           (max x1 (min x x2), max y1 (min y y2))
 
 -- | How much does the player move for each movement command.
 movementDisplacement :: Movement -> (Int, Int)
@@ -233,8 +233,8 @@ movementDisplacement E = (1, 0)
 
 formatSeconds :: Float -> String
 formatSeconds t = let secs = floor t :: Int
-                      mins = secs `div` 60
-                  in printf "%02d:%02d.%d"
+                      mins = secs `div` 60 in
+                  printf "%02d:%02d.%d"
                          (mins `mod` 60)
                          (secs `mod` 60) ((floor ((t - fromIntegral secs) * 10.0) :: Int) `mod` 10)
 
