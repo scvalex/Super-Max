@@ -27,6 +27,7 @@ data World = G { getLevel        :: Int
                                             -- update the world, we process those keys as
                                             -- well as all the keys that were pressed and
                                             -- released.
+               , getNPCs         :: Set NPC
                } deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
@@ -43,6 +44,12 @@ data Player = Player { getPlayerPosition :: (Int, Int)
 
 data Movement = N | S | W | E
               deriving ( Eq, Show )
+
+data NPC = NPC { getNPCId :: Int
+               } deriving ( Eq, Show )
+
+instance Ord NPC where
+    compare a b = compare (getNPCId a) (getNPCId b)
 
 main :: IO ()
 main = do
@@ -86,7 +93,11 @@ initWorld area = G { getLevel = 1
                                         , getPlayerMovement = Nothing
                                         }
                    , getHeldDownKeys = S.empty
+                   , getNPCs = initNPCs area
                    }
+
+initNPCs :: Area -> Set NPC
+initNPCs _ = S.empty
 
 worldToScene :: World -> Picture
 worldToScene w =
