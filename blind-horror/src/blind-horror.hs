@@ -46,7 +46,7 @@ data Player = Player { getPlayerPosition :: (Int, Int)
 data Movement = N | S | W | E
               deriving ( Eq, Show )
 
-data NPC = Zombie { getNPCId :: Int
+data NPC = Zombie { getNPCId          :: Int
                   , getZombiePosition :: (Int, Int)
                   } deriving ( Eq, Show )
 
@@ -220,9 +220,19 @@ tickWorld t w0 =
     w3 { getTime = getTime w3 + t }
   where
     -- Move NPCs according the their own rules.
-    moveNPCs w = getNPCs w
+    moveNPCs :: World -> Set NPC
+    moveNPCs w = S.map (moveNPC w) (getNPCs w)
+
+    moveNPC :: World -> NPC -> NPC
+    moveNPC w z@(Zombie {}) =
+        let (xz, yz) = getZombiePosition z
+            (xp, yp) = getPlayerPosition (getPlayer w) in
+        if abs (xp - xz) > abs (yp - yz)
+        then z { getZombiePosition = (xz + signum (xp - xz), yz) }
+        else z { getZombiePosition = (xz, yz + signum (yp - yz)) }
 
     -- Move the player according to its movement, then, reset its movement.
+    movePlayer :: World -> Player
     movePlayer w =
         let p = getPlayer w
             (x, y) = getPlayerPosition p in
