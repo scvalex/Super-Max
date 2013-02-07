@@ -3,7 +3,7 @@ module Main where
 import Data.Monoid ( Monoid(..) )
 import Graphics.Gloss.Interface.Pure.Game ( Event, play
                                           , Display(..)
-                                          , Picture(..)
+                                          , Picture(..), Path
                                           , black, greyN, white )
 import Text.Printf ( printf )
 
@@ -91,7 +91,10 @@ worldToScene w =
     roomWalls = let (x1, y1, x2, y2) = getRoomBounds (getArea w)
                 in intLine [(x1, y1), (x1, y2), (x2, y2), (x2, y1), (x1, y1)]
 
-    roomExit = mempty
+    roomExit = let (xe, ye) = getRoomExit (getArea w)
+               in mconcat [ intPolygon [(xe, ye), (xe + 2, ye), (xe + 2, ye + 1), (xe, ye + 1)]
+                          , Translate (fromIntegral (xe - 1)) (fromIntegral (ye + 2)) $ Scale 0.02 0.01 $ Text "Exit"
+                          ]
 
     -- The HUD is overlayed on the game.
     hud = mconcat [ survivalTime
@@ -112,9 +115,6 @@ worldToScene w =
     mediumText = Scale 0.25 0.25 . hugeText
     smallText  = Scale 0.1 0.1 . hugeText
 
-    intLine :: [(Int, Int)] -> Picture
-    intLine = Line . map (\(u, v) -> (fromIntegral u, fromIntegral v))
-
 handleEvent :: Event -> World -> World
 handleEvent _ w = w
 
@@ -131,3 +131,15 @@ formatSeconds t = let secs = floor t :: Int
                   in printf "%02d:%02d.%d"
                          (mins `mod` 60)
                          (secs `mod` 60) ((floor ((t - fromIntegral secs) * 10.0) :: Int) `mod` 10)
+
+-- | Draw a line with 'Int' coordinates.
+intLine :: [(Int, Int)] -> Picture
+intLine = Line . intPath
+
+-- | Draw a polygon with 'Int' coordinates.
+intPolygon :: [(Int, Int)] -> Picture
+intPolygon = Polygon . intPath
+
+-- | Convert a path of 'Int' coordinates to a 'Path'.
+intPath :: [(Int, Int)] -> Path
+intPath = map (\(u, v) -> (fromIntegral u, fromIntegral v))
