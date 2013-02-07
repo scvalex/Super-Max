@@ -266,7 +266,9 @@ tickWorld t w0 =
             pos = getPlayerPosition (getPlayer w) in
         if pos `elem` npcPoss
         then w { getState = PostGame { getConclusion = "You died" } }
-        else w
+        else if pos == getRoomExit (getArea w)
+             then w { getState = PostGame { getConclusion = "You win" } }
+             else w
 
     -- Increment the ticker by the elapsed amount of time.
     updateTime :: World -> World
