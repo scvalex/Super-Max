@@ -10,7 +10,7 @@ import Graphics.Gloss.Interface.Pure.Game ( play
                                           , Event(..), Key(..), KeyState(..)
                                           , Display(..)
                                           , Picture(..), Path
-                                          , black, greyN, white, orange )
+                                          , black, greyN, white, orange, red )
 import Text.Printf ( printf )
 
 -- | The state of the world is used to generate the scene, and is
@@ -31,11 +31,12 @@ data World = G { getLevel        :: Int
                } deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
-data Area = Room { getRoomBounds :: (Int, Int, Int, Int) -- ^ the bounds of the room
-                                                         -- (these coordinates are not
-                                                         -- related to the display ones)
-                 , getRoomStart  :: (Int, Int)           -- ^ the player's starting point
-                 , getRoomExit   :: (Int, Int)           -- ^ the area's exit point
+data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ the bounds of the room
+                                                          -- (these coordinates are not
+                                                          -- related to the display ones)
+                 , getRoomStart   :: (Int, Int)           -- ^ the player's starting point
+                 , getRoomExit    :: (Int, Int)           -- ^ the area's exit point
+                 , getInitialNPCs :: Set NPC              -- ^ the area's initial NPCs
                  } deriving ( Eq, Show )
 
 data Player = Player { getPlayerPosition :: (Int, Int)
@@ -45,8 +46,9 @@ data Player = Player { getPlayerPosition :: (Int, Int)
 data Movement = N | S | W | E
               deriving ( Eq, Show )
 
-data NPC = NPC { getNPCId :: Int
-               } deriving ( Eq, Show )
+data NPC = Zombie { getNPCId :: Int
+                  , getZombiePosition :: (Int, Int)
+                  } deriving ( Eq, Show )
 
 instance Ord NPC where
     compare a b = compare (getNPCId a) (getNPCId b)
@@ -83,6 +85,9 @@ area1 :: Area
 area1 = Room { getRoomBounds = (0, 0, 100, 100)
              , getRoomStart = (49, 5)
              , getRoomExit = (49, 94)
+             , getInitialNPCs =
+                    S.fromList [ Zombie 0 (25, 25), Zombie 1 (25, 75)
+                               , Zombie 2 (75, 75), Zombie 3 (75, 25) ]
              }
 
 initWorld :: Area -> World
@@ -93,11 +98,8 @@ initWorld area = G { getLevel = 1
                                         , getPlayerMovement = Nothing
                                         }
                    , getHeldDownKeys = S.empty
-                   , getNPCs = initNPCs area
+                   , getNPCs = getInitialNPCs area
                    }
-
-initNPCs :: Area -> Set NPC
-initNPCs _ = S.empty
 
 worldToScene :: World -> Picture
 worldToScene w =
@@ -110,6 +112,7 @@ worldToScene w =
     mconcat [ wireframe
             , room
             , player
+            , npcs
             , hud
             ]
   where
@@ -119,12 +122,21 @@ worldToScene w =
                 flip map [0.1, 0.2 .. 0.9] $
                 \i -> mconcat [Line [(i, 0.0), (i, 1.0)], Line [(0.0, i), (1.0, i)]]
 
+    npcs =
+        fromRoomCoordinates $
+        mconcat $
+        flip map (S.toList (getNPCs w)) $
+        \npc -> case npc of
+            z@(Zombie {}) ->
+                Color red $
+                personPicture (getZombiePosition z)
+
     -- The player.
     player =
         fromRoomCoordinates $
-        let (xp, yp) = getPlayerPosition (getPlayer w) in
+        let pos = getPlayerPosition (getPlayer w) in
         Color orange $
-        intPolygon [(xp, yp), (xp, yp + 1), (xp + 1, yp + 1), (xp + 1, yp)]
+        personPicture pos
 
     -- The current room/map/area.
     room =
@@ -154,6 +166,10 @@ worldToScene w =
 
     -- I don't know exactly how big this is, but it's pretty huge.
     hugeText = Scale (1.0 / fromIntegral canvasSize) (1.0 / fromIntegral canvasSize) . Text
+
+    -- Draw the picture of a person.
+    personPicture (xp, yp) =
+        intPolygon [(xp, yp), (xp, yp + 1), (xp + 1, yp + 1), (xp + 1, yp)]
 
     -- Convert a picture in room coordinates to one in drawing coordinates.
     fromRoomCoordinates :: Picture -> Picture
