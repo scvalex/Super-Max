@@ -6,12 +6,16 @@ import Data.Foldable ( foldl )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
 import qualified Data.Set as S
+import Data.Map ( Map )
+import qualified Data.Map as M
 import Graphics.Gloss.Interface.Pure.Game ( play
                                           , Event(..), Key(..), KeyState(..)
                                           , Display(..)
                                           , Picture(..), Path
                                           , dim, black, greyN, white, yellow, orange, red )
 import Text.Printf ( printf )
+
+type NpcId = Int
 
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
@@ -27,7 +31,7 @@ data World = G { getLevel        :: Int
                                             -- update the world, we process those keys as
                                             -- well as all the keys that were pressed and
                                             -- released.
-               , getNPCs         :: Set NPC
+               , getNpcs         :: Map NpcId Npc
                } deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
@@ -36,7 +40,7 @@ data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ the bounds of the
                                                           -- related to the display ones)
                  , getRoomStart   :: (Int, Int)           -- ^ the player's starting point
                  , getRoomExit    :: (Int, Int)           -- ^ the area's exit point
-                 , getInitialNPCs :: Set NPC              -- ^ the area's initial NPCs
+                 , getInitialNpcs :: [Npc]                -- ^ the area's initial NPCs
                  } deriving ( Eq, Show )
 
 data Player = Player { getPlayerPosition :: (Int, Int)
@@ -46,12 +50,9 @@ data Player = Player { getPlayerPosition :: (Int, Int)
 data Movement = N | S | W | E
               deriving ( Eq, Show )
 
-data NPC = Zombie { getNPCId          :: Int
+data Npc = Zombie { getNpcId          :: NpcId
                   , getZombiePosition :: (Int, Int)
                   } deriving ( Eq, Show )
-
-instance Ord NPC where
-    compare a b = compare (getNPCId a) (getNPCId b)
 
 main :: IO ()
 main = do
@@ -85,9 +86,8 @@ area1 :: Area
 area1 = Room { getRoomBounds = (0, 0, 100, 100)
              , getRoomStart = (49, 5)
              , getRoomExit = (49, 94)
-             , getInitialNPCs =
-                    S.fromList [ Zombie 0 (25, 25), Zombie 1 (25, 75)
-                               , Zombie 2 (75, 75), Zombie 3 (75, 25) ]
+             , getInitialNpcs = [ Zombie 0 (25, 25), Zombie 1 (25, 75)
+                                , Zombie 2 (75, 75), Zombie 3 (75, 25) ]
              }
 
 initWorld :: Area -> World
@@ -98,7 +98,7 @@ initWorld area = G { getLevel = 1
                                         , getPlayerMovement = Nothing
                                         }
                    , getHeldDownKeys = S.empty
-                   , getNPCs = getInitialNPCs area
+                   , getNpcs = M.fromList $ map (\npc -> (getNpcId npc, npc)) $ getInitialNpcs area
                    }
 
 worldToScene :: World -> Picture
@@ -125,7 +125,7 @@ worldToScene w =
     npcs =
         fromRoomCoordinates $
         mconcat $
-        flip map (S.toList (getNPCs w)) $
+        flip map (M.elems (getNpcs w)) $
         \npc -> case npc of
             z@(Zombie {}) ->
                 Color red $
@@ -216,16 +216,16 @@ tickWorld :: Float -> World -> World
 tickWorld t w0 =
     let w1 = foldl processKey w0 (getHeldDownKeys w0)
         w2 = w1 { getPlayer = movePlayer w1 }
-        w3 = w2 { getNPCs = moveNPCs w2 } in
+        w3 = w2 { getNpcs = moveNpcs w2 } in
     w3 { getTime = getTime w3 + t }
   where
     -- Move NPCs according the their own rules.
-    moveNPCs :: World -> Set NPC
-    moveNPCs w = S.map (moveNPC w) (getNPCs w)
+    moveNpcs :: World -> Map NpcId Npc
+    moveNpcs w = M.map (moveNpc w) (getNpcs w)
 
     -- Move a single NPC.  Zombies follow the player.
-    moveNPC :: World -> NPC -> NPC
-    moveNPC w z@(Zombie {}) =
+    moveNpc :: World -> Npc -> Npc
+    moveNpc w z@(Zombie {}) =
         let (xz, yz) = getZombiePosition z
             (xp, yp) = getPlayerPosition (getPlayer w) in
         if abs (xp - xz) > abs (yp - yz)
