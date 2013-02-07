@@ -10,7 +10,7 @@ import Graphics.Gloss.Interface.Pure.Game ( play
                                           , Event(..), Key(..), KeyState(..)
                                           , Display(..)
                                           , Picture(..), Path
-                                          , black, greyN, white, orange, red )
+                                          , dim, black, greyN, white, yellow, orange, red )
 import Text.Printf ( printf )
 
 -- | The state of the world is used to generate the scene, and is
@@ -149,8 +149,11 @@ worldToScene w =
                 intLine [(x1, y1), (x1, y2), (x2, y2), (x2, y1), (x1, y1)]
 
     roomExit = let (xe, ye) = getRoomExit (getArea w) in
-               mconcat [ intPolygon [(xe, ye), (xe + 2, ye), (xe + 2, ye + 1), (xe, ye + 1)]
-                       , Translate (fromIntegral (xe - 1)) (fromIntegral (ye + 2)) $ Scale 0.02 0.01 $ Text "Exit"
+               mconcat [ Color (dim yellow) $
+                         intPolygon [(xe, ye), (xe + 2, ye), (xe + 2, ye + 1), (xe, ye + 1)]
+                       , Translate (fromIntegral (xe - 1)) (fromIntegral (ye + 2)) $
+                         Scale 0.02 0.01 $
+                         Text "Exit"
                        ]
 
     -- The HUD is overlayed on the game.
