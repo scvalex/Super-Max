@@ -4,15 +4,16 @@ import Data.Monoid ( Monoid(..) )
 import Graphics.Gloss.Interface.Pure.Game ( Event, play
                                           , Display(..)
                                           , Picture(..), Path
-                                          , black, greyN, white )
+                                          , black, greyN, white, orange )
 import Text.Printf ( printf )
 
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
 -- 'tickWorld').
-data World = W { getLevel :: Int
-               , getTime  :: Float
-               , getArea  :: Area
+data World = W { getLevel  :: Int
+               , getTime   :: Float
+               , getArea   :: Area
+               , getPlayer :: (Int, Int)
                } deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
@@ -33,7 +34,7 @@ main = do
         windowParams
         black
         fps
-        initWorld
+        (initWorld area1)
         worldToScene
         handleEvent
         tickWorld
@@ -51,14 +52,18 @@ windowParams = InWindow "Blind Horror" (canvasSize, canvasSize) (0, 0)
 fps :: Int
 fps = 10
 
-initWorld :: World
-initWorld = W { getLevel = 1
-              , getTime  = 0.0
-              , getArea  = Room { getRoomBounds = (0, 0, 100, 100)
-                                , getRoomStart = (49, 5)
-                                , getRoomExit = (49, 94)
-                                }
-              }
+area1 :: Area
+area1 = Room { getRoomBounds = (0, 0, 100, 100)
+             , getRoomStart = (49, 5)
+             , getRoomExit = (49, 94)
+             }
+
+initWorld :: Area -> World
+initWorld area = W { getLevel = 1
+                   , getTime  = 0.0
+                   , getArea  = area
+                   , getPlayer = getRoomStart area
+                   }
 
 worldToScene :: World -> Picture
 worldToScene w =
@@ -70,6 +75,7 @@ worldToScene w =
     Color white $
     mconcat [ wireframe
             , room
+            , player
             , hud
             ]
   where
@@ -79,11 +85,16 @@ worldToScene w =
                 flip map [0.1, 0.2 .. 0.9] $
                 \i -> mconcat [Line [(i, 0.0), (i, 1.0)], Line [(0.0, i), (1.0, i)]]
 
+    -- The player.
+    player =
+        fromRoomCoordinates $
+        let (xp, yp) = getPlayer w
+        in Color orange $
+           intPolygon [(xp, yp), (xp, yp + 1), (xp + 1, yp + 1), (xp + 1, yp)]
+
     -- The current room/map/area.
     room =
-        let (x1, y1, x2, y2) = getRoomBounds (getArea w) in
-        Translate (fromIntegral x1) (fromIntegral y1) $
-        Scale (1.0 / fromIntegral (x2 - x1)) (1.0 / fromIntegral (y2 - y1)) $
+        fromRoomCoordinates $
         mconcat [ roomWalls
                 , roomExit
                 ]
@@ -109,6 +120,13 @@ worldToScene w =
 
     -- I don't know exactly how big this is, but it's pretty huge.
     hugeText = Scale (1.0 / fromIntegral canvasSize) (1.0 / fromIntegral canvasSize) . Text
+
+    -- Convert a picture in room coordinates to one in drawing coordinates.
+    fromRoomCoordinates :: Picture -> Picture
+    fromRoomCoordinates =
+        let (x1, y1, x2, y2) = getRoomBounds (getArea w) in
+        Translate (fromIntegral x1) (fromIntegral y1) .
+        Scale (1.0 / fromIntegral (x2 - x1)) (1.0 / fromIntegral (y2 - y1))
 
     -- Other text sizes (relative to huge text)
     bigText    = Scale 0.5 0.5 . hugeText
