@@ -50,8 +50,8 @@ data Player = Player { getPlayerPosition :: (Int, Int)
 data Movement = N | S | W | E
               deriving ( Eq, Show )
 
-data Npc = Zombie { getNpcId          :: NpcId
-                  , getZombiePosition :: (Int, Int)
+data Npc = Zombie { getNpcId       :: NpcId
+                  , getNpcPosition :: (Int, Int)
                   } deriving ( Eq, Show )
 
 main :: IO ()
@@ -129,7 +129,7 @@ worldToScene w =
         \npc -> case npc of
             z@(Zombie {}) ->
                 Color red $
-                personPicture (getZombiePosition z)
+                personPicture (getNpcPosition z)
 
     -- The player.
     player =
@@ -221,16 +221,22 @@ tickWorld t w0 =
   where
     -- Move NPCs according the their own rules.
     moveNpcs :: World -> Map NpcId Npc
-    moveNpcs w = M.map (moveNpc w) (getNpcs w)
+    moveNpcs w = M.foldl (moveNpc w) (getNpcs w) (getNpcs w)
 
-    -- Move a single NPC.  Zombies follow the player.
-    moveNpc :: World -> Npc -> Npc
-    moveNpc w z@(Zombie {}) =
-        let (xz, yz) = getZombiePosition z
-            (xp, yp) = getPlayerPosition (getPlayer w) in
-        if abs (xp - xz) > abs (yp - yz)
-        then z { getZombiePosition = (xz + signum (xp - xz), yz) }
-        else z { getZombiePosition = (xz, yz + signum (yp - yz)) }
+    -- Move a single NPC.  Zombies follow the player.  If a zombie tries to move to an
+    -- occupied space, it doesn't move.
+    moveNpc :: World -> Map NpcId Npc -> Npc -> Map NpcId Npc
+    moveNpc w npcs z@(Zombie {}) =
+        let (xz, yz) = getNpcPosition z
+            (xp, yp) = getPlayerPosition (getPlayer w)
+            pos' = if abs (xp - xz) > abs (yp - yz)
+                   then (xz + signum (xp - xz), yz)
+                   else (xz, yz + signum (yp - yz)) in
+        if not (posOccupied pos' npcs)
+        then M.insert (getNpcId z) (z { getNpcPosition = pos' }) npcs
+        else npcs
+      where
+        posOccupied pos = M.foldl (\o npc -> o || getNpcPosition npc == pos) False
 
     -- Move the player according to its movement, then, reset its movement.
     movePlayer :: World -> Player
