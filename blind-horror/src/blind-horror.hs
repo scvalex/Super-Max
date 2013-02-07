@@ -1,7 +1,8 @@
 module Main where
 
 import Data.Monoid ( Monoid(..) )
-import Graphics.Gloss.Interface.Pure.Game ( Event, play
+import Graphics.Gloss.Interface.Pure.Game ( play
+                                          , Event(..), Key(..)
                                           , Display(..)
                                           , Picture(..), Path
                                           , black, greyN, white, orange )
@@ -134,7 +135,26 @@ worldToScene w =
     smallText  = Scale 0.1 0.1 . hugeText
 
 handleEvent :: Event -> World -> World
-handleEvent _ w = w
+handleEvent ev w =
+    let (x, y) = getPlayer w in
+    case ev of
+        (EventKey (Char 'a') _ _ _) ->
+            w { getPlayer = inBounds (x - 1, y) }
+        (EventKey (Char 'd') _ _ _) ->
+            w { getPlayer = inBounds (x + 1, y) }
+        (EventKey (Char 's') _ _ _) ->
+            w { getPlayer = inBounds (x, y - 1) }
+        (EventKey (Char 'w') _ _ _) ->
+            w { getPlayer = inBounds (x, y + 1) }
+        _ ->
+            w
+  where
+    -- Force the coordinates back in the area's bounds.
+    inBounds :: (Int, Int) -> (Int, Int)
+    inBounds (x, y) =
+        case getArea w of
+            r@(Room {}) -> let (x1, y1, x2, y2) = getRoomBounds r
+                           in (max x1 (min x x2), max y1 (min y y2))
 
 tickWorld :: Float -> World -> World
 tickWorld t w = w { getTime = getTime w + t }
