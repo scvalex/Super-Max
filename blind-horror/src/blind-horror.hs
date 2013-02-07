@@ -223,6 +223,7 @@ tickWorld t w0 =
     moveNPCs :: World -> Set NPC
     moveNPCs w = S.map (moveNPC w) (getNPCs w)
 
+    -- Move a single NPC.  Zombies follow the player.
     moveNPC :: World -> NPC -> NPC
     moveNPC w z@(Zombie {}) =
         let (xz, yz) = getZombiePosition z
