@@ -11,19 +11,26 @@ import Text.Printf ( printf )
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
 -- 'tickWorld').
-data World = W { getLevel  :: Int
+data World = G { getLevel  :: Int
                , getTime   :: Float
                , getArea   :: Area
-               , getPlayer :: (Int, Int)
+               , getPlayer :: Player
                } deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
 data Area = Room { getRoomBounds :: (Int, Int, Int, Int) -- ^ the bounds of the room
                                                          -- (these coordinates are not
                                                          -- related to the display ones)
-                 , getRoomStart :: (Int, Int)            -- ^ the player's starting point
-                 , getRoomExit :: (Int, Int)             -- ^ the area's exit point
+                 , getRoomStart  :: (Int, Int)           -- ^ the player's starting point
+                 , getRoomExit   :: (Int, Int)            -- ^ the area's exit point
                  } deriving ( Eq, Show )
+
+data Player = Player { getPlayerPosition :: (Int, Int)
+                     , getPlayerMovement :: Maybe Movement
+                     } deriving ( Eq, Show )
+
+data Movement = N | S | W | E
+              deriving ( Eq, Show )
 
 main :: IO ()
 main = do
@@ -60,10 +67,12 @@ area1 = Room { getRoomBounds = (0, 0, 100, 100)
              }
 
 initWorld :: Area -> World
-initWorld area = W { getLevel = 1
+initWorld area = G { getLevel = 1
                    , getTime  = 0.0
                    , getArea  = area
-                   , getPlayer = getRoomStart area
+                   , getPlayer = Player { getPlayerPosition = getRoomStart area
+                                        , getPlayerMovement = Nothing
+                                        }
                    }
 
 worldToScene :: World -> Picture
@@ -89,7 +98,7 @@ worldToScene w =
     -- The player.
     player =
         fromRoomCoordinates $
-        let (xp, yp) = getPlayer w
+        let (xp, yp) = getPlayerPosition (getPlayer w)
         in Color orange $
            intPolygon [(xp, yp), (xp, yp + 1), (xp + 1, yp + 1), (xp + 1, yp)]
 
@@ -136,16 +145,17 @@ worldToScene w =
 
 handleEvent :: Event -> World -> World
 handleEvent ev w =
-    let (x, y) = getPlayer w in
+    let p = getPlayer w
+        (x, y) = getPlayerPosition p in
     case ev of
         (EventKey (Char 'a') _ _ _) ->
-            w { getPlayer = inBounds (x - 1, y) }
+            w { getPlayer = p { getPlayerPosition = inBounds (x - 1, y) } }
         (EventKey (Char 'd') _ _ _) ->
-            w { getPlayer = inBounds (x + 1, y) }
+            w { getPlayer = p { getPlayerPosition = inBounds (x + 1, y) } }
         (EventKey (Char 's') _ _ _) ->
-            w { getPlayer = inBounds (x, y - 1) }
+            w { getPlayer = p { getPlayerPosition = inBounds (x, y - 1) } }
         (EventKey (Char 'w') _ _ _) ->
-            w { getPlayer = inBounds (x, y + 1) }
+            w { getPlayer = p { getPlayerPosition = inBounds (x, y + 1) } }
         _ ->
             w
   where
@@ -158,6 +168,13 @@ handleEvent ev w =
 
 tickWorld :: Float -> World -> World
 tickWorld t w = w { getTime = getTime w + t }
+
+-- | How much does the player move for each movement command.
+movementDisplacement :: Movement -> (Int, Int)
+movementDisplacement N = (0, 1)
+movementDisplacement S = (0, -1)
+movementDisplacement W = (-1, 0)
+movementDisplacement E = (1, 0)
 
 ----------------------
 -- Helpers
