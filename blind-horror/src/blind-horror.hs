@@ -183,25 +183,28 @@ processKey w key =
             w
 
 tickWorld :: Float -> World -> World
-tickWorld t w =
-    let p = getPlayer w
-        (x, y) = getPlayerPosition p
-        (x', y') =
-            case getPlayerMovement p of
-                Nothing -> inBounds (x, y)
-                Just m ->
-                    let (xd, yd) = movementDisplacement m
-                    in inBounds (x + xd, y + yd)
-        w' = w { getTime = getTime w + t
-               , getPlayer = p { getPlayerPosition = (x', y')
-                               , getPlayerMovement = Nothing }
-               }
-        w'' = foldl processKey w' (getHeldDownKeys w')
-    in w''
+tickWorld t w0 =
+    let w1 = foldl processKey w0 (getHeldDownKeys w0)
+        p' = movePlayer w1
+        w2 = w1 { getTime = getTime w1 + t
+                , getPlayer = p'
+                }
+    in w2
   where
+    movePlayer w =
+        let p = getPlayer w
+            (x, y) = getPlayerPosition p in
+        case getPlayerMovement p of
+            Nothing ->
+                p
+            Just m ->
+                    let (xd, yd) = movementDisplacement m
+                    in p { getPlayerPosition = inBounds w (x + xd, y + yd)
+                         , getPlayerMovement = Nothing }
+
     -- Force the coordinates back in the area's bounds.
-    inBounds :: (Int, Int) -> (Int, Int)
-    inBounds (x, y) =
+    inBounds :: World -> (Int, Int) -> (Int, Int)
+    inBounds w (x, y) =
         case getArea w of
             r@(Room {}) -> let (x1, y1, x2, y2) = getRoomBounds r
                            in (max x1 (min x x2), max y1 (min y y2))
