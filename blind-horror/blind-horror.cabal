@@ -22,8 +22,8 @@ Source-repository head
   Location:             https://github.com/scvalex/super-max.git
 
 Executable blind-horror
-  Build-depends:        base >= 4 && < 5
-  Ghc-options:          -Wall
+  Build-depends:        base >= 4 && < 5, gloss
+  Ghc-options:          -Wall -threaded
   Hs-Source-Dirs:       src/
   Extensions:           ScopedTypeVariables, OverloadedStrings
   Main-is:              blind-horror.hs

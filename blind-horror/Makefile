@@ -17,6 +17,8 @@ clean:
 	rm -rf cabal-dev/
 
 dist/setup-config: blind-horror.cabal
+# We want to use the GLFW backend (because GLUT is buggy as all hell).
+	cabal-dev install gloss --flags="GLFW -GLUT"
 # If you don't have all the necessary packages installed on the first
 # run, run `cabal-dev install`.
 	cabal-dev configure || cabal-dev install
