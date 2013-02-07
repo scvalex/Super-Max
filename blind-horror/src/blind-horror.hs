@@ -75,7 +75,9 @@ worldToScene w =
   where
     -- The wireframe in the background.
     wireframe = Color (greyN 0.1) $
-                Line [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]
+                mconcat $
+                flip map [0.1, 0.2 .. 0.9] $
+                \i -> mconcat [Line [(i, 0.0), (i, 1.0)], Line [(0.0, i), (1.0, i)]]
 
     -- The current room/map/area.
     room =
