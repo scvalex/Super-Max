@@ -1,6 +1,6 @@
 module Main where
 
-import Data.Monoid ( mconcat )
+import Data.Monoid ( Monoid(..) )
 import Graphics.Gloss.Interface.Pure.Game ( Event, play
                                           , Display(..)
                                           , Picture(..)
@@ -12,7 +12,16 @@ import Text.Printf ( printf )
 -- 'tickWorld').
 data World = W { getLevel :: Int
                , getTime  :: Float
+               , getArea  :: Area
                } deriving ( Eq, Show )
+
+-- | The definition of the game area/map.
+data Area = Room { getRoomBounds :: (Int, Int, Int, Int) -- ^ the bounds of the room
+                                                         -- (these coordinates are not
+                                                         -- related to the display ones)
+                 , getRoomStart :: (Int, Int)            -- ^ the player's starting point
+                 , getRoomExit :: (Int, Int)             -- ^ the area's exit point
+                 } deriving ( Eq, Show )
 
 main :: IO ()
 main = do
@@ -45,6 +54,10 @@ fps = 10
 initWorld :: World
 initWorld = W { getLevel = 1
               , getTime  = 0.0
+              , getArea  = Room { getRoomBounds = (0, 0, 100, 100)
+                                , getRoomStart = (49, 5)
+                                , getRoomExit = (49, 94)
+                                }
               }
 
 worldToScene :: World -> Picture
@@ -56,11 +69,15 @@ worldToScene w =
     -- Just default all the foreground colours to white.
     Color white $
     mconcat [ wireframe
+            , room
             , hud
             ]
   where
     -- The wireframe in the background.
     wireframe = Line [(0.0, 0.0), (0.0, 1.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]
+
+    -- The current room/map/area.
+    room = mempty
 
     -- The HUD is overlayed on the game.
     hud = mconcat [ survivalTime
