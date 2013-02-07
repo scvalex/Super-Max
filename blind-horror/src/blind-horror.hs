@@ -136,11 +136,15 @@ worldToScene w =
     prePostMessage =
         case getState w of
             pg@(PreGame {}) ->
-                Translate 0.25 0.45 $ bigText (getObjective pg)
+                mconcat [ Translate 0.25 0.45 $ bigText (getObjective pg)
+                        , Translate 0.39 0.40 $ mediumText "<press space>"
+                        ]
             InGame {} ->
                 mempty
             pg@(PostGame {}) ->
-                Translate 0.35 0.45 $ bigText (getConclusion pg)
+                mconcat [ Translate 0.36 0.45 $ bigText (getConclusion pg)
+                        , Translate 0.38 0.40 $ mediumText "<press space>"
+                        ]
 
     -- All the non-player entities.
     npcs =
@@ -211,10 +215,8 @@ handleEvent ev w =
     case getState w of
         PreGame {}  ->
             case ev of
-                -- KeyUnknown seems to be sent to the program on startup.
-                EventKey (SpecialKey KeyUnknown) _ _ _ -> w
-                EventKey _ Up _ _                      -> w { getState = InGame }
-                _                                      -> w
+                EventKey (SpecialKey KeySpace) Up _ _ -> w { getState = InGame }
+                _                                     -> w
         InGame      -> handleInGameEvent
         PostGame {} ->
             case ev of
