@@ -9,7 +9,7 @@ import qualified Data.Set as S
 import Data.Map ( Map )
 import qualified Data.Map as M
 import Graphics.Gloss.Interface.Pure.Game ( play
-                                          , Event(..), Key(..), KeyState(..)
+                                          , Event(..), Key(..), SpecialKey(..), KeyState(..)
                                           , Display(..)
                                           , Picture(..), Path
                                           , dim, black, greyN, white, yellow, orange, red )
@@ -20,19 +20,26 @@ type NpcId = Int
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
 -- 'tickWorld').
-data World = G { getLevel        :: Int
-               , getTime         :: Float
-               , getArea         :: Area
-               , getPlayer       :: Player
-               , getHeldDownKeys :: Set Key -- ^ We get key up and key down events, but we
-                                            -- need to handle holding down a key
-                                            -- ourselves.  We keep track of which keys are
-                                            -- being held down at any time.  When we
-                                            -- update the world, we process those keys as
-                                            -- well as all the keys that were pressed and
-                                            -- released.
-               , getNpcs         :: Map NpcId Npc
-               } deriving ( Eq, Show )
+data World = Game { getState        :: GameState
+                  , getLevel        :: Int
+                  , getTime         :: Float
+                  , getArea         :: Area
+                  , getPlayer       :: Player
+                  , getHeldDownKeys :: Set Key -- ^ We get key up and key down events, but
+                                               -- we need to handle holding down a key
+                                               -- ourselves.  We keep track of which keys
+                                               -- are being held down at any time.  When
+                                               -- we update the world, we process those
+                                               -- keys as well as all the keys that were
+                                               -- pressed and released.
+                  , getNpcs         :: Map NpcId Npc
+                  }
+           deriving ( Eq, Show )
+
+data GameState = PreGame { getObjective :: String }
+               | InGame
+               | PostGame { getConclusion :: String }
+               deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
 data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ the bounds of the room
@@ -91,15 +98,17 @@ area1 = Room { getRoomBounds = (0, 0, 100, 100)
              }
 
 initWorld :: Area -> World
-initWorld area = G { getLevel = 1
-                   , getTime  = 0.0
-                   , getArea  = area
-                   , getPlayer = Player { getPlayerPosition = getRoomStart area
-                                        , getPlayerMovement = Nothing
-                                        }
-                   , getHeldDownKeys = S.empty
-                   , getNpcs = M.fromList $ map (\npc -> (getNpcId npc, npc)) $ getInitialNpcs area
-                   }
+initWorld area =
+    Game { getState = PreGame "Get to the exit"
+         , getLevel = 1
+         , getTime  = 0.0
+         , getArea  = area
+         , getPlayer = Player { getPlayerPosition = getRoomStart area
+                              , getPlayerMovement = Nothing
+                              }
+         , getHeldDownKeys = S.empty
+         , getNpcs = M.fromList $ map (\npc -> (getNpcId npc, npc)) $ getInitialNpcs area
+         }
 
 worldToScene :: World -> Picture
 worldToScene w =
@@ -114,6 +123,7 @@ worldToScene w =
             , player
             , npcs
             , hud
+            , prePostMessage
             ]
   where
     -- The wireframe in the background.
@@ -122,6 +132,17 @@ worldToScene w =
                 flip map [0.1, 0.2 .. 0.9] $
                 \i -> mconcat [Line [(i, 0.0), (i, 1.0)], Line [(0.0, i), (1.0, i)]]
 
+    -- A message shown at the beginning and at the end.
+    prePostMessage =
+        case getState w of
+            pg@(PreGame {}) ->
+                Translate 0.25 0.45 $ bigText (getObjective pg)
+            InGame {} ->
+                mempty
+            pg@(PostGame {}) ->
+                Translate 0.35 0.45 $ bigText (getConclusion pg)
+
+    -- All the non-player entities.
     npcs =
         fromRoomCoordinates $
         mconcat $
@@ -187,14 +208,25 @@ worldToScene w =
 
 handleEvent :: Event -> World -> World
 handleEvent ev w =
-    let keys = getHeldDownKeys w in
-    case ev of
-        EventKey key Down _ _ ->
-            processKey (w { getHeldDownKeys = S.insert key keys }) key
-        EventKey key Up _ _ ->
-            w { getHeldDownKeys = S.delete key keys }
-        _ ->
-            w
+    case getState w of
+        PreGame {}  ->
+            case ev of
+                -- KeyUnknown seems to be sent to the program on startup.
+                EventKey (SpecialKey KeyUnknown) _ _ _ -> w
+                EventKey _ Up _ _                      -> w { getState = InGame }
+                _                                      -> w
+        InGame      -> handleInGameEvent
+        PostGame {} -> w
+  where
+    handleInGameEvent =
+        let keys = getHeldDownKeys w in
+        case ev of
+            EventKey key Down _ _ ->
+                processKey (w { getHeldDownKeys = S.insert key keys }) key
+            EventKey key Up _ _ ->
+                w { getHeldDownKeys = S.delete key keys }
+            _ ->
+                w
 
 -- | A key is pressed -- update the world accordingly.
 processKey :: World -> Key -> World
@@ -214,11 +246,32 @@ processKey w key =
 
 tickWorld :: Float -> World -> World
 tickWorld t w0 =
-    let w1 = foldl processKey w0 (getHeldDownKeys w0)
-        w2 = w1 { getPlayer = movePlayer w1 }
-        w3 = w2 { getNpcs = moveNpcs w2 } in
-    w3 { getTime = getTime w3 + t }
+    case getState w0 of
+        PreGame {}  -> w0
+        InGame      -> tickWorldInGame
+        PostGame {} -> w0
   where
+    tickWorldInGame =
+        let w1 = foldl processKey w0 (getHeldDownKeys w0)
+            w2 = w1 { getPlayer = movePlayer w1 }
+            w3 = w2 { getNpcs = moveNpcs w2 }
+            w4 = updateTime w3
+            w5 = checkVictory w4
+        in w5
+
+    -- Check if the player has lost yet.
+    checkVictory :: World -> World
+    checkVictory w =
+        let npcPoss = map getNpcPosition $ M.elems (getNpcs w)
+            pos = getPlayerPosition (getPlayer w) in
+        if pos `elem` npcPoss
+        then w { getState = PostGame { getConclusion = "You died" } }
+        else w
+
+    -- Increment the ticker by the elapsed amount of time.
+    updateTime :: World -> World
+    updateTime w = w { getTime = getTime w + t }
+
     -- Move NPCs according the their own rules.
     moveNpcs :: World -> Map NpcId Npc
     moveNpcs w = M.foldl (moveNpc w) (getNpcs w) (getNpcs w)
