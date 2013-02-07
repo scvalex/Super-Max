@@ -167,7 +167,7 @@ worldToScene w =
                 ]
 
     roomWalls = let (x1, y1, x2, y2) = getRoomBounds (getArea w) in
-                intLine [(x1, y1), (x1, y2), (x2, y2), (x2, y1), (x1, y1)]
+                intLine [(x1, y1), (x1, y2 + 1), (x2 + 1, y2 + 1), (x2 + 1, y1), (x1, y1)]
 
     roomExit = let (xe, ye) = getRoomExit (getArea w) in
                mconcat [ Color (dim yellow) $
