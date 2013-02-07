@@ -215,12 +215,14 @@ processKey w key =
 tickWorld :: Float -> World -> World
 tickWorld t w0 =
     let w1 = foldl processKey w0 (getHeldDownKeys w0)
-        p' = movePlayer w1
-        w2 = w1 { getTime = getTime w1 + t
-                , getPlayer = p'
-                } in
-    w2
+        w2 = w1 { getPlayer = movePlayer w1 }
+        w3 = w2 { getNPCs = moveNPCs w2 } in
+    w3 { getTime = getTime w3 + t }
   where
+    -- Move NPCs according the their own rules.
+    moveNPCs w = getNPCs w
+
+    -- Move the player according to its movement, then, reset its movement.
     movePlayer w =
         let p = getPlayer w
             (x, y) = getPlayerPosition p in
