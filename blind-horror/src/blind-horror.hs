@@ -13,8 +13,10 @@ import Graphics.Gloss.Interface.Pure.Game ( play
                                           , Display(..)
                                           , Picture(..), Path
                                           , dim, black, greyN, white, yellow, orange, red )
+import Spell ( )
 import System.Random ( StdGen, newStdGen, randomR )
 import Text.Printf ( printf )
+import Types ( Direction(..) )
 
 type NpcId = Int
 
@@ -55,11 +57,8 @@ data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ the bounds of the
                  } deriving ( Eq, Show )
 
 data Player = Player { getPlayerPosition :: (Int, Int)
-                     , getPlayerMovement :: Maybe Movement
+                     , getPlayerMovement :: Maybe Direction
                      } deriving ( Eq, Show )
-
-data Movement = N | S | W | E
-              deriving ( Eq, Show )
 
 data Npc = Zombie { getNpcId       :: NpcId
                   , getNpcPosition :: (Int, Int)
@@ -257,13 +256,13 @@ processKey w key =
     let p = getPlayer w in
     case key of
         Char 'a' ->
-            w { getPlayer = p { getPlayerMovement = Just W } }
+            w { getPlayer = p { getPlayerMovement = Just West } }
         Char 'd' ->
-            w { getPlayer = p { getPlayerMovement = Just E } }
+            w { getPlayer = p { getPlayerMovement = Just East } }
         Char 's' ->
-            w { getPlayer = p { getPlayerMovement = Just S } }
+            w { getPlayer = p { getPlayerMovement = Just South } }
         Char 'w' ->
-            w { getPlayer = p { getPlayerMovement = Just N } }
+            w { getPlayer = p { getPlayerMovement = Just North } }
         _ ->
             w
 
@@ -339,11 +338,11 @@ tickWorld t w0 =
                            (max x1 (min x x2), max y1 (min y y2))
 
 -- | How much does the player move for each movement command.
-movementDisplacement :: Movement -> (Int, Int)
-movementDisplacement N = (0, 1)
-movementDisplacement S = (0, -1)
-movementDisplacement W = (-1, 0)
-movementDisplacement E = (1, 0)
+movementDisplacement :: Direction -> (Int, Int)
+movementDisplacement North = (0, 1)
+movementDisplacement South = (0, -1)
+movementDisplacement West  = (-1, 0)
+movementDisplacement East  = (1, 0)
 
 ----------------------
 -- Helpers
