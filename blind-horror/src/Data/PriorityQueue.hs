@@ -1,5 +1,5 @@
 module Data.PriorityQueue (
-        empty, insert, extractMin
+        empty, insert, extractMin, peekMin
     ) where
 
 data SkewHeap a = Empty
@@ -14,8 +14,12 @@ Empty +++ heap = heap
 heap +++ Empty = heap
 
 extractMin :: (Ord a) => SkewHeap a -> Maybe (a, SkewHeap a)
-extractMin Empty             = Nothing
-extractMin (SkewNode x l r ) = Just (x , l +++ r )
+extractMin Empty            = Nothing
+extractMin (SkewNode x l r) = Just (x , l +++ r )
+
+peekMin :: (Ord a) => SkewHeap a -> Maybe a
+peekMin Empty            = Nothing
+peekMin (SkewNode x _ _) = Just x
 
 insert :: (Ord a) => SkewHeap a -> a -> SkewHeap a
 insert heap x = heap +++ (SkewNode x Empty Empty)
