@@ -1,6 +1,9 @@
+-- | A simple priority queue implemented in terms of a functional heap.
 module Data.PriorityQueue (
-        empty, insert, extractMin, peekMin
+        PriorityQueue, empty, isEmpty, insert, extractMin, peekMin
     ) where
+
+type PriorityQueue a = SkewHeap a
 
 data SkewHeap a = Empty
                 | SkewNode a (SkewHeap a) (SkewHeap a)
@@ -26,3 +29,7 @@ insert heap x = heap +++ (SkewNode x Empty Empty)
 
 empty :: SkewHeap a
 empty = Empty
+
+isEmpty :: SkewHeap a -> Bool
+isEmpty Empty = True
+isEmpty _     = False
