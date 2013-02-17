@@ -30,6 +30,7 @@ data World = Game { getState        :: GameState
                   , getLevel        :: Int
                   , getGen          :: StdGen
                   , getTime         :: Float
+                  , getTicks        :: Int
                   , getArea         :: Area
                   , getPlayer       :: Player
                   , getHeldDownKeys :: Set Key -- ^ We get key up and key down events, but
@@ -115,6 +116,7 @@ initWorld gen area lvl =
          , getLevel        = lvl
          , getGen          = gen'
          , getTime         = 0.0
+         , getTicks        = 0
          , getArea         = area
          , getHeldDownKeys = S.empty
          , getNpcs         = npcs
@@ -279,8 +281,9 @@ tickWorld t w0 =
             w2 = w1 { getPlayer = movePlayer w1 }
             w3 = w2 { getNpcs = moveNpcs w2 }
             w4 = updateTime w3
-            w5 = checkVictory w4
-        in w5
+            w5 = updateTicks w4
+            w6 = checkVictory w5
+        in w6
 
     -- Check if the player has lost yet.
     checkVictory :: World -> World
@@ -298,6 +301,10 @@ tickWorld t w0 =
     -- Increment the ticker by the elapsed amount of time.
     updateTime :: World -> World
     updateTime w = w { getTime = getTime w + t }
+
+    -- Increment the tick count.
+    updateTicks :: World -> World
+    updateTicks w = w { getTicks = getTicks w + 1 }
 
     -- Move NPCs according the their own rules.
     moveNpcs :: World -> Map NpcId Npc
