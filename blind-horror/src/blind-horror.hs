@@ -277,9 +277,9 @@ tickWorld t w0 =
         PostGame {} -> w0
   where
     tickWorldInGame =
-        updateWorld w0 [ \w -> foldl processKey w (getHeldDownKeys w)
-                       , \w -> w { getPlayer = movePlayer w }
-                       , \w -> w { getNpcs = moveNpcs w }
+        updateWorld w0 [ processHeldDownKeys
+                       , movePlayer
+                       , moveNpcs
                        , updateTime
                        , updateTicks
                        , checkVictory]
@@ -287,6 +287,11 @@ tickWorld t w0 =
     -- Apply several world update functions.
     updateWorld :: World -> [World -> World] -> World
     updateWorld = foldl (flip ($))
+
+    -- Some keys were held down, so we didn't see them "happen" this turn.  Simulate key
+    -- presses for all keys that are currently being held down.
+    processHeldDownKeys :: World -> World
+    processHeldDownKeys w = foldl processKey w (getHeldDownKeys w)
 
     -- Check if the player has lost yet.
     checkVictory :: World -> World
@@ -310,8 +315,8 @@ tickWorld t w0 =
     updateTicks w = w { getTicks = getTicks w + 1 }
 
     -- Move NPCs according the their own rules.
-    moveNpcs :: World -> Map NpcId Npc
-    moveNpcs w = M.foldl (moveNpc w) (getNpcs w) (getNpcs w)
+    moveNpcs :: World -> World
+    moveNpcs w = w { getNpcs = M.foldl (moveNpc w) (getNpcs w) (getNpcs w) }
 
     -- Move a single NPC.  Zombies follow the player.  If a zombie tries to move to an
     -- occupied space, it doesn't move.
@@ -329,17 +334,17 @@ tickWorld t w0 =
         posOccupied pos = M.foldl (\o npc -> o || getNpcPosition npc == pos) False
 
     -- Move the player according to its movement, then, reset its movement.
-    movePlayer :: World -> Player
+    movePlayer :: World -> World
     movePlayer w =
         let p = getPlayer w
             (x, y) = getPlayerPosition p in
         case getPlayerMovement p of
             Nothing ->
-                p
+                w
             Just m ->
                     let (xd, yd) = movementDisplacement m in
-                    p { getPlayerPosition = inBounds w (x + xd, y + yd)
-                      , getPlayerMovement = Nothing }
+                    w { getPlayer = p { getPlayerPosition = inBounds w (x + xd, y + yd)
+                                      , getPlayerMovement = Nothing } }
 
     -- Force the coordinates back in the area's bounds.
     inBounds :: World -> (Int, Int) -> (Int, Int)
