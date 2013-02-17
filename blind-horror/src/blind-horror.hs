@@ -282,7 +282,8 @@ tickWorld t w0 =
                        , moveNpcs
                        , updateTime
                        , updateTicks
-                       , checkVictory]
+                       , checkVictory
+                       ]
 
     -- Apply several world update functions.
     updateWorld :: World -> [World -> World] -> World
