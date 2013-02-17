@@ -14,7 +14,7 @@ import Graphics.Gloss.Interface.Pure.Game ( play
                                           , Picture(..), Path
                                           , dim, black, greyN, white, yellow, orange, red )
 import Spell ( )
-import Scheduler ( )
+import Scheduler ( Scheduler, newScheduler, runScheduledActions )
 import System.Random ( StdGen, newStdGen, randomR )
 import Text.Printf ( printf )
 import Types ( Direction(..) )
@@ -27,6 +27,7 @@ type Level = Int
 -- updated on every event (see 'handleEvent'), and on every tick (see
 -- 'tickWorld').
 data World = Game { getState        :: GameState
+                  , getScheduler    :: Scheduler World
                   , getLevel        :: Int
                   , getGen          :: StdGen
                   , getTime         :: Float
@@ -42,7 +43,6 @@ data World = Game { getState        :: GameState
                                                -- pressed and released.
                   , getNpcs         :: Map NpcId Npc
                   }
-           deriving ( Show )
 
 data GameState = PreGame { getObjective :: String }
                | InGame
@@ -113,6 +113,7 @@ initWorld gen area lvl =
                     (M.insert i z ns, gen2)) (M.empty, gen) [1..2^(lvl - 1)]
     in
     Game { getState        = PreGame "Get to the exit"
+         , getScheduler    = newScheduler
          , getLevel        = lvl
          , getGen          = gen'
          , getTime         = 0.0
@@ -282,12 +283,19 @@ tickWorld t w0 =
                        , moveNpcs
                        , updateTime
                        , updateTicks
+                       , runPendingActions
                        , checkVictory
                        ]
 
     -- Apply several world update functions.
     updateWorld :: World -> [World -> World] -> World
     updateWorld = foldl (flip ($))
+
+    -- Run actions pending in the scheduler.
+    runPendingActions :: World -> World
+    runPendingActions w =
+        let (w', s') = runScheduledActions (getTicks w) w (getScheduler w) in
+        w' { getScheduler = s' }
 
     -- Some keys were held down, so we didn't see them "happen" this turn.  Simulate key
     -- presses for all keys that are currently being held down.
