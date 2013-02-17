@@ -256,13 +256,13 @@ processKey :: World -> Key -> World
 processKey w key =
     let p = getPlayer w in
     case key of
-        Char 'a' ->
+        SpecialKey KeyLeft ->
             w { getPlayer = p { getPlayerMovement = Just West } }
-        Char 'd' ->
+        SpecialKey KeyRight ->
             w { getPlayer = p { getPlayerMovement = Just East } }
-        Char 's' ->
+        SpecialKey KeyDown ->
             w { getPlayer = p { getPlayerMovement = Just South } }
-        Char 'w' ->
+        SpecialKey KeyUp ->
             w { getPlayer = p { getPlayerMovement = Just North } }
         _ ->
             w
