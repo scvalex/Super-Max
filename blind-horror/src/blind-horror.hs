@@ -15,6 +15,7 @@ import Graphics.Gloss.Interface.Pure.Game ( play
                                           , Picture(..), Path
                                           , dim, black, greyN, white, yellow, orange, red )
 import Spell ( )
+import Scheduler ( )
 import System.Random ( StdGen, newStdGen, randomR )
 import Text.Printf ( printf )
 import Types ( Direction(..) )
