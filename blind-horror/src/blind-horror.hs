@@ -125,7 +125,9 @@ initWorld gen area lvl =
                                             , getPlayerMovement = Nothing
                                             }
                  }
-    in scheduleIn 1 movePlayer g
+    in scheduleIn 1 movePlayer $
+       scheduleIn 2 moveNpcs $
+       g
 
 worldToScene :: World -> Picture
 worldToScene w =
@@ -280,7 +282,6 @@ tickWorld t w0 =
   where
     tickWorldInGame =
         updateWorld w0 [ processHeldDownKeys
-                       , moveNpcs
                        , updateTick
                        , updateTime
                        , runPendingActions
@@ -323,32 +324,6 @@ tickWorld t w0 =
                                           , getHasContinue = True } }
              else w
 
-    -- Move NPCs according the their own rules.
-    moveNpcs :: World -> World
-    moveNpcs w = w { getNpcs = M.foldl (moveNpc w) (getNpcs w) (getNpcs w) }
-
-    -- Move a single NPC.  Zombies follow the player.  If a zombie tries to move to an
-    -- occupied space, it doesn't move.
-    moveNpc :: World -> Map NpcId Npc -> Npc -> Map NpcId Npc
-    moveNpc w npcs z@(Zombie {}) =
-        let (xz, yz) = getNpcPosition z
-            (xp, yp) = getPlayerPosition (getPlayer w)
-            pos' = if abs (xp - xz) > abs (yp - yz)
-                   then (xz + signum (xp - xz), yz)
-                   else (xz, yz + signum (yp - yz)) in
-        if not (posOccupied pos' npcs)
-        then M.insert (getNpcId z) (z { getNpcPosition = pos' }) npcs
-        else npcs
-      where
-        posOccupied pos = M.foldl (\o npc -> o || getNpcPosition npc == pos) False
-
--- | How much does the player move for each movement command.
-movementDisplacement :: Direction -> (Int, Int)
-movementDisplacement North = (0, 1)
-movementDisplacement South = (0, -1)
-movementDisplacement West  = (-1, 0)
-movementDisplacement East  = (1, 0)
-
 ----------------------
 -- World updates
 ----------------------
@@ -373,6 +348,34 @@ movePlayer w =
         case getArea w of
             r@(Room {}) -> let (x1, y1, x2, y2) = getRoomBounds r in
                            (max x1 (min x x2), max y1 (min y y2))
+
+    -- How much does the player move for each movement command.
+    movementDisplacement :: Direction -> (Int, Int)
+    movementDisplacement North = (0, 1)
+    movementDisplacement South = (0, -1)
+    movementDisplacement West  = (-1, 0)
+    movementDisplacement East  = (1, 0)
+
+-- Move NPCs according the their own rules.
+moveNpcs :: World -> World
+moveNpcs w =
+    let w' = scheduleIn 2 moveNpcs w in
+    w' { getNpcs = M.foldl (moveNpc w') (getNpcs w') (getNpcs w') }
+
+-- Move a single NPC.  Zombies follow the player.  If a zombie tries to move to an
+-- occupied space, it doesn't move.
+moveNpc :: World -> Map NpcId Npc -> Npc -> Map NpcId Npc
+moveNpc w npcs z@(Zombie {}) =
+    let (xz, yz) = getNpcPosition z
+        (xp, yp) = getPlayerPosition (getPlayer w)
+        pos' = if abs (xp - xz) > abs (yp - yz)
+               then (xz + signum (xp - xz), yz)
+               else (xz, yz + signum (yp - yz)) in
+    if not (posOccupied pos' npcs)
+    then M.insert (getNpcId z) (z { getNpcPosition = pos' }) npcs
+    else npcs
+  where
+    posOccupied pos = M.foldl (\o npc -> o || getNpcPosition npc == pos) False
 
 ----------------------
 -- Helpers
