@@ -20,7 +20,8 @@ instance Ord (ScheduledAction w) where
 
 data Scheduler w = Scheduler { getSchedule :: PriorityQueue (ScheduledAction w) }
 
--- | Apply all scheduled actions whose 'getScheduledTick' has passed.
+-- | Apply all scheduled actions whose 'getScheduledTick' has passed.  Return the world
+-- after said actions have been applied, and the scheduler with said actions removed.
 runScheduledActions :: Int              -- ^ The current tick
                     -> w                -- ^ The initial state of the world
                     -> Scheduler w      -- ^ The scheduler
@@ -35,5 +36,6 @@ runScheduledActions n w s =
         _ ->
             (w, s)
 
+-- | A new scheduler with nothing scheduled.
 newScheduler :: Scheduler w
 newScheduler = Scheduler { getSchedule = PQ.empty }
