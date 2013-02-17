@@ -14,7 +14,8 @@ import Graphics.Gloss.Interface.Pure.Game ( play
                                           , Picture(..), Path
                                           , dim, black, greyN, white, yellow, orange, red )
 import Spell ( )
-import Scheduler ( Scheduler, newScheduler, runScheduledActions )
+import Scheduler ( Scheduler, newScheduler
+                 , runScheduledActions, scheduleAction, dropExpiredActions )
 import System.Random ( StdGen, newStdGen, randomR )
 import Text.Printf ( printf )
 import Types ( Direction(..) )
@@ -31,7 +32,7 @@ data World = Game { getState        :: GameState
                   , getLevel        :: Int
                   , getGen          :: StdGen
                   , getTime         :: Float
-                  , getTicks        :: Int
+                  , getTick         :: Int
                   , getArea         :: Area
                   , getPlayer       :: Player
                   , getHeldDownKeys :: Set Key -- ^ We get key up and key down events, but
@@ -111,20 +112,20 @@ initWorld gen area lvl =
                         (yz, gen2) = randomR (y1, y2) gen1
                         z = Zombie { getNpcId = i, getNpcPosition = (xz, yz) } in
                     (M.insert i z ns, gen2)) (M.empty, gen) [1..2^(lvl - 1)]
-    in
-    Game { getState        = PreGame "Get to the exit"
-         , getScheduler    = newScheduler
-         , getLevel        = lvl
-         , getGen          = gen'
-         , getTime         = 0.0
-         , getTicks        = 0
-         , getArea         = area
-         , getHeldDownKeys = S.empty
-         , getNpcs         = npcs
-         , getPlayer       = Player { getPlayerPosition = getRoomStart area
-                                    , getPlayerMovement = Nothing
-                                    }
-         }
+        g = Game { getState        = PreGame "Get to the exit"
+                 , getScheduler    = newScheduler
+                 , getLevel        = lvl
+                 , getGen          = gen'
+                 , getTime         = 0.0
+                 , getTick         = 0
+                 , getArea         = area
+                 , getHeldDownKeys = S.empty
+                 , getNpcs         = npcs
+                 , getPlayer       = Player { getPlayerPosition = getRoomStart area
+                                            , getPlayerMovement = Nothing
+                                            }
+                 }
+    in scheduleIn 1 movePlayer g
 
 worldToScene :: World -> Picture
 worldToScene w =
@@ -279,10 +280,9 @@ tickWorld t w0 =
   where
     tickWorldInGame =
         updateWorld w0 [ processHeldDownKeys
-                       , movePlayer
                        , moveNpcs
+                       , updateTick
                        , updateTime
-                       , updateTicks
                        , runPendingActions
                        , checkVictory
                        ]
@@ -291,11 +291,19 @@ tickWorld t w0 =
     updateWorld :: World -> [World -> World] -> World
     updateWorld = foldl (flip ($))
 
+    -- Increment the tick count.
+    updateTick :: World -> World
+    updateTick w = w { getTick  = getTick w + 1 }
+
+    -- Increment the ticker by the elapsed amount of time.
+    updateTime :: World -> World
+    updateTime w = w { getTime = getTime w + t }
+
     -- Run actions pending in the scheduler.
     runPendingActions :: World -> World
     runPendingActions w =
-        let (w', s') = runScheduledActions (getTicks w) w (getScheduler w) in
-        w' { getScheduler = s' }
+        let w' = runScheduledActions (getTick w) w (getScheduler w) in
+        w' { getScheduler = dropExpiredActions (getTick w') (getScheduler w') }
 
     -- Some keys were held down, so we didn't see them "happen" this turn.  Simulate key
     -- presses for all keys that are currently being held down.
@@ -314,14 +322,6 @@ tickWorld t w0 =
              then w { getState = PostGame { getConclusion  = "You win"
                                           , getHasContinue = True } }
              else w
-
-    -- Increment the ticker by the elapsed amount of time.
-    updateTime :: World -> World
-    updateTime w = w { getTime = getTime w + t }
-
-    -- Increment the tick count.
-    updateTicks :: World -> World
-    updateTicks w = w { getTicks = getTicks w + 1 }
 
     -- Move NPCs according the their own rules.
     moveNpcs :: World -> World
@@ -342,26 +342,6 @@ tickWorld t w0 =
       where
         posOccupied pos = M.foldl (\o npc -> o || getNpcPosition npc == pos) False
 
-    -- Move the player according to its movement, then, reset its movement.
-    movePlayer :: World -> World
-    movePlayer w =
-        let p = getPlayer w
-            (x, y) = getPlayerPosition p in
-        case getPlayerMovement p of
-            Nothing ->
-                w
-            Just m ->
-                    let (xd, yd) = movementDisplacement m in
-                    w { getPlayer = p { getPlayerPosition = inBounds w (x + xd, y + yd)
-                                      , getPlayerMovement = Nothing } }
-
-    -- Force the coordinates back in the area's bounds.
-    inBounds :: World -> (Int, Int) -> (Int, Int)
-    inBounds w (x, y) =
-        case getArea w of
-            r@(Room {}) -> let (x1, y1, x2, y2) = getRoomBounds r in
-                           (max x1 (min x x2), max y1 (min y y2))
-
 -- | How much does the player move for each movement command.
 movementDisplacement :: Direction -> (Int, Int)
 movementDisplacement North = (0, 1)
@@ -370,8 +350,38 @@ movementDisplacement West  = (-1, 0)
 movementDisplacement East  = (1, 0)
 
 ----------------------
+-- World updates
+----------------------
+
+-- Move the player according to its movement, then, reset its movement.
+movePlayer :: World -> World
+movePlayer w =
+    let p = getPlayer w
+        (x, y) = getPlayerPosition p
+        w' = scheduleIn 1 movePlayer w
+    in case getPlayerMovement p of
+        Nothing ->
+            w'
+        Just m ->
+            let (xd, yd) = movementDisplacement m in
+            w' { getPlayer = p { getPlayerPosition = inBounds (x + xd, y + yd)
+                               , getPlayerMovement = Nothing } }
+  where
+    -- Force the coordinates back in the area's bounds.
+    inBounds :: (Int, Int) -> (Int, Int)
+    inBounds (x, y) =
+        case getArea w of
+            r@(Room {}) -> let (x1, y1, x2, y2) = getRoomBounds r in
+                           (max x1 (min x x2), max y1 (min y y2))
+
+----------------------
 -- Helpers
 ----------------------
+
+-- | Schedule an action to run in the given number of ticks.
+scheduleIn :: Int -> (World -> World) -> World -> World
+scheduleIn d update w =
+    w { getScheduler = scheduleAction (getScheduler w) (getTick w + d) update }
 
 formatSeconds :: Float -> String
 formatSeconds t = let secs = floor t :: Int
