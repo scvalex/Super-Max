@@ -277,13 +277,16 @@ tickWorld t w0 =
         PostGame {} -> w0
   where
     tickWorldInGame =
-        let w1 = foldl processKey w0 (getHeldDownKeys w0)
-            w2 = w1 { getPlayer = movePlayer w1 }
-            w3 = w2 { getNpcs = moveNpcs w2 }
-            w4 = updateTime w3
-            w5 = updateTicks w4
-            w6 = checkVictory w5
-        in w6
+        updateWorld w0 [ \w -> foldl processKey w (getHeldDownKeys w)
+                       , \w -> w { getPlayer = movePlayer w }
+                       , \w -> w { getNpcs = moveNpcs w }
+                       , updateTime
+                       , updateTicks
+                       , checkVictory]
+
+    -- Apply several world update functions.
+    updateWorld :: World -> [World -> World] -> World
+    updateWorld = foldl (flip ($))
 
     -- Check if the player has lost yet.
     checkVictory :: World -> World
