@@ -16,6 +16,10 @@ import Graphics.UI.SDL ( InitFlag(..), withInit
                        , surfaceGetPixelFormat, fillRect )
 import Text.Printf ( printf )
 
+--------------------------------
+-- Colors -- I want to call them Colours :(
+--------------------------------
+
 data Color = Color { colorRed   :: Word8
                    , colorGreen :: Word8
                    , colorBlue  :: Word8
@@ -24,6 +28,10 @@ data Color = Color { colorRed   :: Word8
 
 instance Show Color where
     show c = printf "#%2x%2x%2x%2x" (colorRed c) (colorGreen c) (colorBlue c) (colorAlpha c)
+
+--------------------------------
+-- Pictures and drawing
+--------------------------------
 
 data Picture = FilledRectangle Double Double Double Double Color
              | Translate Double Double Picture
@@ -56,6 +64,23 @@ draw surface proj (Scale sx sy picture) = do
 draw surface proj (Pictures ps) = do
     mapM_ (draw surface proj) ps
 
+--------------------------------
+-- SDL initialization
+--------------------------------
+
+withScreen :: Int                -- ^ width
+           -> Int                -- ^ height
+           -> (Surface -> IO ()) -- ^ action to run
+           -> IO ()
+withScreen w h act = do
+    withInit [InitEverything] $ do
+        s <- setVideoMode w h 32 [HWSurface]
+        act s
+
+--------------------------------
+-- Runner
+--------------------------------
+
 main :: IO ()
 main = do
     withScreen 640 480 $ \screen -> do
@@ -69,12 +94,3 @@ main = do
                     ]
         flip screen
         threadDelay 1000000
-
-withScreen :: Int                -- ^ width
-           -> Int                -- ^ height
-           -> (Surface -> IO ()) -- ^ action to run
-           -> IO ()
-withScreen w h act = do
-    withInit [InitEverything] $ do
-        s <- setVideoMode w h 32 [HWSurface]
-        act s
