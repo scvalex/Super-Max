@@ -9,7 +9,7 @@ import Control.Concurrent ( threadDelay, forkIO )
 import Control.Concurrent.STM ( atomically
                               , TChan, newTChanIO, readTChan, writeTChan )
 import Control.Exception ( assert )
-import Control.Monad ( when, void, forever )
+import Control.Monad ( void, forever )
 import Data.Monoid ( Monoid(..) )
 import Data.Word ( Word8 )
 import Data.Vect.Double ( Mat3(..), Matrix(..), LeftModule(..), Vec3(..)
@@ -83,22 +83,6 @@ withScreen w h act = do
         act s
 
 --------------------------------
--- Event-loop
---------------------------------
-
-handleEvent :: Event -> Bool
-handleEvent (KeyUp (Keysym {symKey = SDLK_ESCAPE})) =
-    False
-handleEvent _ = do
-    True
-
-eventLoop :: IO ()
-eventLoop = do
-    event <- waitEvent
-    when (handleEvent event) $ do
-        eventLoop
-
---------------------------------
 -- Game/Engine interface
 --------------------------------
 
@@ -116,6 +100,18 @@ instance Applicative (Game s) where
     pure x = Game (\s -> (x, s))
     Game f <*> Game g = Game (\s -> let (h, s') = f s in let (x, s'') = g s' in (h x, s''))
 
+-- | Get the current game state.
+getGameState :: Game s s
+getGameState = Game (\s -> (s, s))
+
+-- | Overwrite the current game state.
+setGameState :: s -> Game s ()
+setGameState s = Game (\_ -> ((), s))
+
+-- | Pass the current game state through the given function.
+modifyGameState :: (s -> s) -> Game s ()
+modifyGameState f = Game (\s -> ((), f s))
+
 data GameEvent = Tick | SdlEvent Event
 
 play :: forall w.
@@ -127,8 +123,8 @@ play :: forall w.
      -> (Double -> Game w ())   -- ^ How to update the state after a tick (the elapsed
                                 -- time in seconds since the last tick is included)
      -> IO ()
-play (sw, sh) tps wInit drawGame onEvent onTick = do
-    withScreen sw sh $ \screen -> do
+play (screenW, screenH) tps wInit drawGame onEvent onTick = do
+    withScreen screenW screenH $ \screen -> do
         putStrLn "Screen initialised"
 
         -- This channel is used to collect events from multiple sources for the game.
@@ -153,6 +149,8 @@ play (sw, sh) tps wInit drawGame onEvent onTick = do
                 SdlEvent ev -> runGame (onEvent ev) w
 
         -- Draw the current state.
+        draw screen idmtx $
+            FilledRectangle 0 0 (fromIntegral screenW) (fromIntegral screenH) (Color 0 0 0 255)
         draw screen idmtx (drawGame w')
         flip screen
 
@@ -179,14 +177,20 @@ play (sw, sh) tps wInit drawGame onEvent onTick = do
 
 main :: IO ()
 main = do
-    withScreen 640 480 $ \screen -> do
-        putStrLn "Ok"
-        draw screen idmtx $
-            mconcat [ Translate 100 50 $
-                      Scale 2 1.5 $
-                      FilledRectangle 1 1 100 100 (Color 255 0 0 255)
-                    , Translate 400 50 $
-                      FilledRectangle 0 0 100 100 (Color 0 255 0 255)
-                    ]
-        flip screen
-        eventLoop
+    play (640, 480) 2 (0 :: Int) drawRects handleEvent handleTick
+  where
+    drawRects i =
+        mconcat [ Translate 100 50 $
+                  Scale (fromIntegral (i `mod` 4)) 1.5 $
+                  FilledRectangle 1 1 100 100 (Color 255 0 0 255)
+                , Translate 400 50 $
+                  FilledRectangle 0 0 100 100 (Color 0 255 0 255)
+                ]
+
+    handleEvent (KeyUp (Keysym {symKey = SDLK_ESCAPE})) =
+        error "escape!"
+    handleEvent _ = do
+        return ()
+
+    handleTick _ = do
+        modifyGameState (+1)
