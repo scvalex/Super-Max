@@ -27,3 +27,10 @@ Executable blind-horror
   Hs-Source-Dirs:       src/
   Extensions:           ScopedTypeVariables, OverloadedStrings
   Main-is:              blind-horror.hs
+
+Executable engine
+  Build-depends:        base >= 4 && < 5, containers, SDL, random
+  Ghc-options:          -Wall -threaded
+  Hs-Source-Dirs:       src/
+  Extensions:           ScopedTypeVariables, OverloadedStrings
+  Main-is:              engine.hs
