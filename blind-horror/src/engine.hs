@@ -4,6 +4,7 @@ module Main where
 
 import Prelude hiding ( flip )
 
+import Control.Applicative ( Applicative(..) )
 import Control.Exception ( assert )
 import Control.Monad ( when )
 import Data.Monoid ( Monoid(..) )
@@ -93,6 +94,34 @@ eventLoop = do
     event <- waitEvent
     when (handleEvent event) $ do
         eventLoop
+
+--------------------------------
+-- Game/Engine interface
+--------------------------------
+
+-- | Psych!  It's a state monad!
+newtype Game s a = Game { runGame :: s -> (a, s) }
+
+instance Monad (Game s) where
+    return x = Game (\s -> (x, s))
+    (Game h) >>= f = Game (\s -> let (x, s') = h s in let (Game g) = f x in g s')
+
+instance Functor (Game s) where
+    f `fmap` (Game h) = Game (\s -> let (x, s') = h s in (f x, s'))
+
+instance Applicative (Game s) where
+    pure x = Game (\s -> (x, s))
+    Game f <*> Game g = Game (\s -> let (h, s') = f s in let (x, s'') = g s' in (h x, s''))
+
+play :: (Int, Int)              -- ^ width, height of the game window
+     -> Int                     -- ^ Logical ticks per second
+     -> w                       -- ^ Game state
+     -> (Game w Picture)        -- ^ How to draw a particular state
+     -> (Event -> Game w ())    -- ^ How to update a state after an 'Event'
+     -> (Double -> Game w ())   -- ^ How to update the state after a tick (the elapsed
+                                -- time in seconds since the last tick is included)
+     -> IO ()
+play = undefined
 
 --------------------------------
 -- Runner
