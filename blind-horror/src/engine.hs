@@ -177,14 +177,13 @@ play (screenW, screenH) tps wInit drawGame onEvent onTick = do
 
 main :: IO ()
 main = do
-    play (640, 480) 2 (0 :: Int) drawRects handleEvent handleTick
+    play (640, 480) 10 (0 :: Int) drawRects handleEvent handleTick
   where
     drawRects i =
-        mconcat [ Translate 100 50 $
-                  Scale (fromIntegral (i `mod` 4)) 1.5 $
-                  FilledRectangle 1 1 100 100 (Color 255 0 0 255)
-                , Translate 400 50 $
-                  FilledRectangle 0 0 100 100 (Color 0 255 0 255)
+        mconcat [ Translate (10 * fromIntegral (i `mod` 40)) 50 $
+                  FilledRectangle 0 0 10 10 (Color 255 0 0 255)
+                , Translate 30 (10 * fromIntegral (i `mod` 30)) $
+                  FilledRectangle 0 0 10 10 (Color 0 255 0 255)
                 ]
 
     handleEvent (KeyUp (Keysym {symKey = SDLK_ESCAPE})) =
