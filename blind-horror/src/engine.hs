@@ -157,7 +157,9 @@ play (screenW, screenH) tps wInit drawGame onEvent onTick = do
         flip screen
 
         -- Set up the next tick.
-        tick eventCh
+        case event of
+            Tick -> tick eventCh
+            _    -> return ()
 
         playLoop screen eventCh w'
 
