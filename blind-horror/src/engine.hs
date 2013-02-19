@@ -5,8 +5,11 @@ module Main where
 import Prelude hiding ( flip )
 
 import Control.Applicative ( Applicative(..) )
+import Control.Concurrent ( threadDelay, forkIO )
+import Control.Concurrent.STM ( atomically
+                              , TChan, newTChanIO, readTChan, writeTChan )
 import Control.Exception ( assert )
-import Control.Monad ( when )
+import Control.Monad ( when, void )
 import Data.Monoid ( Monoid(..) )
 import Data.Word ( Word8 )
 import Data.Vect.Double ( Mat3(..), Matrix(..), LeftModule(..), Vec3(..)
@@ -113,15 +116,39 @@ instance Applicative (Game s) where
     pure x = Game (\s -> (x, s))
     Game f <*> Game g = Game (\s -> let (h, s') = f s in let (x, s'') = g s' in (h x, s''))
 
-play :: (Int, Int)              -- ^ width, height of the game window
+data GameEvent = Tick | SdlEvent Event
+
+play :: forall w.
+        (Int, Int)              -- ^ width, height of the game window
      -> Int                     -- ^ Logical ticks per second
      -> w                       -- ^ Game state
-     -> (Game w Picture)        -- ^ How to draw a particular state
+     -> (w -> Picture)          -- ^ How to draw a particular state
      -> (Event -> Game w ())    -- ^ How to update a state after an 'Event'
      -> (Double -> Game w ())   -- ^ How to update the state after a tick (the elapsed
                                 -- time in seconds since the last tick is included)
      -> IO ()
-play = undefined
+play (sw, sh) tps wInit drawGame onEvent onTick = do
+    withScreen sw sh $ \screen -> do
+        putStrLn "Screen initialised"
+        eventCh <- newTChanIO
+        tick eventCh
+        playLoop screen eventCh wInit
+  where
+    playLoop :: Surface -> TChan GameEvent -> w -> IO ()
+    playLoop screen eventCh w = do
+        event <- atomically (readTChan eventCh)
+        let ((), w') = case event of
+                Tick        -> runGame (onTick undefined) w
+                SdlEvent ev -> runGame (onEvent ev) w
+        draw screen idmtx (drawGame w')
+        flip screen
+        tick eventCh
+        playLoop screen eventCh w'
+
+    tick :: TChan GameEvent -> IO ()
+    tick eventCh = void $ forkIO $ do
+        threadDelay (1000000 `div` tps)
+        atomically (writeTChan eventCh Tick)
 
 --------------------------------
 -- Runner
