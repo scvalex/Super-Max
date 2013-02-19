@@ -26,6 +26,7 @@ instance Show Color where
 
 data Picture = FilledRectangle Double Double Double Double Color
              | Translate Double Double Picture
+             | Scale Double Double Picture
              deriving ( Eq, Show )
 
 draw :: Surface -> Mat3 -> Picture -> IO ()
@@ -39,8 +40,11 @@ draw surface proj (FilledRectangle x y w h c) = do
                  , rectW = floor w1, rectH = floor h1 }
     ok <- fillRect surface (Just r) p
     assert ok (return ())
-draw surface proj (Translate w h picture) = do
-    let proj' = proj .*. (Mat3 (Vec3 1 0 w) (Vec3 0 1 h) (Vec3 0 0 1))
+draw surface proj (Translate tx ty picture) = do
+    let proj' = proj .*. (Mat3 (Vec3 1 0 tx) (Vec3 0 1 ty) (Vec3 0 0 1))
+    draw surface proj' picture
+draw surface proj (Scale sx sy picture) = do
+    let proj' = proj .*. (Mat3 (Vec3 sx 0 0) (Vec3 0 sy 0) (Vec3 0 0 1))
     draw surface proj' picture
 
 main :: IO ()
@@ -48,6 +52,7 @@ main = do
     withScreen 640 480 $ \screen -> do
         putStrLn "Ok"
         draw screen idmtx (Translate 100 50 $
+                           Scale 2 1.5 $
                            FilledRectangle 1 1 100 100 (Color 255 0 0 255))
         flip screen
         threadDelay 1000000
