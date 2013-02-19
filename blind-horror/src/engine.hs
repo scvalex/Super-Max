@@ -9,7 +9,7 @@ import Control.Concurrent ( threadDelay, forkIO )
 import Control.Concurrent.STM ( atomically
                               , TChan, newTChanIO, readTChan, writeTChan )
 import Control.Exception ( assert )
-import Control.Monad ( when, void )
+import Control.Monad ( when, void, forever )
 import Data.Monoid ( Monoid(..) )
 import Data.Word ( Word8 )
 import Data.Vect.Double ( Mat3(..), Matrix(..), LeftModule(..), Vec3(..)
@@ -130,25 +130,48 @@ play :: forall w.
 play (sw, sh) tps wInit drawGame onEvent onTick = do
     withScreen sw sh $ \screen -> do
         putStrLn "Screen initialised"
+
+        -- This channel is used to collect events from multiple sources for the game.
         eventCh <- newTChanIO
+
+        -- Set up the first tick.
         tick eventCh
+
+        -- Forward SDL event.
+        forwardEvents eventCh
+
         playLoop screen eventCh wInit
   where
     playLoop :: Surface -> TChan GameEvent -> w -> IO ()
     playLoop screen eventCh w = do
+        -- Block for next event.
         event <- atomically (readTChan eventCh)
+
+        -- Notify game of event.
         let ((), w') = case event of
                 Tick        -> runGame (onTick undefined) w
                 SdlEvent ev -> runGame (onEvent ev) w
+
+        -- Draw the current state.
         draw screen idmtx (drawGame w')
         flip screen
+
+        -- Set up the next tick.
         tick eventCh
+
         playLoop screen eventCh w'
 
+    -- FIXME Actually tick at tps (not at slightly less).
     tick :: TChan GameEvent -> IO ()
     tick eventCh = void $ forkIO $ do
         threadDelay (1000000 `div` tps)
         atomically (writeTChan eventCh Tick)
+
+    -- FIXME Have a way of stopping these threads.
+    forwardEvents :: TChan GameEvent -> IO ()
+    forwardEvents eventCh = void $ forkIO $ forever $ do
+        event <- waitEvent
+        atomically (writeTChan eventCh (SdlEvent event))
 
 --------------------------------
 -- Runner
