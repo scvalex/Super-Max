@@ -6,6 +6,7 @@ import Prelude hiding ( flip )
 
 import Control.Concurrent ( threadDelay )
 import Control.Exception ( assert )
+import Data.Monoid ( Monoid(..) )
 import Data.Word ( Word8 )
 import Data.Vect.Double ( Mat3(..), Matrix(..), LeftModule(..), Vec3(..)
                         , MultSemiGroup(..) )
@@ -27,7 +28,13 @@ instance Show Color where
 data Picture = FilledRectangle Double Double Double Double Color
              | Translate Double Double Picture
              | Scale Double Double Picture
+             | Pictures [Picture]
              deriving ( Eq, Show )
+
+instance Monoid Picture where
+    mempty = Pictures []
+    p1 `mappend` p2 = Pictures [p1, p2]
+    mconcat ps = Pictures ps
 
 draw :: Surface -> Mat3 -> Picture -> IO ()
 draw surface proj (FilledRectangle x y w h c) = do
@@ -46,14 +53,20 @@ draw surface proj (Translate tx ty picture) = do
 draw surface proj (Scale sx sy picture) = do
     let proj' = proj .*. (Mat3 (Vec3 sx 0 0) (Vec3 0 sy 0) (Vec3 0 0 1))
     draw surface proj' picture
+draw surface proj (Pictures ps) = do
+    mapM_ (draw surface proj) ps
 
 main :: IO ()
 main = do
     withScreen 640 480 $ \screen -> do
         putStrLn "Ok"
-        draw screen idmtx (Translate 100 50 $
-                           Scale 2 1.5 $
-                           FilledRectangle 1 1 100 100 (Color 255 0 0 255))
+        draw screen idmtx $
+            mconcat [ Translate 100 50 $
+                      Scale 2 1.5 $
+                      FilledRectangle 1 1 100 100 (Color 255 0 0 255)
+                    , Translate 400 50 $
+                      FilledRectangle 0 0 100 100 (Color 0 255 0 255)
+                    ]
         flip screen
         threadDelay 1000000
 
