@@ -86,6 +86,7 @@ withScreen w h act = do
 -- Game/Engine interface
 --------------------------------
 
+-- FIXME Also encode the EngineState in the state.
 -- | Psych!  It's a state monad!
 newtype Game s a = Game { runGame :: s -> (a, s) }
 
@@ -145,6 +146,7 @@ play (screenW, screenH) tps wInit drawGame onEvent onTick = do
 
         -- Notify game of event.
         let ((), w') = case event of
+                -- FIXME Pass in the real time to onTick.
                 Tick        -> runGame (onTick undefined) w
                 SdlEvent ev -> runGame (onEvent ev) w
 
@@ -187,7 +189,7 @@ main = do
                 ]
 
     handleEvent (KeyUp (Keysym {symKey = SDLK_ESCAPE})) =
-        error "escape!"
+        fail "escape!"
     handleEvent _ = do
         return ()
 
