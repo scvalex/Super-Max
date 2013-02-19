@@ -4,8 +4,8 @@ module Main where
 
 import Prelude hiding ( flip )
 
-import Control.Concurrent ( threadDelay )
 import Control.Exception ( assert )
+import Control.Monad ( when )
 import Data.Monoid ( Monoid(..) )
 import Data.Word ( Word8 )
 import Data.Vect.Double ( Mat3(..), Matrix(..), LeftModule(..), Vec3(..)
@@ -13,7 +13,8 @@ import Data.Vect.Double ( Mat3(..), Matrix(..), LeftModule(..), Vec3(..)
 import Graphics.UI.SDL ( InitFlag(..), withInit
                        , Surface, SurfaceFlag(..), setVideoMode, flip
                        , Rect(..), mapRGBA
-                       , surfaceGetPixelFormat, fillRect )
+                       , surfaceGetPixelFormat, fillRect
+                       , Event(..), SDLKey(..), Keysym(..), waitEvent )
 import Text.Printf ( printf )
 
 --------------------------------
@@ -78,6 +79,22 @@ withScreen w h act = do
         act s
 
 --------------------------------
+-- Event-loop
+--------------------------------
+
+handleEvent :: Event -> Bool
+handleEvent (KeyUp (Keysym {symKey = SDLK_ESCAPE})) =
+    False
+handleEvent _ = do
+    True
+
+eventLoop :: IO ()
+eventLoop = do
+    event <- waitEvent
+    when (handleEvent event) $ do
+        eventLoop
+
+--------------------------------
 -- Runner
 --------------------------------
 
@@ -93,4 +110,4 @@ main = do
                       FilledRectangle 0 0 100 100 (Color 0 255 0 255)
                     ]
         flip screen
-        threadDelay 1000000
+        eventLoop
