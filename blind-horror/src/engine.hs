@@ -76,5 +76,5 @@ withScreen :: Int                -- ^ width
            -> IO ()
 withScreen w h act = do
     withInit [InitEverything] $ do
-        s <- setVideoMode w h 32 [SWSurface]
+        s <- setVideoMode w h 32 [HWSurface]
         act s
