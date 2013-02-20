@@ -113,7 +113,7 @@ setGameState s = Game (\_ -> ((), s))
 modifyGameState :: (s -> s) -> Game s ()
 modifyGameState f = Game (\s -> ((), f s))
 
-data GameEvent = Tick | SdlEvent Event
+data GameEvent = Tick | InputEvent Event
 
 play :: forall w.
         (Int, Int)              -- ^ width, height of the game window
@@ -147,8 +147,8 @@ play (screenW, screenH) tps wInit drawGame onEvent onTick = do
         -- Notify game of event.
         let ((), w') = case event of
                 -- FIXME Pass in the real time to onTick.
-                Tick        -> runGame (onTick undefined) w
-                SdlEvent ev -> runGame (onEvent ev) w
+                Tick          -> runGame (onTick undefined) w
+                InputEvent ev -> runGame (onEvent ev) w
 
         -- Draw the current state.
         draw screen idmtx $
@@ -173,7 +173,7 @@ play (screenW, screenH) tps wInit drawGame onEvent onTick = do
     forwardEvents :: TChan GameEvent -> IO ()
     forwardEvents eventCh = void $ forkIO $ forever $ do
         event <- waitEvent
-        atomically (writeTChan eventCh (SdlEvent event))
+        atomically (writeTChan eventCh (InputEvent event))
 
 --------------------------------
 -- Runner
