@@ -113,18 +113,19 @@ setGameState s = Game (\_ -> ((), s))
 modifyGameState :: (s -> s) -> Game s ()
 modifyGameState f = Game (\s -> ((), f s))
 
-data GameEvent = Tick | InputEvent Event
+-- | The events a game may receive.
+data GameEvent = Tick Double      -- ^ A logical tick with the number of seconds since the
+                                  -- last one.
+               | InputEvent Event -- ^ An input (mouse, keyboard, etc.) event
 
 play :: forall w.
-        (Int, Int)              -- ^ width, height of the game window
-     -> Int                     -- ^ Logical ticks per second
-     -> w                       -- ^ Game state
-     -> (w -> Picture)          -- ^ How to draw a particular state
-     -> (Event -> Game w ())    -- ^ How to update a state after an 'Event'
-     -> (Double -> Game w ())   -- ^ How to update the state after a tick (the elapsed
-                                -- time in seconds since the last tick is included)
+        (Int, Int)                  -- ^ width, height of the game window
+     -> Int                         -- ^ Logical ticks per second
+     -> w                           -- ^ Game state
+     -> (w -> Picture)              -- ^ Draw a particular state
+     -> (GameEvent -> Game w ())    -- ^ Update the state after a 'GameEvent'
      -> IO ()
-play (screenW, screenH) tps wInit drawGame onEvent onTick = do
+play (screenW, screenH) tps wInit drawGame onEvent = do
     withScreen screenW screenH $ \screen -> do
         putStrLn "Screen initialised"
 
@@ -145,10 +146,7 @@ play (screenW, screenH) tps wInit drawGame onEvent onTick = do
         event <- atomically (readTChan eventCh)
 
         -- Notify game of event.
-        let ((), w') = case event of
-                -- FIXME Pass in the real time to onTick.
-                Tick          -> runGame (onTick undefined) w
-                InputEvent ev -> runGame (onEvent ev) w
+        let ((), w') = runGame (onEvent event) w
 
         -- Draw the current state.
         draw screen idmtx $
@@ -158,8 +156,8 @@ play (screenW, screenH) tps wInit drawGame onEvent onTick = do
 
         -- Set up the next tick.
         case event of
-            Tick -> tick eventCh
-            _    -> return ()
+            Tick _ -> tick eventCh
+            _      -> return ()
 
         playLoop screen eventCh w'
 
@@ -167,7 +165,8 @@ play (screenW, screenH) tps wInit drawGame onEvent onTick = do
     tick :: TChan GameEvent -> IO ()
     tick eventCh = void $ forkIO $ do
         threadDelay (1000000 `div` tps)
-        atomically (writeTChan eventCh Tick)
+        -- FIXME Pass in the real time to Tick.
+        atomically (writeTChan eventCh (Tick undefined))
 
     -- FIXME Have a way of stopping these threads.
     forwardEvents :: TChan GameEvent -> IO ()
@@ -181,7 +180,7 @@ play (screenW, screenH) tps wInit drawGame onEvent onTick = do
 
 main :: IO ()
 main = do
-    play (640, 480) 10 (0 :: Int) drawRects handleEvent handleTick
+    play (640, 480) 10 (0 :: Int) drawRects handleEvent
   where
     drawRects i =
         mconcat [ Translate (10 * fromIntegral (i `mod` 40)) 50 $
@@ -190,10 +189,9 @@ main = do
                   FilledRectangle 0 0 10 10 (Color 0 255 0 255)
                 ]
 
-    handleEvent (KeyUp (Keysym {symKey = SDLK_ESCAPE})) =
+    handleEvent (Tick _) = do
+        modifyGameState (+1)
+    handleEvent (InputEvent (KeyUp (Keysym {symKey = SDLK_ESCAPE}))) =
         fail "escape!"
     handleEvent _ = do
         return ()
-
-    handleTick _ = do
-        modifyGameState (+1)
