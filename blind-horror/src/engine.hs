@@ -9,7 +9,7 @@ import Control.Concurrent ( threadDelay, forkIO )
 import Control.Concurrent.STM ( atomically
                               , TChan, newTChanIO, readTChan, writeTChan )
 import Control.Exception ( assert )
-import Control.Monad ( void, forever )
+import Control.Monad ( void, forever, when )
 import Data.Monoid ( Monoid(..) )
 import Data.Word ( Word8 )
 import Data.Vect.Double ( Mat3(..), Matrix(..), LeftModule(..), Vec3(..)
@@ -86,9 +86,12 @@ withScreen w h act = do
 -- Game/Engine interface
 --------------------------------
 
--- FIXME Also encode the EngineState in the state.
+data EngineState s = EngineState { getInnerState  :: s
+                                 , isTerminating :: Bool
+                                 }
+
 -- | Psych!  It's a state monad!
-newtype Game s a = Game { runGame :: s -> (a, s) }
+newtype Game s a = Game { runGame :: EngineState s -> (a, EngineState s) }
 
 instance Monad (Game s) where
     return x = Game (\s -> (x, s))
@@ -103,15 +106,19 @@ instance Applicative (Game s) where
 
 -- | Get the current game state.
 getGameState :: Game s s
-getGameState = Game (\s -> (s, s))
+getGameState = Game (\s -> (getInnerState s, s))
 
 -- | Overwrite the current game state.
 setGameState :: s -> Game s ()
-setGameState s = Game (\_ -> ((), s))
+setGameState is = Game (\s -> ((), s { getInnerState = is }))
 
 -- | Pass the current game state through the given function.
 modifyGameState :: (s -> s) -> Game s ()
-modifyGameState f = Game (\s -> ((), f s))
+modifyGameState f = Game (\s -> ((), s { getInnerState = f (getInnerState s) }))
+
+-- | Instruct the engine to close after the current callback returns.
+quitGame :: Game s ()
+quitGame = Game (\s -> ((), s { isTerminating = True }))
 
 -- | The events a game may receive.
 data GameEvent = Tick Double      -- ^ A logical tick with the number of seconds since the
@@ -138,20 +145,23 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         -- Forward SDL event.
         forwardEvents eventCh
 
-        playLoop screen eventCh wInit
+        let es = EngineState { getInnerState = wInit
+                             , isTerminating = False
+                             }
+        playLoop screen eventCh es
   where
-    playLoop :: Surface -> TChan GameEvent -> w -> IO ()
-    playLoop screen eventCh w = do
+    playLoop :: Surface -> TChan GameEvent -> EngineState w -> IO ()
+    playLoop screen eventCh es = do
         -- Block for next event.
         event <- atomically (readTChan eventCh)
 
         -- Notify game of event.
-        let ((), w') = runGame (onEvent event) w
+        let ((), es') = runGame (onEvent event) es
 
         -- Draw the current state.
         draw screen idmtx $
             FilledRectangle 0 0 (fromIntegral screenW) (fromIntegral screenH) (Color 0 0 0 255)
-        draw screen idmtx (drawGame w')
+        draw screen idmtx (drawGame (getInnerState es'))
         flip screen
 
         -- Set up the next tick.
@@ -159,7 +169,7 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
             Tick _ -> tick eventCh
             _      -> return ()
 
-        playLoop screen eventCh w'
+        when (not (isTerminating es')) $ playLoop screen eventCh es'
 
     -- FIXME Actually tick at tps (not at slightly less).
     tick :: TChan GameEvent -> IO ()
@@ -192,6 +202,6 @@ main = do
     handleEvent (Tick _) = do
         modifyGameState (+1)
     handleEvent (InputEvent (KeyUp (Keysym {symKey = SDLK_ESCAPE}))) =
-        fail "escape!"
+        quitGame
     handleEvent _ = do
         return ()
