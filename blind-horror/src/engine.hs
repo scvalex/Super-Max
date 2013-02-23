@@ -47,6 +47,7 @@ instance Show Color where
 data Picture = FilledRectangle Double Double Double Double Color
              | Translate Double Double Picture
              | Scale Double Double Picture
+               -- FIXME Add an AbsolutelySized text picture.
              | Pictures [Picture]
              deriving ( Eq, Show )
 
