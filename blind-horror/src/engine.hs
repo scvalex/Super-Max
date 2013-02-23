@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Main where
@@ -5,12 +6,15 @@ module Main where
 import Prelude hiding ( flip )
 
 import Control.Applicative ( Applicative(..) )
-import Control.Concurrent ( threadDelay, forkIO )
+import Control.Concurrent ( threadDelay, forkIO, ThreadId )
 import Control.Concurrent.STM ( atomically
                               , TChan, newTChanIO, readTChan, writeTChan )
-import Control.Exception ( assert )
-import Control.Monad ( void, forever, when )
+import Control.Exception ( Exception, assert )
+import Control.Monad ( forever )
 import Data.Monoid ( Monoid(..) )
+import Data.Set ( Set )
+import Data.Traversable ( forM )
+import Data.Typeable ( Typeable )
 import Data.Word ( Word8 )
 import Data.Vect.Double ( Mat3(..), Matrix(..), LeftModule(..), Vec3(..)
                         , MultSemiGroup(..) )
@@ -20,6 +24,8 @@ import Graphics.UI.SDL ( InitFlag(..), withInit
                        , surfaceGetPixelFormat, fillRect
                        , Event(..), SDLKey(..), Keysym(..), waitEvent )
 import Text.Printf ( printf )
+import qualified Control.Exception as CE
+import qualified Data.Set as S
 
 --------------------------------
 -- Colors -- I want to call them Colours :(
@@ -86,7 +92,9 @@ withScreen w h act = do
 -- Game/Engine interface
 --------------------------------
 
-data EngineState s = EngineState { getInnerState  :: s
+data EngineState s = EngineState { getInnerState :: s
+                                 , getEventChan  :: TChan GameEvent
+                                 , getThreads    :: Set ThreadId
                                  , isTerminating :: Bool
                                  }
 
@@ -139,21 +147,23 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         -- This channel is used to collect events from multiple sources for the game.
         eventCh <- newTChanIO
 
-        -- Set up the first tick.
-        tick eventCh
-
-        -- Forward SDL event.
-        forwardEvents eventCh
-
         let es = EngineState { getInnerState = wInit
+                             , getEventChan  = eventCh
+                             , getThreads    = S.empty
                              , isTerminating = False
                              }
-        playLoop screen eventCh es
+        -- Set up the first tick.
+        es' <- tick es
+
+        -- Forward SDL event.
+        es'' <- forwardEvents es'
+
+        playLoop screen es''
   where
-    playLoop :: Surface -> TChan GameEvent -> EngineState w -> IO ()
-    playLoop screen eventCh es = do
+    playLoop :: Surface -> EngineState w -> IO ()
+    playLoop screen es = do
         -- Block for next event.
-        event <- atomically (readTChan eventCh)
+        event <- atomically (readTChan (getEventChan es))
 
         -- Notify game of event.
         let ((), es') = runGame (onEvent event) es
@@ -165,24 +175,43 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         flip screen
 
         -- Set up the next tick.
-        case event of
-            Tick _ -> tick eventCh
-            _      -> return ()
+        es'' <- case event of
+            Tick _ -> tick es'
+            _      -> return es'
 
-        when (not (isTerminating es')) $ playLoop screen eventCh es'
+        if isTerminating es''
+            then shutdown es''
+            else playLoop screen es''
 
     -- FIXME Actually tick at tps (not at slightly less).
-    tick :: TChan GameEvent -> IO ()
-    tick eventCh = void $ forkIO $ do
+    tick :: EngineState s -> IO (EngineState s)
+    tick es = managedForkIO es $ do
         threadDelay (1000000 `div` tps)
         -- FIXME Pass in the real time to Tick.
-        atomically (writeTChan eventCh (Tick undefined))
+        atomically (writeTChan (getEventChan es) (Tick undefined))
 
-    -- FIXME Have a way of stopping these threads.
-    forwardEvents :: TChan GameEvent -> IO ()
-    forwardEvents eventCh = void $ forkIO $ forever $ do
+    -- | Wait for SDL event and forward them to the event channel.
+    forwardEvents :: EngineState s -> IO (EngineState s)
+    forwardEvents es = managedForkIO es $ forever $ do
         event <- waitEvent
-        atomically (writeTChan eventCh (InputEvent event))
+        atomically (writeTChan (getEventChan es) (InputEvent event))
+
+    -- | Fork a thread and keep track of its id.
+    managedForkIO :: EngineState s -> IO () -> IO (EngineState s)
+    managedForkIO es act = do
+        tid <- forkIO (CE.handle (\(_ :: Shutdown) -> return ()) act)
+        return es { getThreads = S.insert tid (getThreads es) }
+
+    -- | Shutdown the engine by throwing 'Shutdown' to all its non-main threads.
+    shutdown :: EngineState s -> IO ()
+    shutdown es = do
+        _ <- forM (S.toList (getThreads es)) (\tid -> CE.throwTo tid Shutdown)
+        return ()
+
+data Shutdown = Shutdown
+              deriving ( Show, Typeable )
+
+instance Exception Shutdown
 
 --------------------------------
 -- Runner
