@@ -227,6 +227,7 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
     managedForkIO :: EngineState s -> IO () -> IO (EngineState s)
     managedForkIO es act = do
         tid <- forkIO (CE.handle (\(_ :: Shutdown) -> return ()) act)
+        -- FIXME Memory leak: thread ids are never removed from the set.
         return es { getThreads = S.insert tid (getThreads es) }
 
     -- | Shutdown the engine by throwing 'Shutdown' to all its non-main threads.
