@@ -10,7 +10,7 @@ import Control.Concurrent ( threadDelay, forkIO, ThreadId )
 import Control.Concurrent.STM ( atomically
                               , TChan, newTChanIO, readTChan, writeTChan )
 import Control.Exception ( Exception, assert )
-import Control.Monad ( forever )
+import Control.Monad ( forever, when )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
 import Data.Traversable ( forM )
@@ -26,6 +26,7 @@ import Graphics.UI.SDL ( InitFlag(..), withInit
 import Text.Printf ( printf )
 import qualified Control.Exception as CE
 import qualified Data.Set as S
+import qualified Graphics.UI.SDL.TTF as TTF
 
 --------------------------------
 -- Colors -- I want to call them Colours :(
@@ -86,6 +87,8 @@ withScreen :: Int                -- ^ width
            -> IO ()
 withScreen w h act = do
     withInit [InitEverything] $ do
+        ttfOk <- TTF.init
+        when (not ttfOk) $ fail "could not initialize SDL-ttf"
         s <- setVideoMode w h 32 [SWSurface]
         act s
 
@@ -143,7 +146,12 @@ play :: forall w.
      -> IO ()
 play (screenW, screenH) tps wInit drawGame onEvent = do
     withScreen screenW screenH $ \screen -> do
-        putStrLn "Screen initialised"
+        putStrLn "SDL initialised"
+
+        -- Load resources
+        font <- TTF.openFont "r/Ubuntu-C.ttf" 28
+
+        putStrLn "Resources loaded"
 
         -- This channel is used to collect events from multiple sources for the game.
         eventCh <- newTChanIO
@@ -159,10 +167,10 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         -- Forward SDL event.
         es'' <- forwardEvents es'
 
-        playLoop screen es''
+        playLoop screen font es''
   where
-    playLoop :: Surface -> EngineState w -> IO ()
-    playLoop screen es = do
+    playLoop :: Surface -> TTF.Font -> EngineState w -> IO ()
+    playLoop screen font es = do
         -- Block for next event.
         event <- atomically (readTChan (getEventChan es))
 
@@ -182,7 +190,7 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
 
         if isTerminating es''
             then shutdown es''
-            else playLoop screen es''
+            else playLoop screen font es''
 
     -- FIXME Actually tick at tps (not at slightly less).
     tick :: EngineState s -> IO (EngineState s)
