@@ -150,10 +150,10 @@ draw surface _ proj col (FilledRectangle x y w h) = do
     p <- mapRGBA pf (colorRed col) (colorGreen col) (colorBlue col) (colorAlpha col)
     let (x1, y1) = projectXY proj x y
         (x2, y2) = projectXY proj (x + w) (y + h)
-        (x1', y1') = min (x1, y1) (x2, y2)
-        (w1, h1) = (abs (x2 - x1), abs (y2 - y1))
-    let r = Rect { rectX = floor x1', rectY = floor y1'
-                 , rectW = floor w1, rectH = floor h1 }
+        (x', y') = (min x1 x2, min y1 y2)
+        (w', h') = (abs (x2 - x1), abs (y2 - y1))
+    let r = Rect { rectX = floor x', rectY = floor y'
+                 , rectW = floor w', rectH = floor h' }
     ok <- fillRect surface (Just r) p
     assert ok (return ())
 draw surface fonts proj col (Translate tx ty picture) = do
@@ -197,6 +197,8 @@ withScreen w h act = do
     withInit [InitEverything] $ do
         ok <- TTF.init
         assert ok (return ())
+        -- FIXME Set window caption
+        -- FiXME Make window resizable
         s <- setVideoMode w h 32 [SWSurface]
         act s
 

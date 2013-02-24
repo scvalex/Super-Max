@@ -8,7 +8,7 @@ import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
 import Game.Engine ( GameEvent(..), play, quitGame
                    , Game, getGameState, setGameState, modifyGameState
-                   , Picture(..), Color(..), greyN
+                   , Picture(..), Color(..), black, greyN
                    , Event(..), SDLKey(..), Keysym(..) )
 import Scheduler ( Scheduler, newScheduler
                  , runScheduledActions, scheduleAction, dropExpiredActions )
@@ -51,9 +51,11 @@ data GameState = PreGame { getObjective :: String }
                deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
-data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ the bounds of the room
+data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ The bounds of the room
                                                           -- (these coordinates are not
-                                                          -- related to the display ones)
+                                                          -- related to the display ones).
+                                                          -- The top and right bounds are
+                                                          -- exclusive.
                  , getRoomStart   :: (Int, Int)           -- ^ the player's starting point
                  , getRoomExit    :: (Int, Int)           -- ^ the area's exit point
                  } deriving ( Eq, Show )
@@ -141,11 +143,13 @@ worldToScene w =
             ]
   where
     -- The wireframe in the background.
-    wireframe = Color (greyN 0.1) $
-                mempty
-                -- mconcat $
-                -- flip map [0.1, 0.2 .. 0.9] $
-                -- \i -> mconcat [Line [(i, 0.0), (i, 1.0)], Line [(0.0, i), (1.0, i)]]
+    wireframe = mappend (Color (greyN 0.1) $
+                         FilledRectangle 0.0 0.0 1.0 1.0) $
+                Color black $
+                mconcat $ [ FilledRectangle (i + 0.001) (j + 0.001) 0.099 0.099
+                          | i <- [0.0, 0.1 .. 0.9]
+                          , j <- [0.0, 0.1 .. 0.9]
+                          ]
 
     -- A message shown at the beginning and at the end.
     prePostMessage =
@@ -183,13 +187,7 @@ worldToScene w =
     -- The current room/map/area.
     room =
         fromRoomCoordinates $
-        mconcat [ roomWalls
-                , roomExit
-                ]
-
-    roomWalls = mempty
-                -- let (x1, y1, x2, y2) = getRoomBounds (getArea w) in
-                -- intLine [(x1, y1), (x1, y2 + 1), (x2 + 1, y2 + 1), (x2 + 1, y1), (x1, y1)]
+        roomExit
 
     roomExit = let (xe, ye) = getRoomExit (getArea w) in
                mconcat [ Color (RGBA 255 215 0 255) $
@@ -363,7 +361,7 @@ movePlayer w =
     inBounds (x, y) =
         case getArea w of
             r@(Room {}) -> let (x1, y1, x2, y2) = getRoomBounds r in
-                           (max x1 (min x x2), max y1 (min y y2))
+                           (max x1 (min x (x2 - 1)), max y1 (min y (y2 - 1)))
 
     -- How much does the player move for each movement command.
     movementDisplacement :: Direction -> (Int, Int)
