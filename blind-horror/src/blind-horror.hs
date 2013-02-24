@@ -239,7 +239,7 @@ handleInputEvent ev = handleGlobalKey ev $ do
                 KeyUp (Keysym { symKey = SDLK_SPACE }) -> do
                     setGameState (w { getState = InGame })
                 _ -> do
-                    return ()
+                    handleInGameEvent
         InGame -> do
             handleInGameEvent
         PostGame { getHasContinue = c } -> do
