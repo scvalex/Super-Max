@@ -5,12 +5,13 @@ module Main where
 
 import Prelude hiding ( flip )
 
-import Control.Applicative ( Applicative(..) )
+import Control.Applicative ( Applicative(..), (<$>) )
 import Control.Concurrent ( threadDelay, forkIO, ThreadId )
 import Control.Concurrent.STM ( atomically
                               , TChan, newTChanIO, readTChan, writeTChan )
 import Control.Exception ( Exception, assert )
 import Control.Monad ( forever )
+import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
 import Data.Traversable ( forM )
@@ -27,6 +28,7 @@ import Graphics.UI.SDL ( InitFlag(..), withInit
                        , Rect(..), getClipRect )
 import Text.Printf ( printf )
 import qualified Control.Exception as CE
+import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.TTF as TTF
@@ -45,13 +47,19 @@ instance Show Color where
     show c = printf "#%2x%2x%2x%2x" (colorRed c) (colorGreen c) (colorBlue c) (colorAlpha c)
 
 --------------------------------
+-- Fonts
+--------------------------------
+
+type Fonts = Map Int TTF.Font
+
+--------------------------------
 -- Pictures and drawing
 --------------------------------
 
 data Picture = FilledRectangle Double Double Double Double Color
              | Translate Double Double Picture
              | Scale Double Double Picture
-             | AbsSizedText String
+             | SizedText Int String
              | Pictures [Picture]
              deriving ( Eq, Show )
 
@@ -60,7 +68,7 @@ instance Monoid Picture where
     p1 `mappend` p2 = Pictures [p1, p2]
     mconcat ps = Pictures ps
 
-draw :: Surface -> TTF.Font -> Mat3 -> Picture -> IO ()
+draw :: Surface -> Fonts -> Mat3 -> Picture -> IO ()
 draw surface _ proj (FilledRectangle x y w h c) = do
     let pf = surfaceGetPixelFormat surface
     p <- mapRGBA pf (colorRed c) (colorGreen c) (colorBlue c) (colorAlpha c)
@@ -71,22 +79,26 @@ draw surface _ proj (FilledRectangle x y w h c) = do
                  , rectW = floor w1, rectH = floor h1 }
     ok <- fillRect surface (Just r) p
     assert ok (return ())
-draw surface font proj (Translate tx ty picture) = do
+draw surface fonts proj (Translate tx ty picture) = do
     let proj' = proj .*. (Mat3 (Vec3 1 0 tx) (Vec3 0 1 ty) (Vec3 0 0 1))
-    draw surface font proj' picture
-draw surface font proj (Scale sx sy picture) = do
+    draw surface fonts proj' picture
+draw surface fonts proj (Scale sx sy picture) = do
     let proj' = proj .*. (Mat3 (Vec3 sx 0 0) (Vec3 0 sy 0) (Vec3 0 0 1))
-    draw surface font proj' picture
-draw surface font proj (AbsSizedText text) = do
-    -- FIXME Do we need to manually free used surfaces?
-    textSurface <- TTF.renderUTF8Solid font text (SDL.Color 255 255 255)
-    textR <- getClipRect textSurface
-    let (x, y) = projectXY proj 0 0
-    ok <- blitSurface textSurface Nothing surface (Just (textR { rectX = floor x
-                                                               , rectY = floor y }))
-    assert ok (return ())
-draw surface font proj (Pictures ps) = do
-    mapM_ (draw surface font proj) ps
+    draw surface fonts proj' picture
+draw surface fonts proj (SizedText size text) = do
+    case M.lookup size fonts of
+        Nothing ->
+            return ()
+        Just font -> do
+            -- FIXME Do we need to manually free used surfaces?
+            textSurface <- TTF.renderUTF8Solid font text (SDL.Color 255 255 255)
+            textR <- getClipRect textSurface
+            let (x, y) = projectXY proj 0 0
+            ok <- blitSurface textSurface Nothing surface (Just (textR { rectX = floor x
+                                                                       , rectY = floor y }))
+            assert ok (return ())
+draw surface fonts proj (Pictures ps) = do
+    mapM_ (draw surface fonts proj) ps
 
 -- | Run a pair of xy-coordinates through a projection matrix.
 projectXY :: Mat3 -> Double -> Double -> (Double, Double)
@@ -166,8 +178,10 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         putStrLn "SDL initialised"
 
         -- Load resources
-        -- We don't bother freeing the font.
-        font <- TTF.openFont "r/Ubuntu-C.ttf" 28
+        -- We don't bother freeing the fonts.
+        fonts <- M.fromList <$> forM [10..60] (\size -> do
+            font <- TTF.openFont "r/Ubuntu-C.ttf" size
+            return (size, font))
 
         putStrLn "Resources loaded"
 
@@ -185,10 +199,10 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         -- Forward SDL event.
         es'' <- forwardEvents es'
 
-        playLoop screen font es''
+        playLoop screen fonts es''
   where
-    playLoop :: Surface -> TTF.Font -> EngineState w -> IO ()
-    playLoop screen font es = do
+    playLoop :: Surface -> Fonts -> EngineState w -> IO ()
+    playLoop screen fonts es = do
         -- Block for next event.
         event <- atomically (readTChan (getEventChan es))
 
@@ -196,9 +210,9 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         let ((), es') = runGame (onEvent event) es
 
         -- Draw the current state.
-        draw screen font idmtx $
+        draw screen fonts idmtx $
             FilledRectangle 0 0 (fromIntegral screenW) (fromIntegral screenH) (Color 0 0 0 255)
-        draw screen font idmtx (drawGame (getInnerState es'))
+        draw screen fonts idmtx (drawGame (getInnerState es'))
         flip screen
 
         -- Set up the next tick.
@@ -208,7 +222,7 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
 
         if isTerminating es''
             then shutdown es''
-            else playLoop screen font es''
+            else playLoop screen fonts es''
 
     -- FIXME Actually tick at tps (not at slightly less).
     tick :: EngineState s -> IO (EngineState s)
@@ -255,7 +269,7 @@ main = do
                 , Translate 30 (10 * fromIntegral (i `mod` 30)) $
                   FilledRectangle 0 0 10 10 (Color 0 255 0 255)
                 , Translate 100 100 $
-                  AbsSizedText "Test"
+                  SizedText 60 "Test"
                 ]
 
     handleEvent (Tick _) = do
