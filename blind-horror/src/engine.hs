@@ -14,6 +14,7 @@ import Control.Monad ( forever )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
+import Data.Time.Clock ( UTCTime, getCurrentTime, diffUTCTime )
 import Data.Traversable ( forM )
 import Data.Typeable ( Typeable )
 import Data.Word ( Word8 )
@@ -162,9 +163,9 @@ quitGame :: Game s ()
 quitGame = Game (\s -> ((), s { isTerminating = True }))
 
 -- | The events a game may receive.
-data GameEvent = Tick Double      -- ^ A logical tick with the number of seconds since the
-                                  -- last one.
-               | InputEvent Event -- ^ An input (mouse, keyboard, etc.) event
+data GameEvent = Tick (UTCTime, Double) -- ^ A logical tick with the current time and the
+                                        -- number of seconds since the last tick.
+               | InputEvent Event       -- ^ An input (mouse, keyboard, etc.) event
 
 play :: forall w.
         (Int, Int)                  -- ^ width, height of the game window
@@ -194,7 +195,8 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
                              , isTerminating = False
                              }
         -- Set up the first tick.
-        es' <- tick es
+        initTime <- getCurrentTime
+        es' <- tick initTime es
 
         -- Forward SDL event.
         es'' <- forwardEvents es'
@@ -217,19 +219,22 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
 
         -- Set up the next tick.
         es'' <- case event of
-            Tick _ -> tick es'
-            _      -> return es'
+            Tick (prevTime, _) -> tick prevTime es'
+            _                  -> return es'
 
         if isTerminating es''
             then shutdown es''
             else playLoop screen fonts es''
 
-    -- FIXME Actually tick at tps (not at slightly less).
-    tick :: EngineState s -> IO (EngineState s)
-    tick es = managedForkIO es $ do
-        threadDelay (1000000 `div` tps)
-        -- FIXME Pass in the real time to Tick.
-        atomically (writeTChan (getEventChan es) (Tick undefined))
+    tick :: UTCTime -> EngineState s -> IO (EngineState s)
+    tick prevTime es = managedForkIO es $ do
+        now <- getCurrentTime
+        let delta = fromRational (toRational (diffUTCTime now prevTime))
+            desiredDelay = fromIntegral (1000000 `div` tps)
+        -- The 1.05 factor below prevents the delay from oscillating between 0.0s and
+        -- 0.2s.
+        threadDelay (floor (2.0 * desiredDelay - delta * 1000000.0 / 1.05))
+        atomically (writeTChan (getEventChan es) (Tick (now, delta)))
 
     -- | Wait for SDL event and forward them to the event channel.
     forwardEvents :: EngineState s -> IO (EngineState s)
@@ -261,19 +266,19 @@ instance Exception Shutdown
 
 main :: IO ()
 main = do
-    play (640, 480) 10 (0 :: Int) drawRects handleEvent
+    play (640, 480) 10 (0 :: Int, 0 :: Double) drawRects handleEvent
   where
-    drawRects i =
+    drawRects (i, time) =
         mconcat [ Translate (10 * fromIntegral (i `mod` 40)) 50 $
                   FilledRectangle 0 0 10 10 (Color 255 0 0 255)
                 , Translate 30 (10 * fromIntegral (i `mod` 30)) $
                   FilledRectangle 0 0 10 10 (Color 0 255 0 255)
                 , Translate 100 100 $
-                  SizedText 60 "Test"
+                  SizedText 60 (printf "Test: %.2f" time)
                 ]
 
-    handleEvent (Tick _) = do
-        modifyGameState (+1)
+    handleEvent (Tick (_, delta)) = do
+        modifyGameState (\(ticks, time) -> (ticks + 1, time + delta))
     handleEvent (InputEvent (KeyUp (Keysym {symKey = SDLK_ESCAPE}))) =
         quitGame
     handleEvent _ = do
