@@ -97,6 +97,7 @@ data GameEvent = Tick (UTCTime, Double) -- ^ A logical tick with the current tim
                                         -- number of seconds since the last tick.
                | InputEvent Event       -- ^ An input (mouse, keyboard, etc.) event
 
+-- FIXME Just use a StateT for the game state.
 -- | Psych!  It's a state monad!
 newtype Game s a = Game { runGame :: EngineState s -> (a, EngineState s) }
 
