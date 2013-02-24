@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, StandaloneDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Game.Engine (
@@ -44,6 +44,12 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.TTF as TTF
+
+--------------------------------
+-- Missing instances
+--------------------------------
+
+deriving instance Ord Keysym
 
 --------------------------------
 -- Colors -- I want to call them Colours :(
@@ -97,8 +103,8 @@ data GameEvent = Tick (UTCTime, Double) -- ^ A logical tick with the current tim
                                         -- number of seconds since the last tick.
                | InputEvent Event       -- ^ An input (mouse, keyboard, etc.) event
 
--- FIXME Just use a StateT for the game state.
--- | Psych!  It's a state monad!
+-- FIXME Just use a StateT for the game state.  Don't forget to use gets and sets in
+-- blind-horror.hs.  | Psych!  It's a state monad!
 newtype Game s a = Game { runGame :: EngineState s -> (a, EngineState s) }
 
 instance Monad (Game s) where
@@ -144,8 +150,9 @@ draw surface _ proj col (FilledRectangle x y w h) = do
     p <- mapRGBA pf (colorRed col) (colorGreen col) (colorBlue col) (colorAlpha col)
     let (x1, y1) = projectXY proj x y
         (x2, y2) = projectXY proj (x + w) (y + h)
-        (w1, h1) = (x2 - x1, y2 - y1)
-    let r = Rect { rectX = floor x1, rectY = floor y1
+        (x1', y1') = min (x1, y1) (x2, y2)
+        (w1, h1) = (abs (x2 - x1), abs (y2 - y1))
+    let r = Rect { rectX = floor x1', rectY = floor y1'
                  , rectW = floor w1, rectH = floor h1 }
     ok <- fillRect surface (Just r) p
     assert ok (return ())
