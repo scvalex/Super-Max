@@ -200,10 +200,10 @@ worldToScene w =
                   ]
 
     -- Survival time in top-left corner
-    survivalTime = Translate 0.04 0.9 $ (bigText (formatSeconds (getTime w)))
+    survivalTime = Translate 0.04 0.94 $ (bigText (formatSeconds (getTime w)))
 
     -- Current level in the top-left corner
-    currentLevel = Translate 0.04 0.86 $ (mediumText (printf "Level: %d" (getLevel w)))
+    currentLevel = Translate 0.04 0.91 $ (mediumText (printf "Level: %d" (getLevel w)))
 
     -- Draw the picture of a person.
     personPicture (xp, yp) =
