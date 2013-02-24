@@ -15,9 +15,11 @@ main = do
   where
     drawRects (i, time) =
         mconcat [ Translate (10 * fromIntegral (i `mod` 40)) 50 $
-                  FilledRectangle 0 0 10 10 (Color 255 0 0 255)
+                  Color (RGBA 255 0 0 255) $
+                  FilledRectangle 0 0 10 10
                 , Translate 30 (10 * fromIntegral (i `mod` 30)) $
-                  FilledRectangle 0 0 10 10 (Color 0 255 0 255)
+                  Color (RGBA 0 255 0 255) $
+                  FilledRectangle 0 0 10 10
                 , Translate 100 100 $
                   SizedText 60 (printf "Test: %.2f" time)
                 ]

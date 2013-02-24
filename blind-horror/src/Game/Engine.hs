@@ -2,8 +2,12 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Game.Engine (
-        -- * Types
-        Picture(..), Color(..), Game, GameEvent(..),
+        -- * The Game
+        Game, GameEvent(..),
+
+        -- * Pictures
+        Picture(..),
+        Color(..), white, black, greyN,
 
         -- * SDL events (re-export)
         Event(..), SDLKey(..), Keysym(..),
@@ -45,23 +49,37 @@ import qualified Graphics.UI.SDL.TTF as TTF
 -- Colors -- I want to call them Colours :(
 --------------------------------
 
-data Color = Color { colorRed   :: Word8
-                   , colorGreen :: Word8
-                   , colorBlue  :: Word8
-                   , colorAlpha :: Word8
-                   } deriving ( Eq )
+data Color = RGBA { colorRed   :: Word8
+                  , colorGreen :: Word8
+                  , colorBlue  :: Word8
+                  , colorAlpha :: Word8
+                  } deriving ( Eq )
 
 instance Show Color where
     show c = printf "#%2x%2x%2x%2x" (colorRed c) (colorGreen c) (colorBlue c) (colorAlpha c)
+
+white, black :: Color
+white = RGBA 255 255 255 255
+black = RGBA 0   0   0   255
+
+greyN :: Double -> Color
+greyN prop = RGBA sat sat sat 255
+  where
+    sat = floor (prop * 255.0)
+
+-- | Convert a 'Color' to an SDL 'SDL.Color'.  Drops the alpha component.
+colorToSdlColor :: Color -> SDL.Color
+colorToSdlColor (RGBA r g b _) = SDL.Color r g b
 
 --------------------------------
 -- Pictures
 --------------------------------
 
-data Picture = FilledRectangle Double Double Double Double Color
+data Picture = FilledRectangle Double Double Double Double
              | Translate Double Double Picture
              | Scale Double Double Picture
              | SizedText Int String
+             | Color Color Picture
              | Pictures [Picture]
              deriving ( Eq, Show )
 
@@ -119,10 +137,10 @@ type Fonts = Map Int TTF.Font
 -- Drawing
 --------------------------------
 
-draw :: Surface -> Fonts -> Mat3 -> Picture -> IO ()
-draw surface _ proj (FilledRectangle x y w h c) = do
+draw :: Surface -> Fonts -> Mat3 -> Color -> Picture -> IO ()
+draw surface _ proj col (FilledRectangle x y w h) = do
     let pf = surfaceGetPixelFormat surface
-    p <- mapRGBA pf (colorRed c) (colorGreen c) (colorBlue c) (colorAlpha c)
+    p <- mapRGBA pf (colorRed col) (colorGreen col) (colorBlue col) (colorAlpha col)
     let (x1, y1) = projectXY proj x y
         (x2, y2) = projectXY proj (x + w) (y + h)
         (w1, h1) = (x2 - x1, y2 - y1)
@@ -130,26 +148,28 @@ draw surface _ proj (FilledRectangle x y w h c) = do
                  , rectW = floor w1, rectH = floor h1 }
     ok <- fillRect surface (Just r) p
     assert ok (return ())
-draw surface fonts proj (Translate tx ty picture) = do
+draw surface fonts proj col (Translate tx ty picture) = do
     let proj' = proj .*. (Mat3 (Vec3 1 0 tx) (Vec3 0 1 ty) (Vec3 0 0 1))
-    draw surface fonts proj' picture
-draw surface fonts proj (Scale sx sy picture) = do
+    draw surface fonts proj' col picture
+draw surface fonts proj col (Scale sx sy picture) = do
     let proj' = proj .*. (Mat3 (Vec3 sx 0 0) (Vec3 0 sy 0) (Vec3 0 0 1))
-    draw surface fonts proj' picture
-draw surface fonts proj (SizedText size text) = do
+    draw surface fonts proj' col picture
+draw surface fonts proj col (SizedText size text) = do
     case M.lookup size fonts of
         Nothing ->
             return ()
         Just font -> do
             -- FIXME Do we need to manually free used surfaces?
-            textSurface <- TTF.renderUTF8Solid font text (SDL.Color 255 255 255)
+            textSurface <- TTF.renderUTF8Solid font text (colorToSdlColor col)
             textR <- getClipRect textSurface
             let (x, y) = projectXY proj 0 0
             ok <- blitSurface textSurface Nothing surface (Just (textR { rectX = floor x
                                                                        , rectY = floor y }))
             assert ok (return ())
-draw surface fonts proj (Pictures ps) = do
-    mapM_ (draw surface fonts proj) ps
+draw surface fonts proj _ (Color col picture) = do
+    draw surface fonts proj col picture
+draw surface fonts proj col (Pictures ps) = do
+    mapM_ (draw surface fonts proj col) ps
 
 -- | Run a pair of xy-coordinates through a projection matrix.
 projectXY :: Mat3 -> Double -> Double -> (Double, Double)
@@ -233,9 +253,9 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         let ((), es') = runGame (onEvent event) es
 
         -- Draw the current state.
-        draw screen fonts idmtx $
-            FilledRectangle 0 0 (fromIntegral screenW) (fromIntegral screenH) (Color 0 0 0 255)
-        draw screen fonts idmtx (drawGame (getInnerState es'))
+        draw screen fonts idmtx black $
+            FilledRectangle 0 0 (fromIntegral screenW) (fromIntegral screenH)
+        draw screen fonts idmtx white (drawGame (getInnerState es'))
         SDL.flip screen
 
         -- Set up the next tick.
