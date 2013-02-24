@@ -8,7 +8,9 @@ import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
 import Game.Engine ( GameEvent(..), play, quitGame
                    , Game, getGameState, setGameState, modifyGameState
-                   , Picture(..), Color(..), black, greyN
+                   , Picture(..)
+                   , TextAlignment(..)
+                   , Color(..), black, greyN
                    , Event(..), SDLKey(..), Keysym(..) )
 import Scheduler ( Scheduler, newScheduler
                  , runScheduledActions, scheduleAction, dropExpiredActions )
@@ -152,15 +154,15 @@ worldToScene w =
     prePostMessage =
         case getState w of
             pg@(PreGame {}) ->
-                mconcat [ Translate 0.25 0.45 $ bigText (getObjective pg)
-                        , Translate 0.39 0.40 $ mediumText "<press space>"
+                mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getObjective pg)
+                        , Translate 0.5 0.40 $ mediumText CenterAligned "<press space>"
                         ]
             InGame {} ->
                 mempty
             pg@(PostGame { getHasContinue = c }) ->
-                mconcat [ Translate 0.36 0.45 $ bigText (getConclusion pg)
+                mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getConclusion pg)
                         , if c
-                          then Translate 0.39 0.40 $ mediumText "<press space>"
+                          then Translate 0.5 0.40 $ mediumText CenterAligned "<press space>"
                           else mempty
                         ]
 
@@ -189,9 +191,8 @@ worldToScene w =
     roomExit = let (xe, ye) = getRoomExit (getArea w) in
                mconcat [ Color (RGBA 255 215 0 255) $
                          intRectangle xe ye 2 1
-                       , Translate (fromIntegral (xe - 1)) (fromIntegral (ye + 1)) $
-                         Scale 0.02 0.01 $
-                         smallText "Exit"
+                       , Translate (fromIntegral (xe + 1)) (fromIntegral (ye + 1)) $
+                         smallText CenterAligned "Exit"
                        ]
 
     -- The HUD is overlayed on the game.
@@ -200,10 +201,10 @@ worldToScene w =
                   ]
 
     -- Survival time in top-left corner
-    survivalTime = Translate 0.04 0.94 $ (bigText (formatSeconds (getTime w)))
+    survivalTime = Translate 0.04 0.94 $ (bigText LeftAligned (formatSeconds (getTime w)))
 
     -- Current level in the top-left corner
-    currentLevel = Translate 0.04 0.91 $ (mediumText (printf "Level: %d" (getLevel w)))
+    currentLevel = Translate 0.04 0.91 $ (mediumText LeftAligned (printf "Level: %d" (getLevel w)))
 
     -- Draw the picture of a person.
     personPicture (xp, yp) =
@@ -217,9 +218,9 @@ worldToScene w =
         Scale (1.0 / fromIntegral (x2 - x1)) (1.0 / fromIntegral (y2 - y1))
 
     -- Text with fixed sizes
-    bigText    = SizedText 40
-    mediumText = SizedText 30
-    smallText  = SizedText 20
+    bigText    = Text 40
+    mediumText = Text 30
+    smallText  = Text 20
 
 handleEvent :: GameEvent -> Game World ()
 handleEvent (InputEvent ev) = handleInputEvent ev

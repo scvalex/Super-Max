@@ -5,7 +5,7 @@ module Main where
 
 import Data.Monoid ( Monoid(..) )
 import Game.Engine ( GameEvent(..), play, quitGame, modifyGameState
-                   , Picture(..), Color(..)
+                   , Picture(..), TextAlignment(..), Color(..)
                    , Event(..), SDLKey(..), Keysym(..) )
 import Text.Printf ( printf )
 
@@ -21,7 +21,7 @@ main = do
                   Color (RGBA 0 255 0 255) $
                   FilledRectangle 0 0 10 10
                 , Translate 100 100 $
-                  SizedText 60 (printf "Test: %.2f" time)
+                  Text 60 LeftAligned (printf "Test: %.2f" time)
                 ]
 
     handleEvent (Tick (_, delta)) = do

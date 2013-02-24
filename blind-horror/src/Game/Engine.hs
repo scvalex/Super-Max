@@ -7,6 +7,7 @@ module Game.Engine (
 
         -- * Pictures
         Picture(..),
+        TextAlignment(..),
         Color(..), white, black, greyN,
 
         -- * SDL events (re-export)
@@ -81,6 +82,13 @@ colorToSdlColor (RGBA r g b _) = SDL.Color r g b
 -- Pictures
 --------------------------------
 
+-- | Are the coordinates given for the text the left edge, the center, or the right edge
+-- of the text?
+data TextAlignment = LeftAligned
+                   | CenterAligned
+                   | RightAligned
+                   deriving ( Eq, Show )
+
 -- | The 'Picture' returned by the callback to 'play' is drawn on the screen.  The origin
 -- of the coordinate system is in the bottom-left corner, and axes are the usual Cartesian
 -- ones.
@@ -88,7 +96,7 @@ data Picture = FilledRectangle Double Double Double Double
              | Translate Double Double Picture
                -- Do /not/ use 'Scale' to flip the screen.
              | Scale Double Double Picture
-             | SizedText Int String
+             | Text Int TextAlignment String
              | Color Color Picture
              | Pictures [Picture]
              deriving ( Eq, Show )
@@ -166,7 +174,7 @@ draw surface fonts proj col (Translate tx ty picture) = do
 draw surface fonts proj col (Scale sx sy picture) = do
     let proj' = proj .*. (Mat3 (Vec3 sx 0 0) (Vec3 0 sy 0) (Vec3 0 0 1))
     draw surface fonts proj' col picture
-draw surface fonts proj col (SizedText size text) = do
+draw surface fonts proj col (Text size alignment text) = do
     case M.lookup size fonts of
         Nothing ->
             return ()
@@ -175,8 +183,12 @@ draw surface fonts proj col (SizedText size text) = do
             textSurface <- TTF.renderUTF8Solid font text (colorToSdlColor col)
             textR <- getClipRect textSurface
             let (x, y) = projectXY proj 0 0
+                x' = case alignment of
+                    LeftAligned   -> floor x
+                    RightAligned  -> floor x - rectW textR
+                    CenterAligned -> floor x - (rectW textR `div` 2)
             ok <- blitSurface textSurface Nothing surface
-                      (Just (textR { rectX = floor x
+                      (Just (textR { rectX = x'
                                    , rectY = floor y - rectH textR }))
             assert ok (return ())
 draw surface fonts proj _ (Color col picture) = do
