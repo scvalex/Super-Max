@@ -10,7 +10,7 @@ import Control.Concurrent ( threadDelay, forkIO, ThreadId )
 import Control.Concurrent.STM ( atomically
                               , TChan, newTChanIO, readTChan, writeTChan )
 import Control.Exception ( Exception, assert )
-import Control.Monad ( forever, when )
+import Control.Monad ( forever )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
 import Data.Traversable ( forM )
@@ -22,10 +22,13 @@ import Graphics.UI.SDL ( InitFlag(..), withInit
                        , Surface, SurfaceFlag(..), setVideoMode, flip
                        , Rect(..), mapRGBA
                        , surfaceGetPixelFormat, fillRect
-                       , Event(..), SDLKey(..), Keysym(..), waitEvent )
+                       , Event(..), SDLKey(..), Keysym(..), waitEvent
+                       , blitSurface
+                       , Rect(..), getClipRect )
 import Text.Printf ( printf )
 import qualified Control.Exception as CE
 import qualified Data.Set as S
+import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.TTF as TTF
 
 --------------------------------
@@ -36,7 +39,7 @@ data Color = Color { colorRed   :: Word8
                    , colorGreen :: Word8
                    , colorBlue  :: Word8
                    , colorAlpha :: Word8
-                   } deriving (Eq)
+                   } deriving ( Eq )
 
 instance Show Color where
     show c = printf "#%2x%2x%2x%2x" (colorRed c) (colorGreen c) (colorBlue c) (colorAlpha c)
@@ -48,7 +51,7 @@ instance Show Color where
 data Picture = FilledRectangle Double Double Double Double Color
              | Translate Double Double Picture
              | Scale Double Double Picture
-               -- FIXME Add an AbsolutelySized text picture.
+             | AbsSizedText String
              | Pictures [Picture]
              deriving ( Eq, Show )
 
@@ -57,25 +60,39 @@ instance Monoid Picture where
     p1 `mappend` p2 = Pictures [p1, p2]
     mconcat ps = Pictures ps
 
-draw :: Surface -> Mat3 -> Picture -> IO ()
-draw surface proj (FilledRectangle x y w h c) = do
+draw :: Surface -> TTF.Font -> Mat3 -> Picture -> IO ()
+draw surface _ proj (FilledRectangle x y w h c) = do
     let pf = surfaceGetPixelFormat surface
     p <- mapRGBA pf (colorRed c) (colorGreen c) (colorBlue c) (colorAlpha c)
-    let Vec3 x1 y1 _ = proj *. (Vec3 x y 1)
-        Vec3 x2 y2 _ = proj *. (Vec3 (x + w) (y + h) 1)
+    let (x1, y1) = projectXY proj x y
+        (x2, y2) = projectXY proj (x + w) (y + h)
         (w1, h1) = (x2 - x1, y2 - y1)
     let r = Rect { rectX = floor x1, rectY = floor y1
                  , rectW = floor w1, rectH = floor h1 }
     ok <- fillRect surface (Just r) p
     assert ok (return ())
-draw surface proj (Translate tx ty picture) = do
+draw surface font proj (Translate tx ty picture) = do
     let proj' = proj .*. (Mat3 (Vec3 1 0 tx) (Vec3 0 1 ty) (Vec3 0 0 1))
-    draw surface proj' picture
-draw surface proj (Scale sx sy picture) = do
+    draw surface font proj' picture
+draw surface font proj (Scale sx sy picture) = do
     let proj' = proj .*. (Mat3 (Vec3 sx 0 0) (Vec3 0 sy 0) (Vec3 0 0 1))
-    draw surface proj' picture
-draw surface proj (Pictures ps) = do
-    mapM_ (draw surface proj) ps
+    draw surface font proj' picture
+draw surface font proj (AbsSizedText text) = do
+    -- FIXME Do we need to manually free used surfaces?
+    textSurface <- TTF.renderUTF8Solid font text (SDL.Color 255 255 255)
+    textR <- getClipRect textSurface
+    let (x, y) = projectXY proj 0 0
+    ok <- blitSurface textSurface Nothing surface (Just (textR { rectX = floor x
+                                                               , rectY = floor y }))
+    assert ok (return ())
+draw surface font proj (Pictures ps) = do
+    mapM_ (draw surface font proj) ps
+
+-- | Run a pair of xy-coordinates through a projection matrix.
+projectXY :: Mat3 -> Double -> Double -> (Double, Double)
+projectXY proj x y =
+    let Vec3 x' y' _ = proj *. (Vec3 x y 1)
+    in (x', y')
 
 --------------------------------
 -- SDL initialization
@@ -87,8 +104,8 @@ withScreen :: Int                -- ^ width
            -> IO ()
 withScreen w h act = do
     withInit [InitEverything] $ do
-        ttfOk <- TTF.init
-        when (not ttfOk) $ fail "could not initialize SDL-ttf"
+        ok <- TTF.init
+        assert ok (return ())
         s <- setVideoMode w h 32 [SWSurface]
         act s
 
@@ -149,6 +166,7 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         putStrLn "SDL initialised"
 
         -- Load resources
+        -- We don't bother freeing the font.
         font <- TTF.openFont "r/Ubuntu-C.ttf" 28
 
         putStrLn "Resources loaded"
@@ -178,9 +196,9 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         let ((), es') = runGame (onEvent event) es
 
         -- Draw the current state.
-        draw screen idmtx $
+        draw screen font idmtx $
             FilledRectangle 0 0 (fromIntegral screenW) (fromIntegral screenH) (Color 0 0 0 255)
-        draw screen idmtx (drawGame (getInnerState es'))
+        draw screen font idmtx (drawGame (getInnerState es'))
         flip screen
 
         -- Set up the next tick.
@@ -235,6 +253,8 @@ main = do
                   FilledRectangle 0 0 10 10 (Color 255 0 0 255)
                 , Translate 30 (10 * fromIntegral (i `mod` 30)) $
                   FilledRectangle 0 0 10 10 (Color 0 255 0 255)
+                , Translate 100 100 $
+                  AbsSizedText "Test"
                 ]
 
     handleEvent (Tick _) = do
