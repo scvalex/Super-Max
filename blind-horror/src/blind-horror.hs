@@ -128,9 +128,6 @@ initWorld gen area lvl =
 
 worldToScene :: World -> Picture
 worldToScene w =
-    -- The origin is in the bottom right corner
-    Translate 0.0 (fromIntegral canvasSize) $
-    Scale 1.0 (-1.0) $
     -- We draw on a (x = 0.0 -- 1.0, y = 0.0 -- 1.0) sized canvas.
     Scale (fromIntegral canvasSize) (fromIntegral canvasSize) $
     -- Now, draw the scene
@@ -192,7 +189,7 @@ worldToScene w =
     roomExit = let (xe, ye) = getRoomExit (getArea w) in
                mconcat [ Color (RGBA 255 215 0 255) $
                          intRectangle xe ye 2 1
-                       , Translate (fromIntegral (xe - 1)) (fromIntegral (ye + 2)) $
+                       , Translate (fromIntegral (xe - 1)) (fromIntegral (ye + 1)) $
                          Scale 0.02 0.01 $
                          smallText "Exit"
                        ]

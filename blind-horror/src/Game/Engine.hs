@@ -81,8 +81,12 @@ colorToSdlColor (RGBA r g b _) = SDL.Color r g b
 -- Pictures
 --------------------------------
 
+-- | The 'Picture' returned by the callback to 'play' is drawn on the screen.  The origin
+-- of the coordinate system is in the bottom-left corner, and axes are the usual Cartesian
+-- ones.
 data Picture = FilledRectangle Double Double Double Double
              | Translate Double Double Picture
+               -- Do /not/ use 'Scale' to flip the screen.
              | Scale Double Double Picture
              | SizedText Int String
              | Color Color Picture
@@ -150,8 +154,8 @@ draw surface _ proj col (FilledRectangle x y w h) = do
     p <- mapRGBA pf (colorRed col) (colorGreen col) (colorBlue col) (colorAlpha col)
     let (x1, y1) = projectXY proj x y
         (x2, y2) = projectXY proj (x + w) (y + h)
-        (x', y') = (min x1 x2, min y1 y2)
         (w', h') = (abs (x2 - x1), abs (y2 - y1))
+        (x', y') = (min x1 x2, min y1 y2)
     let r = Rect { rectX = floor x', rectY = floor y'
                  , rectW = floor w', rectH = floor h' }
     ok <- fillRect surface (Just r) p
@@ -171,8 +175,9 @@ draw surface fonts proj col (SizedText size text) = do
             textSurface <- TTF.renderUTF8Solid font text (colorToSdlColor col)
             textR <- getClipRect textSurface
             let (x, y) = projectXY proj 0 0
-            ok <- blitSurface textSurface Nothing surface (Just (textR { rectX = floor x
-                                                                       , rectY = floor y }))
+            ok <- blitSurface textSurface Nothing surface
+                      (Just (textR { rectX = floor x
+                                   , rectY = floor y - rectH textR }))
             assert ok (return ())
 draw surface fonts proj _ (Color col picture) = do
     draw surface fonts proj col picture
@@ -265,7 +270,11 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         -- Draw the current state.
         draw screen fonts idmtx black $
             FilledRectangle 0 0 (fromIntegral screenW) (fromIntegral screenH)
-        draw screen fonts idmtx white (drawGame (getInnerState es'))
+        draw screen fonts idmtx white $
+            -- The origin is in the bottom right corner
+            Translate 0.0 (fromIntegral screenH) $
+            Scale 1.0 (-1.0) $
+            (drawGame (getInnerState es'))
         SDL.flip screen
 
         -- Set up the next tick.
