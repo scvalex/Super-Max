@@ -26,6 +26,7 @@ doc: build
 
 p:
 	permamake.sh $(shell find src/ -name '*.hs') \
+                     $(shell find engine/ -name '*.hs') \
 	             *.cabal \
 	             Makefile
 

@@ -35,6 +35,7 @@ import Data.Vect.Double ( Mat3(..), Matrix(..), LeftModule(..), Vec3(..)
                         , MultSemiGroup(..) )
 import Graphics.UI.SDL ( InitFlag(..), withInit
                        , Surface, SurfaceFlag(..), setVideoMode
+                       , getVideoInfo, videoInfoWidth, videoInfoHeight
                        , Rect(..), mapRGBA
                        , surfaceGetPixelFormat, fillRect
                        , Event(..), SDLKey(..), Keysym(..), waitEvent
@@ -242,18 +243,17 @@ projectXY proj x y =
 -- SDL initialization
 --------------------------------
 
-withScreen :: Int                -- ^ width
-           -> Int                -- ^ height
-           -> (Surface -> IO ()) -- ^ action to run
+withScreen :: (Int -> Int -> Surface -> IO ()) -- ^ action to run
            -> IO ()
-withScreen w h act = do
+withScreen act = do
     withInit [InitEverything] $ do
         ok <- TTF.init
         assert ok (return ())
-        -- FIXME Set window caption
-        -- FiXME Make window resizable
-        s <- setVideoMode w h 32 [SWSurface]
-        act s
+        vi <- getVideoInfo
+        let screenW = videoInfoWidth vi
+            screenH = videoInfoHeight vi
+        s <- setVideoMode screenW screenH 32 [HWSurface, Fullscreen]
+        act screenW screenH s
 
 --------------------------------
 -- The Engine loop
@@ -266,14 +266,14 @@ data Shutdown = Shutdown
 instance Exception Shutdown
 
 play :: forall w.
-        (Int, Int)                  -- ^ width, height of the game window
-     -> Int                         -- ^ Logical ticks per second
-     -> w                           -- ^ Game state
+        Int                         -- ^ Logical ticks per second
+     -> (Int -> Int -> w)           -- ^ Take the screen width and height, and return the
+                                    -- initial game state
      -> (w -> Picture)              -- ^ Draw a particular state
      -> (GameEvent -> Game w ())    -- ^ Update the state after a 'GameEvent'
      -> IO ()
-play (screenW, screenH) tps wInit drawGame onEvent = do
-    withScreen screenW screenH $ \screen -> do
+play tps wInit drawGame onEvent = do
+    withScreen $ \screenW screenH screen -> do
         putStrLn "SDL initialised"
 
         -- Load resources
@@ -291,7 +291,7 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         -- The random number generator used throughout the game.
         gen <- newStdGen
 
-        let es = EngineState { getInnerState = wInit
+        let es = EngineState { getInnerState = wInit screenW screenH
                              , getEventChan  = eventCh
                              , getThreads    = S.empty
                              , isTerminating = False
@@ -304,10 +304,10 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         -- Forward SDL event.
         es'' <- forwardEvents es'
 
-        playLoop screen fonts es''
+        playLoop screen screenW screenH fonts es''
   where
-    playLoop :: Surface -> Fonts -> EngineState w -> IO ()
-    playLoop screen fonts es = do
+    playLoop :: Surface -> Int -> Int -> Fonts -> EngineState w -> IO ()
+    playLoop screen screenW screenH fonts es = do
         -- Block for next event.
         event <- atomically (readTChan (getEventChan es))
 
@@ -331,7 +331,7 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
 
         if isTerminating es''
             then shutdown es''
-            else playLoop screen fonts es''
+            else playLoop screen screenW screenH fonts es''
 
     tick :: UTCTime -> EngineState s -> IO (EngineState s)
     tick prevTime es = managedForkIO es $ do

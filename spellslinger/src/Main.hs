@@ -11,15 +11,14 @@ type NpcId = Int
 
 type Level = Int
 
+type FullState = ((Int, Int), GameState)
+
 data GameState = MainMenu MainMenu.State
                | Survival Survival.State
 
 ----------------------
 -- Constants
 ----------------------
-
-canvasSize :: Int
-canvasSize = 1000
 
 tps :: Int
 tps = 10
@@ -36,9 +35,8 @@ main = do
     putStrLn ""
 
     play
-        (canvasSize, canvasSize)
         tps
-        (MainMenu MainMenu.initState)
+        (\screenW screenH -> ((screenW, screenH), MainMenu MainMenu.initState))
         drawState
         handleEvent
 
@@ -46,33 +44,36 @@ main = do
 -- Callbacks
 ----------------------
 
-drawState :: GameState -> Picture
-drawState gs =
+drawState :: FullState -> Picture
+drawState ((screenW, screenH), gs) =
     -- We draw on a (x = 0.0 -- 1.0, y = 0.0 -- 1.0) sized canvas.
-    Scale (fromIntegral canvasSize) (fromIntegral canvasSize) $
+    Scale (fromIntegral screenW) (fromIntegral screenH) $
     -- Now, draw the scene
     case gs of
         MainMenu state -> MainMenu.drawState state
         Survival state -> Survival.drawState state
 
-handleEvent :: GameEvent -> Game GameState ()
+handleEvent :: GameEvent -> Game FullState ()
 handleEvent ev = do
-    gs <- getGameState
+    (dims, gs) <- getGameState
     mcommand <- case gs of
         MainMenu state -> do
-            withAlternateGameState state (\state' -> MainMenu state') $
+            withAlternateGameState state (\state' -> (dims, MainMenu state')) $
                 MainMenu.handleEvent ev
         Survival state -> do
-            withAlternateGameState state (\state' -> Survival state') $
+            withAlternateGameState state (\state' -> (dims, Survival state')) $
                 Survival.handleEvent ev
     handleGlobalCommand mcommand
   where
-    handleGlobalCommand :: Maybe GlobalCommand -> Game GameState ()
+    handleGlobalCommand :: Maybe GlobalCommand -> Game FullState ()
     handleGlobalCommand Nothing =
         return ()
-    handleGlobalCommand (Just ToNewGame) =
-        setGameState . Survival =<< (Survival.initState 1)
-    handleGlobalCommand (Just ToMainMenu) =
-        setGameState (MainMenu MainMenu.initState)
+    handleGlobalCommand (Just ToNewGame) = do
+        (dims, _) <- getGameState
+        survivalState <- Survival.initState 1
+        setGameState (dims, Survival survivalState)
+    handleGlobalCommand (Just ToMainMenu) = do
+        (dims, _) <- getGameState
+        setGameState (dims, MainMenu MainMenu.initState)
     handleGlobalCommand (Just ToQuit) =
         quitGame
