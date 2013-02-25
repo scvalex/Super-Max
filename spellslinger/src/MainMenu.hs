@@ -1,4 +1,4 @@
-module Menu (
+module MainMenu (
         -- * State
         State, initState,
 

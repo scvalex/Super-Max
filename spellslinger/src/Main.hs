@@ -4,14 +4,14 @@ import Game.Engine ( Game, GameEvent, play
                    , getGameState, withAlternateGameState
                    , Picture )
 import System.Random ( newStdGen )
-import qualified Menu as Menu
+import qualified MainMenu as MainMenu
 import qualified Survival as Survival
 
 type NpcId = Int
 
 type Level = Int
 
-data GameState = Menu Menu.State
+data GameState = MainMenu MainMenu.State
                | Survival Survival.State
 
 ----------------------
@@ -49,16 +49,16 @@ main = do
 ----------------------
 
 drawState :: GameState -> Picture
-drawState (Menu state)     = Menu.drawState state
+drawState (MainMenu state) = MainMenu.drawState state
 drawState (Survival state) = Survival.drawState state
 
 handleEvent :: GameEvent -> Game GameState ()
 handleEvent ev = do
     gs <- getGameState
     case gs of
-        Menu state -> do
-            withAlternateGameState state (\state' -> Menu state') $
-                Menu.handleEvent ev
+        MainMenu state -> do
+            withAlternateGameState state (\state' -> MainMenu state') $
+                MainMenu.handleEvent ev
         Survival state -> do
             withAlternateGameState state (\state' -> Survival state') $
                 Survival.handleEvent ev
