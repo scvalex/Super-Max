@@ -28,8 +28,9 @@ type Level = Int
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
 -- 'handleTick').
-data World = Game { getState        :: RoundState
-                  , getScheduler    :: Scheduler World
+data SurvivalState =
+    SurvivalState { getState        :: RoundState
+                  , getScheduler    :: Scheduler SurvivalState
                   , getLevel        :: Int
                   , getGen          :: StdGen
                   , getTime         :: Double
@@ -82,7 +83,7 @@ main = do
     play
         (canvasSize, canvasSize)
         tps
-        (initWorld gen area1 1)
+        (initSurvivalState gen area1 1)
         worldToScene
         handleEvent
 
@@ -102,8 +103,8 @@ area1 = Room { getRoomBounds = (0, 0, 100, 100)
              , getRoomExit = (49, 94)
              }
 
-initWorld :: StdGen -> Area -> Level -> World
-initWorld gen area lvl =
+initSurvivalState :: StdGen -> Area -> Level -> SurvivalState
+initSurvivalState gen area lvl =
     let (x1, y1, x2, y2) = getRoomBounds area
         (npcs, gen') =
             foldl (\(ns, gen0) i ->
@@ -111,24 +112,24 @@ initWorld gen area lvl =
                         (yz, gen2) = randomR (y1, y2) gen1
                         z = Zombie { getNpcId = i, getNpcPosition = (xz, yz) } in
                     (M.insert i z ns, gen2)) (M.empty, gen) [1..2^(lvl - 1)]
-        g = Game { getState        = PreRound "Get to the exit"
-                 , getScheduler    = newScheduler
-                 , getLevel        = lvl
-                 , getGen          = gen'
-                 , getTime         = 0.0
-                 , getTick         = 0
-                 , getArea         = area
-                 , getHeldDownKeys = S.empty
-                 , getNpcs         = npcs
-                 , getPlayer       = Player { getPlayerPosition = getRoomStart area
-                                            , getPlayerMovement = Nothing
-                                            }
-                 }
+        g = SurvivalState { getState        = PreRound "Get to the exit"
+                          , getScheduler    = newScheduler
+                          , getLevel        = lvl
+                          , getGen          = gen'
+                          , getTime         = 0.0
+                          , getTick         = 0
+                          , getArea         = area
+                          , getHeldDownKeys = S.empty
+                          , getNpcs         = npcs
+                          , getPlayer       = Player { getPlayerPosition = getRoomStart area
+                                                     , getPlayerMovement = Nothing
+                                                     }
+                          }
     in scheduleIn 1 movePlayer $
        scheduleIn 2 moveNpcs $
        g
 
-worldToScene :: World -> Picture
+worldToScene :: SurvivalState -> Picture
 worldToScene w =
     -- We draw on a (x = 0.0 -- 1.0, y = 0.0 -- 1.0) sized canvas.
     Scale (fromIntegral canvasSize) (fromIntegral canvasSize) $
@@ -222,11 +223,11 @@ worldToScene w =
     mediumText = Text 30
     smallText  = Text 20
 
-handleEvent :: GameEvent -> Game World ()
+handleEvent :: GameEvent -> Game SurvivalState ()
 handleEvent (InputEvent ev) = handleInputEvent ev
 handleEvent (Tick (_, t)) = handleTick t
 
-handleInputEvent :: Event -> Game World ()
+handleInputEvent :: Event -> Game SurvivalState ()
 handleInputEvent ev = handleGlobalKey ev $ do
     w <- getGameState
     case getState w of
@@ -241,11 +242,11 @@ handleInputEvent ev = handleGlobalKey ev $ do
         PostRound { getHasContinue = c } -> do
             case ev of
                 KeyUp (Keysym { symKey = SDLK_SPACE }) | c ->
-                    setGameState (initWorld (getGen w) (getArea w) (getLevel w + 1))
+                    setGameState (initSurvivalState (getGen w) (getArea w) (getLevel w + 1))
                 _ -> do
                     return ()
   where
-    handleInRoundEvent :: Game World ()
+    handleInRoundEvent :: Game SurvivalState ()
     handleInRoundEvent = do
         w <- getGameState
         let keys = getHeldDownKeys w
@@ -259,14 +260,14 @@ handleInputEvent ev = handleGlobalKey ev $ do
                 return ()
 
     -- Handle keys that work regardless of gamestate
-    handleGlobalKey :: Event -> Game World () -> Game World ()
+    handleGlobalKey :: Event -> Game SurvivalState () -> Game SurvivalState ()
     handleGlobalKey (KeyUp (Keysym {symKey = SDLK_ESCAPE})) _ = do
         quitGame
     handleGlobalKey _ fallback = do
         fallback
 
 -- | A key is pressed -- update the world accordingly.
-processKey :: Keysym -> Game World ()
+processKey :: Keysym -> Game SurvivalState ()
 processKey key = do
     w <- getGameState
     let p = getPlayer w
@@ -282,7 +283,7 @@ processKey key = do
         _ ->
             return ()
 
-handleTick :: Double -> Game World ()
+handleTick :: Double -> Game SurvivalState ()
 handleTick t = do
     w0 <- getGameState
     case getState w0 of
@@ -290,7 +291,7 @@ handleTick t = do
         InRound      -> handleTickInRound
         PostRound {} -> return ()
   where
-    handleTickInRound :: Game World ()
+    handleTickInRound :: Game SurvivalState ()
     handleTickInRound =
         sequence_ [ processHeldDownKeys
                   , updateTick
@@ -300,17 +301,17 @@ handleTick t = do
                   ]
 
     -- Increment the tick count.
-    updateTick :: Game World ()
+    updateTick :: Game SurvivalState ()
     updateTick = do
         modifyGameState (\w -> w { getTick  = getTick w + 1 })
 
     -- Increment the ticker by the elapsed amount of time.
-    updateTime :: Game World ()
+    updateTime :: Game SurvivalState ()
     updateTime = do
         modifyGameState (\w -> w { getTime = getTime w + t })
 
     -- Run actions pending in the scheduler.
-    runPendingActions :: Game World ()
+    runPendingActions :: Game SurvivalState ()
     runPendingActions = do
         w <- getGameState
         let w' = runScheduledActions (getTick w) w (getScheduler w)
@@ -318,13 +319,13 @@ handleTick t = do
 
     -- Some keys were held down, so we didn't see them "happen" this turn.  Simulate key
     -- presses for all keys that are currently being held down.
-    processHeldDownKeys :: Game World ()
+    processHeldDownKeys :: Game SurvivalState ()
     processHeldDownKeys = do
         w <- getGameState
         mapM_ processKey (S.toList (getHeldDownKeys w))
 
     -- Check if the player has lost yet.
-    checkVictory :: Game World ()
+    checkVictory :: Game SurvivalState ()
     checkVictory = do
         w <- getGameState
         let npcPoss = map getNpcPosition $ M.elems (getNpcs w)
@@ -338,11 +339,11 @@ handleTick t = do
             else return ()
 
 ----------------------
--- World updates
+-- SurvivalState updates
 ----------------------
 
 -- Move the player according to its movement, then, reset its movement.
-movePlayer :: World -> World
+movePlayer :: SurvivalState -> SurvivalState
 movePlayer w =
     let p = getPlayer w
         (x, y) = getPlayerPosition p
@@ -370,14 +371,14 @@ movePlayer w =
     movementDisplacement East  = (1, 0)
 
 -- Move NPCs according the their own rules.
-moveNpcs :: World -> World
+moveNpcs :: SurvivalState -> SurvivalState
 moveNpcs w =
     let w' = scheduleIn 2 moveNpcs w in
     w' { getNpcs = M.foldl (moveNpc w') (getNpcs w') (getNpcs w') }
 
 -- Move a single NPC.  Zombies follow the player.  If a zombie tries to move to an
 -- occupied space, it doesn't move.
-moveNpc :: World -> Map NpcId Npc -> Npc -> Map NpcId Npc
+moveNpc :: SurvivalState -> Map NpcId Npc -> Npc -> Map NpcId Npc
 moveNpc w npcs z@(Zombie {}) =
     let (xz, yz) = getNpcPosition z
         (xp, yp) = getPlayerPosition (getPlayer w)
@@ -395,7 +396,7 @@ moveNpc w npcs z@(Zombie {}) =
 ----------------------
 
 -- | Schedule an action to run in the given number of ticks.
-scheduleIn :: Int -> (World -> World) -> World -> World
+scheduleIn :: Int -> (SurvivalState -> SurvivalState) -> SurvivalState -> SurvivalState
 scheduleIn d update w =
     w { getScheduler = scheduleAction (getScheduler w) (getTick w + d) update }
 
