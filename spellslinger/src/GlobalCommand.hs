@@ -8,4 +8,4 @@ module GlobalCommand (
 
 data GlobalCommand = ToNewGame
                    | ToMainMenu
-                   | Quit
+                   | ToQuit

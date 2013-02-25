@@ -74,5 +74,5 @@ handleEvent ev = do
         setGameState . Survival =<< (Survival.initState 1)
     handleGlobalCommand (Just ToMainMenu) =
         setGameState (MainMenu MainMenu.initState)
-    handleGlobalCommand (Just Quit) =
+    handleGlobalCommand (Just ToQuit) =
         quitGame
