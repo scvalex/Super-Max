@@ -1,7 +1,7 @@
-blind-horror
+Spellslinger
 ============
 
-> A horror-survival game
+> A game with wizards, spells, and monsters
 
 Büild
 -----

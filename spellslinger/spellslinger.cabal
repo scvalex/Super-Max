@@ -1,4 +1,4 @@
-Name:           blind-horror
+Name:           spellslinger
 Version:        0.5
 Cabal-Version:  >= 1.8
 License:        GPL-3
@@ -8,7 +8,7 @@ Author:         Alexandru Scvortov <scvalex@gmail.com>
 Maintainer:     scvalex@gmail.com
 Homepage:       https://github.com/scvalex/super-max
 Category:       Games
-Synopsis:       A horror-survival game
+Synopsis:       A game with wizards, spells, and monsters
 Build-Type:     Simple
 Description:
         See the @README.md@ file and the homepage for details.
@@ -21,13 +21,13 @@ Source-repository head
   Type:                 git
   Location:             https://github.com/scvalex/super-max.git
 
-Executable blind-horror
+Executable spellslinger
   Build-depends:        base >= 4 && < 5, containers, SDL, SDL-ttf, random,
                         stm, time, vect
   Ghc-options:          -Wall -threaded
   Hs-Source-Dirs:       src/
   Extensions:           ScopedTypeVariables, OverloadedStrings
-  Main-is:              blind-horror.hs
+  Main-is:              Main.hs
 
 Executable engine
   Build-depends:        base >= 4 && < 5, containers, SDL, SDL-ttf, random,

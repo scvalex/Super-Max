@@ -16,7 +16,7 @@ clean:
 	cabal-dev clean
 	rm -rf cabal-dev/
 
-dist/setup-config: blind-horror.cabal
+dist/setup-config: spellslinger.cabal
 # If you don't have all the necessary packages installed on the first
 # run, run `cabal-dev install`.
 	cabal-dev configure || cabal-dev install
@@ -30,7 +30,7 @@ p:
 	             Makefile
 
 run: build
-	./blind-horror
+	./spellslinger
 
 ghci: build
 	cabal-dev ghci
