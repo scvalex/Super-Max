@@ -1,4 +1,10 @@
-module Survival where
+module Survival (
+        -- * State
+        State, initState,
+
+        -- * Callbacks
+        drawState, handleEvent
+    ) where
 
 import Prelude hiding ( foldl )
 
@@ -77,17 +83,15 @@ data Npc = Zombie { getNpcId       :: NpcId
 canvasSize :: Int
 canvasSize = 1000
 
-tps :: Int
-tps = 10
-
 area1 :: Area
 area1 = Room { getRoomBounds = (0, 0, 100, 100)
              , getRoomStart = (49, 5)
              , getRoomExit = (49, 94)
              }
 
-initState :: StdGen -> Area -> Level -> State
-initState gen area lvl =
+initState :: StdGen -> Level -> State
+initState gen lvl =
+    let area = area1 in
     let (x1, y1, x2, y2) = getRoomBounds area
         (npcs, gen') =
             foldl (\(ns, gen0) i ->
@@ -225,7 +229,7 @@ handleInputEvent ev = handleGlobalKey ev $ do
         PostRound { getHasContinue = c } -> do
             case ev of
                 KeyUp (Keysym { symKey = SDLK_SPACE }) | c ->
-                    setGameState (initState (getGen w) (getArea w) (getLevel w + 1))
+                    setGameState (initState (getGen w) (getLevel w + 1))
                 _ -> do
                     return ()
   where

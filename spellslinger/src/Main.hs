@@ -40,7 +40,7 @@ main = do
     play
         (canvasSize, canvasSize)
         tps
-        (Survival (Survival.initState gen Survival.area1 1))
+        (Survival (Survival.initState gen 1))
         drawState
         handleEvent
 
