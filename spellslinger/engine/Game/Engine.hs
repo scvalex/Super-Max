@@ -41,6 +41,8 @@ import Graphics.UI.SDL ( InitFlag(..), withInit
                        , Event(..), SDLKey(..), Keysym(..), waitEvent
                        , blitSurface
                        , Rect(..), getClipRect )
+import System.Environment ( lookupEnv )
+import System.FilePath ( (</>) )
 import System.Random ( Random, StdGen, newStdGen )
 import Text.Printf ( printf )
 import qualified Control.Exception as CE
@@ -277,10 +279,14 @@ play tps wInit drawGame onEvent = do
         putStrLn "SDL initialised"
 
         -- Load resources
+        spellslingerDir <- lookupEnv "SPELLSLINGER_DIR"
+        let resDir = maybe "r" (</> "r") spellslingerDir
+        _ <- printf "Loading resources from %s\n" resDir
+
         -- We don't bother freeing the fonts.
         -- FIXME Let the game specify which fonts to load
         fonts <- M.fromList <$> forM [10..80] (\size -> do
-            font <- TTF.openFont "r/Ubuntu-C.ttf" size
+            font <- TTF.openFont (resDir </> "Ubuntu-C.ttf") size
             return (size, font))
 
         putStrLn "Resources loaded"

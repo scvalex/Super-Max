@@ -15,7 +15,7 @@ redist: build
 	cp $(shell objdump -p $(REDIST)/spellslinger-x64 | grep NEEDED | grep -i sdl | awk '{ printf "/usr/lib64/%s\n", $$2 }') $(REDIST)/
 	cp ./spellslinger $(REDIST)/
 	cp -r r/ $(REDIST)/
-	tree $(REDIST)/
+	tar -cjvf spellslinger-redist.tar.bz2 $(REDIST)/
 
 install: build
 	cabal install
@@ -39,7 +39,7 @@ p:
 	             Makefile
 
 run: build
-	./spellslinger
+	$(BIN)
 
 ghci: build
 	cabal-dev ghci
