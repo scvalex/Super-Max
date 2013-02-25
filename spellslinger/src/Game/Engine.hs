@@ -14,7 +14,8 @@ module Game.Engine (
         Event(..), SDLKey(..), Keysym(..),
 
         -- * Engine interface
-        play, quitGame, getGameState, setGameState, modifyGameState
+        play, quitGame, getGameState, setGameState, modifyGameState,
+        withAlternateGameState
     ) where
 
 import Control.Applicative ( Applicative(..), (<$>) )
@@ -110,6 +111,12 @@ instance Monoid Picture where
 -- Game/Engine interface
 --------------------------------
 
+data EngineState s = EngineState { getInnerState :: s
+                                 , getEventChan  :: TChan GameEvent
+                                 , getThreads    :: Set ThreadId
+                                 , isTerminating :: Bool
+                                 }
+
 -- | The events a game may receive.
 data GameEvent = Tick (UTCTime, Double) -- ^ A logical tick with the current time and the
                                         -- number of seconds since the last tick.
@@ -121,14 +128,18 @@ newtype Game s a = Game { runGame :: EngineState s -> (a, EngineState s) }
 
 instance Monad (Game s) where
     return x = Game (\s -> (x, s))
-    (Game h) >>= f = Game (\s -> let (x, s') = h s in let (Game g) = f x in g s')
+    (Game h) >>= f = Game (\s -> let (x, s') = h s in
+                                 let (Game g) = f x in
+                                 g s')
 
 instance Functor (Game s) where
     f `fmap` (Game h) = Game (\s -> let (x, s') = h s in (f x, s'))
 
 instance Applicative (Game s) where
     pure x = Game (\s -> (x, s))
-    Game f <*> Game g = Game (\s -> let (h, s') = f s in let (x, s'') = g s' in (h x, s''))
+    Game f <*> Game g = Game (\s -> let (h, s') = f s in
+                                    let (x, s'') = g s' in
+                                    (h x, s''))
 
 -- | Get the current game state.
 getGameState :: Game s s
@@ -145,6 +156,22 @@ modifyGameState f = Game (\s -> ((), s { getInnerState = f (getInnerState s) }))
 -- | Instruct the engine to close after the current callback returns.
 quitGame :: Game s ()
 quitGame = Game (\s -> ((), s { isTerminating = True }))
+
+-- | Run an action in the 'Game' monad but with a different game state.
+withAlternateGameState :: t -> (t -> s) -> Game t a -> Game s a
+withAlternateGameState alternateState setAlternateState innerAction =
+    Game (\s -> let as = EngineState { getInnerState = alternateState
+                                     , getEventChan  = getEventChan s
+                                     , getThreads    = getThreads s
+                                     , isTerminating = isTerminating s
+                                     } in
+                let (x, as') = runGame innerAction as in
+                let s' = EngineState { getInnerState = setAlternateState (getInnerState as')
+                                     , getEventChan  = getEventChan as'
+                                     , getThreads    = getThreads as'
+                                     , isTerminating = isTerminating as'
+                                     } in
+                (x, s'))
 
 --------------------------------
 -- Fonts
@@ -222,12 +249,6 @@ withScreen w h act = do
 --------------------------------
 -- The Engine loop
 --------------------------------
-
-data EngineState s = EngineState { getInnerState :: s
-                                 , getEventChan  :: TChan GameEvent
-                                 , getThreads    :: Set ThreadId
-                                 , isTerminating :: Bool
-                                 }
 
 -- | 'Shutdown' is sent to each non-main game thread when the engine shuts down.
 data Shutdown = Shutdown
@@ -325,4 +346,4 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
     shutdown :: EngineState s -> IO ()
     shutdown es = do
         _ <- forM (S.toList (getThreads es)) (\tid -> CE.throwTo tid Shutdown)
-        return ()
+        putStrLn "Shutdown"
