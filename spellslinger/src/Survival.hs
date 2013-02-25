@@ -10,12 +10,13 @@ import Data.Foldable ( foldlM )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
-import Game.Engine ( GameEvent(..), quitGame
+import Game.Engine ( GameEvent(..)
                    , Game, getGameState, setGameState, modifyGameState, randomR
                    , Picture(..)
                    , TextAlignment(..)
                    , Color(..), black, greyN
                    , Event(..), SDLKey(..), Keysym(..) )
+import GlobalCommand ( GlobalCommand(..) )
 import Scheduler ( Scheduler, newScheduler
                  , runScheduledActions, scheduleAction, dropExpiredActions )
 import Spell ( )
@@ -200,11 +201,14 @@ drawState w =
     mediumText = Text 30
     smallText  = Text 20
 
-handleEvent :: GameEvent -> Game State ()
-handleEvent (InputEvent ev) = handleInputEvent ev
-handleEvent (Tick (_, t)) = handleTick t
+handleEvent :: GameEvent -> Game State (Maybe GlobalCommand)
+handleEvent (InputEvent ev) =
+    handleInputEvent ev
+handleEvent (Tick (_, t)) = do
+    handleTick t
+    return Nothing
 
-handleInputEvent :: Event -> Game State ()
+handleInputEvent :: Event -> Game State (Maybe GlobalCommand)
 handleInputEvent ev = handleGlobalKey ev $ do
     w <- getGameState
     case getState w of
@@ -222,6 +226,7 @@ handleInputEvent ev = handleGlobalKey ev $ do
                     setGameState =<< initState (getLevel w + 1)
                 _ -> do
                     return ()
+    return Nothing
   where
     handleInRoundEvent :: Game State ()
     handleInRoundEvent = do
@@ -237,9 +242,9 @@ handleInputEvent ev = handleGlobalKey ev $ do
                 return ()
 
     -- Handle keys that work regardless of gamestate
-    handleGlobalKey :: Event -> Game State () -> Game State ()
+    handleGlobalKey :: Event -> Game State (Maybe GlobalCommand) -> Game State (Maybe GlobalCommand)
     handleGlobalKey (KeyUp (Keysym {symKey = SDLK_ESCAPE})) _ = do
-        quitGame
+        return (Just ToMainMenu)
     handleGlobalKey _ fallback = do
         fallback
 

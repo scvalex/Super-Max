@@ -58,14 +58,14 @@ drawState gs =
 handleEvent :: GameEvent -> Game GameState ()
 handleEvent ev = do
     gs <- getGameState
-    case gs of
+    mcommand <- case gs of
         MainMenu state -> do
-            mcommand <- withAlternateGameState state (\state' -> MainMenu state') $
+            withAlternateGameState state (\state' -> MainMenu state') $
                 MainMenu.handleEvent ev
-            handleGlobalCommand mcommand
         Survival state -> do
             withAlternateGameState state (\state' -> Survival state') $
                 Survival.handleEvent ev
+    handleGlobalCommand mcommand
   where
     handleGlobalCommand :: Maybe GlobalCommand -> Game GameState ()
     handleGlobalCommand Nothing =
