@@ -52,7 +52,7 @@ data State =
 data RoundState = PreRound { getObjective :: String }
                 | InRound
                 | PostRound { getConclusion  :: String
-                            , getHasContinue :: Bool }
+                            , getCanContinue :: Bool }
                 deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
@@ -134,15 +134,16 @@ drawState w =
         case getState w of
             pg@(PreRound {}) ->
                 mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getObjective pg)
-                        , Translate 0.5 0.40 $ mediumText CenterAligned "<press space>"
+                        , Translate 0.5 0.40 $ mediumText CenterAligned "<press space to start>"
                         ]
             InRound {} ->
                 mempty
-            pg@(PostRound { getHasContinue = hasContinue }) ->
+            pg@(PostRound { getCanContinue = canContinue }) ->
                 mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getConclusion pg)
-                        , if hasContinue
-                          then Translate 0.5 0.40 $ mediumText CenterAligned "<press space>"
-                          else mempty
+                        , Translate 0.5 0.40 $ mediumText CenterAligned $
+                          if canContinue
+                          then "<press space for next level>"
+                          else "<press space for main menu>"
                         ]
 
     -- All the non-player entities.
@@ -216,17 +217,24 @@ handleInputEvent ev = handleGlobalKey ev $ do
             case ev of
                 KeyUp (Keysym { symKey = SDLK_SPACE }) -> do
                     setGameState (w { getState = InRound })
+                    return Nothing
                 _ -> do
                     handleInRoundEvent
+                    return Nothing
         InRound -> do
             handleInRoundEvent
-        PostRound { getHasContinue = c } -> do
+            return Nothing
+        PostRound { getCanContinue = canContinue } -> do
             case ev of
-                KeyUp (Keysym { symKey = SDLK_SPACE }) | c -> do
-                    setGameState =<< initState (getLevel w + 1)
+                KeyUp (Keysym { symKey = SDLK_SPACE })-> do
+                    if canContinue
+                        then do
+                            setGameState =<< initState (getLevel w + 1)
+                            return Nothing
+                        else do
+                            return (Just ToMainMenu)
                 _ -> do
-                    return ()
-    return Nothing
+                    return Nothing
   where
     handleInRoundEvent :: Game State ()
     handleInRoundEvent = do
@@ -314,10 +322,10 @@ handleTick t = do
             pos = getPlayerPosition (getPlayer w)
         if pos `elem` npcPoss
             then setGameState (w { getState = PostRound { getConclusion  = "You died"
-                                                        , getHasContinue = False } })
+                                                        , getCanContinue = False } })
             else if pos == getRoomExit (getArea w)
             then setGameState (w { getState = PostRound { getConclusion  = "You win"
-                                                        , getHasContinue = True } })
+                                                        , getCanContinue = True } })
             else return ()
 
 ----------------------
