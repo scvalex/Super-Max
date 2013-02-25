@@ -2,7 +2,7 @@ module Main where
 
 import Game.Engine ( Game, GameEvent, play
                    , getGameState, withAlternateGameState
-                   , Picture )
+                   , Picture(..) )
 import System.Random ( newStdGen )
 import qualified MainMenu as MainMenu
 import qualified Survival as Survival
@@ -49,8 +49,13 @@ main = do
 ----------------------
 
 drawState :: GameState -> Picture
-drawState (MainMenu state) = MainMenu.drawState state
-drawState (Survival state) = Survival.drawState state
+drawState gs =
+    -- We draw on a (x = 0.0 -- 1.0, y = 0.0 -- 1.0) sized canvas.
+    Scale (fromIntegral canvasSize) (fromIntegral canvasSize) $
+    -- Now, draw the scene
+    case gs of
+        MainMenu state -> MainMenu.drawState state
+        Survival state -> Survival.drawState state
 
 handleEvent :: GameEvent -> Game GameState ()
 handleEvent ev = do

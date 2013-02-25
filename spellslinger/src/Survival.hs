@@ -80,9 +80,6 @@ data Npc = Zombie { getNpcId       :: NpcId
 -- Callbacks
 ----------------------
 
-canvasSize :: Int
-canvasSize = 1000
-
 area1 :: Area
 area1 = Room { getRoomBounds = (0, 0, 100, 100)
              , getRoomStart = (49, 5)
@@ -118,9 +115,6 @@ initState gen lvl =
 
 drawState :: State -> Picture
 drawState w =
-    -- We draw on a (x = 0.0 -- 1.0, y = 0.0 -- 1.0) sized canvas.
-    Scale (fromIntegral canvasSize) (fromIntegral canvasSize) $
-    -- Now, draw the scene
     mconcat [ wireframe
             , room
             , player
