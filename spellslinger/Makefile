@@ -22,7 +22,7 @@ install: build
 
 clean:
 	cabal-dev clean
-	rm -rf cabal-dev/ spellslinger-redist/
+	rm -rf cabal-dev/ spellslinger-redist/ spellslinger-redist.tar.bz2
 
 dist/setup-config: spellslinger.cabal
 # If you don't have all the necessary packages installed on the first
