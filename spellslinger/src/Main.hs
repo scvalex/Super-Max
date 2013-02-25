@@ -1,9 +1,8 @@
 module Main where
 
 import Game.Engine ( Game, GameEvent, play
-                   , getGameState, withAlternateGameState
+                   , setGameState, getGameState, withAlternateGameState
                    , Picture(..) )
-import System.Random ( newStdGen )
 import qualified MainMenu as MainMenu
 import qualified Survival as Survival
 
@@ -35,12 +34,10 @@ main = do
     putStrLn "ohgod ohgod ohgod"
     putStrLn ""
 
-    gen <- newStdGen
-
     play
         (canvasSize, canvasSize)
         tps
-        (Survival (Survival.initState gen 1))
+        (MainMenu MainMenu.initState)
         drawState
         handleEvent
 
@@ -64,6 +61,7 @@ handleEvent ev = do
         MainMenu state -> do
             withAlternateGameState state (\state' -> MainMenu state') $
                 MainMenu.handleEvent ev
+            setGameState . Survival =<< (Survival.initState 1)
         Survival state -> do
             withAlternateGameState state (\state' -> Survival state') $
                 Survival.handleEvent ev

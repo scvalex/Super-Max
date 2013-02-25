@@ -15,7 +15,7 @@ module Game.Engine (
 
         -- * Engine interface
         play, quitGame, getGameState, setGameState, modifyGameState,
-        withAlternateGameState
+        withAlternateGameState, randomR
     ) where
 
 import Control.Applicative ( Applicative(..), (<$>) )
@@ -40,12 +40,14 @@ import Graphics.UI.SDL ( InitFlag(..), withInit
                        , Event(..), SDLKey(..), Keysym(..), waitEvent
                        , blitSurface
                        , Rect(..), getClipRect )
+import System.Random ( Random, StdGen, newStdGen )
 import Text.Printf ( printf )
 import qualified Control.Exception as CE
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.TTF as TTF
+import qualified System.Random as R
 
 --------------------------------
 -- Missing instances
@@ -115,6 +117,7 @@ data EngineState s = EngineState { getInnerState :: s
                                  , getEventChan  :: TChan GameEvent
                                  , getThreads    :: Set ThreadId
                                  , isTerminating :: Bool
+                                 , getGen        :: StdGen
                                  }
 
 -- | The events a game may receive.
@@ -164,14 +167,20 @@ withAlternateGameState alternateState setAlternateState innerAction =
                                      , getEventChan  = getEventChan s
                                      , getThreads    = getThreads s
                                      , isTerminating = isTerminating s
+                                     , getGen        = getGen s
                                      } in
                 let (x, as') = runGame innerAction as in
                 let s' = EngineState { getInnerState = setAlternateState (getInnerState as')
                                      , getEventChan  = getEventChan as'
                                      , getThreads    = getThreads as'
                                      , isTerminating = isTerminating as'
+                                     , getGen        = getGen as'
                                      } in
                 (x, s'))
+
+-- | Generate a random number using the game's random generator.
+randomR :: (Random a) => (a, a) -> Game s a
+randomR bounds = Game (\s -> let (x, g) = R.randomR bounds (getGen s) in (x, s { getGen = g }))
 
 --------------------------------
 -- Fonts
@@ -278,10 +287,14 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         -- This channel is used to collect events from multiple sources for the game.
         eventCh <- newTChanIO
 
+        -- The random number generator used throughout the game.
+        gen <- newStdGen
+
         let es = EngineState { getInnerState = wInit
                              , getEventChan  = eventCh
                              , getThreads    = S.empty
                              , isTerminating = False
+                             , getGen        = gen
                              }
         -- Set up the first tick.
         initTime <- getCurrentTime

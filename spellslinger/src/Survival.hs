@@ -6,14 +6,12 @@ module Survival (
         drawState, handleEvent
     ) where
 
-import Prelude hiding ( foldl )
-
-import Data.Foldable ( foldl )
+import Data.Foldable ( foldlM )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
 import Game.Engine ( GameEvent(..), quitGame
-                   , Game, getGameState, setGameState, modifyGameState
+                   , Game, getGameState, setGameState, modifyGameState, randomR
                    , Picture(..)
                    , TextAlignment(..)
                    , Color(..), black, greyN
@@ -21,7 +19,6 @@ import Game.Engine ( GameEvent(..), quitGame
 import Scheduler ( Scheduler, newScheduler
                  , runScheduledActions, scheduleAction, dropExpiredActions )
 import Spell ( )
-import System.Random ( StdGen, randomR )
 import Text.Printf ( printf )
 import Types ( Direction(..) )
 import qualified Data.Map as M
@@ -38,7 +35,6 @@ data State =
     State { getState        :: RoundState
           , getScheduler    :: Scheduler State
           , getLevel        :: Int
-          , getGen          :: StdGen
           , getTime         :: Double
           , getTick         :: Int
           , getArea         :: Area
@@ -86,20 +82,20 @@ area1 = Room { getRoomBounds = (0, 0, 100, 100)
              , getRoomExit = (49, 94)
              }
 
-initState :: StdGen -> Level -> State
-initState gen lvl =
-    let area = area1 in
-    let (x1, y1, x2, y2) = getRoomBounds area
-        (npcs, gen') =
-            foldl (\(ns, gen0) i ->
-                    let (xz, gen1) = randomR (x1, x2) gen0
-                        (yz, gen2) = randomR (y1, y2) gen1
-                        z = Zombie { getNpcId = i, getNpcPosition = (xz, yz) } in
-                    (M.insert i z ns, gen2)) (M.empty, gen) [1..2^(lvl - 1)]
-        g = State { getState        = PreRound "Get to the exit"
+initState :: Level -> Game a State
+initState lvl = do
+    let area = area1
+        (x1, y1, x2, y2) = getRoomBounds area
+    npcs <- foldlM (\ns i -> do
+                         xz <- randomR (x1, x2)
+                         yz <- randomR (y1, y2)
+                         let z = Zombie { getNpcId = i, getNpcPosition = (xz, yz) }
+                         return (M.insert i z ns))
+                   M.empty
+                   [1..2^(lvl - 1)]
+    let g = State { getState        = PreRound "Get to the exit"
                   , getScheduler    = newScheduler
                   , getLevel        = lvl
-                  , getGen          = gen'
                   , getTime         = 0.0
                   , getTick         = 0
                   , getArea         = area
@@ -109,9 +105,9 @@ initState gen lvl =
                                              , getPlayerMovement = Nothing
                                              }
                   }
-    in scheduleIn 1 movePlayer $
-       scheduleIn 2 moveNpcs $
-       g
+    return (scheduleIn 1 movePlayer $
+            scheduleIn 2 moveNpcs $
+            g)
 
 drawState :: State -> Picture
 drawState w =
@@ -222,8 +218,8 @@ handleInputEvent ev = handleGlobalKey ev $ do
             handleInRoundEvent
         PostRound { getHasContinue = c } -> do
             case ev of
-                KeyUp (Keysym { symKey = SDLK_SPACE }) | c ->
-                    setGameState (initState (getGen w) (getLevel w + 1))
+                KeyUp (Keysym { symKey = SDLK_SPACE }) | c -> do
+                    setGameState =<< initState (getLevel w + 1)
                 _ -> do
                     return ()
   where

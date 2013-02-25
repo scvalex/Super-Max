@@ -6,6 +6,7 @@ module MainMenu (
         drawState, handleEvent
     ) where
 
+import Data.Monoid ( Monoid(..) )
 import Game.Engine ( Game, GameEvent
                    , Picture )
 
@@ -19,7 +20,7 @@ initState = State
 ----------------------
 
 drawState :: State -> Picture
-drawState _ = undefined
+drawState _ = mempty
 
 handleEvent :: GameEvent -> Game State ()
-handleEvent _ = undefined
+handleEvent _ = return ()
