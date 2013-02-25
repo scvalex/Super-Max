@@ -17,10 +17,12 @@ data ScheduledAction w = UpdateWorld { getScheduledTick  :: Int
                                      , getUpdateFunction :: w -> w }
 
 instance Eq (ScheduledAction w) where
-    UpdateWorld { getScheduledTick = n1 } == UpdateWorld { getScheduledTick = n2 } = n1 == n2
+    UpdateWorld { getScheduledTick = n1 } == UpdateWorld { getScheduledTick = n2 } =
+        n1 == n2
 
 instance Ord (ScheduledAction w) where
-    UpdateWorld { getScheduledTick = n1 } `compare` UpdateWorld {getScheduledTick = n2 } = n1 `compare` n2
+    UpdateWorld { getScheduledTick = n1 } `compare` UpdateWorld {getScheduledTick = n2 } =
+        n1 `compare` n2
 
 data Scheduler w = Scheduler { getSchedule :: PriorityQueue (ScheduledAction w) }
 
