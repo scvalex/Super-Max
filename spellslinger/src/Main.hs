@@ -1,8 +1,9 @@
 module Main where
 
-import Game.Engine ( Game, GameEvent, play
+import Game.Engine ( Game, GameEvent, play, quitGame
                    , setGameState, getGameState, withAlternateGameState
                    , Picture(..) )
+import GlobalCommand ( GlobalCommand(..) )
 import qualified MainMenu as MainMenu
 import qualified Survival as Survival
 
@@ -59,9 +60,19 @@ handleEvent ev = do
     gs <- getGameState
     case gs of
         MainMenu state -> do
-            withAlternateGameState state (\state' -> MainMenu state') $
+            mcommand <- withAlternateGameState state (\state' -> MainMenu state') $
                 MainMenu.handleEvent ev
-            setGameState . Survival =<< (Survival.initState 1)
+            handleGlobalCommand mcommand
         Survival state -> do
             withAlternateGameState state (\state' -> Survival state') $
                 Survival.handleEvent ev
+  where
+    handleGlobalCommand :: Maybe GlobalCommand -> Game GameState ()
+    handleGlobalCommand Nothing =
+        return ()
+    handleGlobalCommand (Just ToNewGame) =
+        setGameState . Survival =<< (Survival.initState 1)
+    handleGlobalCommand (Just ToMainMenu) =
+        setGameState (MainMenu MainMenu.initState)
+    handleGlobalCommand (Just Quit) =
+        quitGame
