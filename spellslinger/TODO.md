@@ -1,0 +1,6 @@
+TODO:
+
+- [ ] Fullscreen
+- [ ] Flexible NPC (Entity) abstraction
+- [ ] Info boxes
+- [ ] Sneak
