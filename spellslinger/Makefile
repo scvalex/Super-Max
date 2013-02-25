@@ -1,12 +1,13 @@
 BIN := dist/build/spellslinger/spellslinger
 REDIST := spellslinger-redist
+CABAL := $(shell cabal-dev --version > /dev/null && echo cabal-dev || echo cabal)
 
 all: build
 
 .PHONY: all build dist install clean doc p ghci
 
 build: dist/setup-config
-	cabal-dev build
+	$(CABAL) build
 
 redist: build
 	rm -rf $(REDIST)/
@@ -21,16 +22,16 @@ install: build
 	cabal install
 
 clean:
-	cabal-dev clean
+	$(CABAL) clean
 	rm -rf cabal-dev/ spellslinger-redist/ spellslinger-redist.tar.bz2
 
 dist/setup-config: spellslinger.cabal
 # If you don't have all the necessary packages installed on the first
 # run, run `cabal-dev install`.
-	cabal-dev configure || cabal-dev install
+	$(CABAL) configure || $(CABAL) install
 
 doc: build
-	cabal-dev haddock
+	$(CABAL) haddock
 
 p:
 	permamake.sh $(shell find src/ -name '*.hs') \
