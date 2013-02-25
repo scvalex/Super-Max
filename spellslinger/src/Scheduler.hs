@@ -14,6 +14,7 @@ import qualified Data.PriorityQueue as PQ
 ----------------------
 
 data ScheduledAction w = UpdateWorld { getScheduledTick  :: Int
+                                       -- FIXME Scheduler should use Game w ()
                                      , getUpdateFunction :: w -> w }
 
 instance Eq (ScheduledAction w) where
