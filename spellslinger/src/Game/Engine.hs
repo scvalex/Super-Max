@@ -324,9 +324,7 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
         now <- getCurrentTime
         let delta = fromRational (toRational (diffUTCTime now prevTime))
             desiredDelay = fromIntegral (1000000 `div` tps)
-        -- The 1.05 factor below prevents the delay from oscillating between 0.0s and
-        -- 0.2s.
-        threadDelay (floor (2.0 * desiredDelay - delta * 1000000.0 / 1.05))
+        threadDelay (floor (min desiredDelay (2.0 * desiredDelay - delta * 1000000.0)))
         atomically (writeTChan (getEventChan es) (Tick (now, delta)))
 
     -- | Wait for SDL event and forward them to the event channel.
