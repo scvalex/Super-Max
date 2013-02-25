@@ -5,3 +5,6 @@ Todo
 - [ ] Flexible NPC (Entity) abstraction
 - [ ] Info boxes
 - [ ] Sneak
+- [ ] Score
+- [ ] IO Scheduler
+- [ ] High Scores
