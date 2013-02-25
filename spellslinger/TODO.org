@@ -1,4 +1,5 @@
-TODO:
+Todo
+====
 
 - [ ] Fullscreen
 - [ ] Flexible NPC (Entity) abstraction
