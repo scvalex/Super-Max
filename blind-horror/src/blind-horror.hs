@@ -27,7 +27,7 @@ type Level = Int
 
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
--- 'tickWorld').
+-- 'handleTick').
 data World = Game { getState        :: GameState
                   , getScheduler    :: Scheduler World
                   , getLevel        :: Int
@@ -286,11 +286,11 @@ handleTick t = do
     w0 <- getGameState
     case getState w0 of
         PreGame {}  -> return ()
-        InGame      -> tickWorldInGame
+        InGame      -> handleTickInGame
         PostGame {} -> return ()
   where
-    tickWorldInGame :: Game World ()
-    tickWorldInGame =
+    handleTickInGame :: Game World ()
+    handleTickInGame =
         sequence_ [ processHeldDownKeys
                   , updateTick
                   , updateTime
