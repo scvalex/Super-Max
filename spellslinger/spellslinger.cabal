@@ -21,9 +21,16 @@ Source-repository head
   Type:                 git
   Location:             https://github.com/scvalex/super-max.git
 
-Executable spellslinger
+Library
   Build-depends:        base >= 4 && < 5, containers, SDL, SDL-ttf, random,
                         stm, time, vect
+  Ghc-options:          -Wall
+  Hs-Source-Dirs:       engine/
+  Extensions:           ScopedTypeVariables, OverloadedStrings
+  Exposed-modules:      Game.Engine
+
+Executable spellslinger
+  Build-depends:        base >= 4 && < 5, containers, spellslinger
   Ghc-options:          -Wall -threaded
   Hs-Source-Dirs:       src/
   Extensions:           ScopedTypeVariables, OverloadedStrings
