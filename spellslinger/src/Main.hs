@@ -47,7 +47,9 @@ main = do
 drawState :: FullState -> Picture
 drawState ((screenW, screenH), gs) =
     -- We draw on a (x = 0.0 -- 1.0, y = 0.0 -- 1.0) sized canvas.
-    Scale (fromIntegral screenW) (fromIntegral screenH) $
+    let dimMin = min screenW screenH in
+    Translate (fromIntegral (screenW - dimMin) / 2.0) (fromIntegral (screenH - dimMin) / 2.0) $
+    Scale (fromIntegral dimMin) (fromIntegral dimMin) $
     -- Now, draw the scene
     case gs of
         MainMenu state -> MainMenu.drawState state
