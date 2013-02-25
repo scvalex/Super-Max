@@ -1,7 +1,7 @@
 Spellslinger
 ============
 
-> A game with wizards, spells, and monsters
+> A game featuring wizards, spells, and monsters
 
 Büild
 -----
