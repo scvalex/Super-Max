@@ -41,7 +41,7 @@ import Graphics.UI.SDL ( InitFlag(..), withInit
                        , Event(..), SDLKey(..), Keysym(..), waitEvent
                        , blitSurface
                        , Rect(..), getClipRect )
-import System.Environment ( lookupEnv )
+import System.Environment ( getEnv )
 import System.FilePath ( (</>) )
 import System.Random ( Random, StdGen, newStdGen )
 import Text.Printf ( printf )
@@ -279,7 +279,8 @@ play tps wInit drawGame onEvent = do
         putStrLn "SDL initialised"
 
         -- Load resources
-        spellslingerDir <- lookupEnv "SPELLSLINGER_DIR"
+        spellslingerDir <- CE.handle (\(_ :: CE.SomeException) -> return Nothing) $
+                             Just <$> getEnv "SPELLSLINGER_DIR"
         let resDir = maybe "r" (</> "r") spellslingerDir
         _ <- printf "Loading resources from %s\n" resDir
 
