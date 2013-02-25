@@ -28,7 +28,7 @@ type Level = Int
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
 -- 'handleTick').
-data World = Game { getState        :: GameState
+data World = Game { getState        :: RoundState
                   , getScheduler    :: Scheduler World
                   , getLevel        :: Int
                   , getGen          :: StdGen
@@ -46,11 +46,11 @@ data World = Game { getState        :: GameState
                   , getNpcs         :: Map NpcId Npc
                   }
 
-data GameState = PreGame { getObjective :: String }
-               | InGame
-               | PostGame { getConclusion  :: String
-                          , getHasContinue :: Bool }
-               deriving ( Eq, Show )
+data RoundState = PreRound { getObjective :: String }
+                | InRound
+                | PostRound { getConclusion  :: String
+                            , getHasContinue :: Bool }
+                deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
 data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ The bounds of the room
@@ -111,7 +111,7 @@ initWorld gen area lvl =
                         (yz, gen2) = randomR (y1, y2) gen1
                         z = Zombie { getNpcId = i, getNpcPosition = (xz, yz) } in
                     (M.insert i z ns, gen2)) (M.empty, gen) [1..2^(lvl - 1)]
-        g = Game { getState        = PreGame "Get to the exit"
+        g = Game { getState        = PreRound "Get to the exit"
                  , getScheduler    = newScheduler
                  , getLevel        = lvl
                  , getGen          = gen'
@@ -153,15 +153,15 @@ worldToScene w =
     -- A message shown at the beginning and at the end.
     prePostMessage =
         case getState w of
-            pg@(PreGame {}) ->
+            pg@(PreRound {}) ->
                 mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getObjective pg)
                         , Translate 0.5 0.40 $ mediumText CenterAligned "<press space>"
                         ]
-            InGame {} ->
+            InRound {} ->
                 mempty
-            pg@(PostGame { getHasContinue = c }) ->
+            pg@(PostRound { getHasContinue = hasContinue }) ->
                 mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getConclusion pg)
-                        , if c
+                        , if hasContinue
                           then Translate 0.5 0.40 $ mediumText CenterAligned "<press space>"
                           else mempty
                         ]
@@ -230,22 +230,23 @@ handleInputEvent :: Event -> Game World ()
 handleInputEvent ev = handleGlobalKey ev $ do
     w <- getGameState
     case getState w of
-        PreGame {}  -> do
+        PreRound {}  -> do
             case ev of
                 KeyUp (Keysym { symKey = SDLK_SPACE }) -> do
-                    setGameState (w { getState = InGame })
+                    setGameState (w { getState = InRound })
                 _ -> do
-                    handleInGameEvent
-        InGame -> do
-            handleInGameEvent
-        PostGame { getHasContinue = c } -> do
+                    handleInRoundEvent
+        InRound -> do
+            handleInRoundEvent
+        PostRound { getHasContinue = c } -> do
             case ev of
                 KeyUp (Keysym { symKey = SDLK_SPACE }) | c ->
                     setGameState (initWorld (getGen w) (getArea w) (getLevel w + 1))
                 _ -> do
                     return ()
   where
-    handleInGameEvent = do
+    handleInRoundEvent :: Game World ()
+    handleInRoundEvent = do
         w <- getGameState
         let keys = getHeldDownKeys w
         case ev of
@@ -285,12 +286,12 @@ handleTick :: Double -> Game World ()
 handleTick t = do
     w0 <- getGameState
     case getState w0 of
-        PreGame {}  -> return ()
-        InGame      -> handleTickInGame
-        PostGame {} -> return ()
+        PreRound {}  -> return ()
+        InRound      -> handleTickInRound
+        PostRound {} -> return ()
   where
-    handleTickInGame :: Game World ()
-    handleTickInGame =
+    handleTickInRound :: Game World ()
+    handleTickInRound =
         sequence_ [ processHeldDownKeys
                   , updateTick
                   , updateTime
@@ -329,11 +330,11 @@ handleTick t = do
         let npcPoss = map getNpcPosition $ M.elems (getNpcs w)
             pos = getPlayerPosition (getPlayer w)
         if pos `elem` npcPoss
-            then setGameState (w { getState = PostGame { getConclusion  = "You died"
-                                                       , getHasContinue = False } })
+            then setGameState (w { getState = PostRound { getConclusion  = "You died"
+                                                        , getHasContinue = False } })
             else if pos == getRoomExit (getArea w)
-            then setGameState (w { getState = PostGame { getConclusion  = "You win"
-                                                       , getHasContinue = True } })
+            then setGameState (w { getState = PostRound { getConclusion  = "You win"
+                                                        , getHasContinue = True } })
             else return ()
 
 ----------------------
