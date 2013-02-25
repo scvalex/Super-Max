@@ -3,11 +3,11 @@ super-max
 
 > A catch-all for game-related projects
 
-blind-horror
+spellslinger
 ------------
 
-An in-development horror-survival fantasy game.  This is the focus of
-current efforts.
+An in-development game featuring wizards, spells, and monsters.  This
+is the focus of current efforts.
 
 old_2012
 --------
