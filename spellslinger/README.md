@@ -19,7 +19,7 @@ The build system is driven by the top-level `Makefile` (it's Cabal and
 
     make
 
-See the other `make` targets other options.
+See the other `make` targets for other options.
 
 Rün
 ---
