@@ -34,7 +34,10 @@ initState = State { getItems = [ ("New Game", ToNewGame)
 drawState :: State -> Picture
 drawState state =
     mconcat $
-    map drawMenuItem (zip [0 :: Int ..] (map fst (getItems state)))
+    [ Translate 0.5 0.7 $ Text 80 CenterAligned "Spellslinger"
+    , mconcat $
+      map drawMenuItem (zip [0 :: Int ..] (map fst (getItems state)))
+    ]
   where
     drawMenuItem (i, text) = Translate 0.5 (0.6 - (fromIntegral i) * 0.1) $
                              Text 50 CenterAligned $

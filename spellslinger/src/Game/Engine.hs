@@ -278,7 +278,8 @@ play (screenW, screenH) tps wInit drawGame onEvent = do
 
         -- Load resources
         -- We don't bother freeing the fonts.
-        fonts <- M.fromList <$> forM [10..60] (\size -> do
+        -- FIXME Let the game specify which fonts to load
+        fonts <- M.fromList <$> forM [10..80] (\size -> do
             font <- TTF.openFont "r/Ubuntu-C.ttf" size
             return (size, font))
 
