@@ -28,11 +28,3 @@ Executable spellslinger
   Hs-Source-Dirs:       src/
   Extensions:           ScopedTypeVariables, OverloadedStrings
   Main-is:              Main.hs
-
-Executable engine
-  Build-depends:        base >= 4 && < 5, containers, SDL, SDL-ttf, random,
-                        stm, time, vect
-  Ghc-options:          -Wall -threaded
-  Hs-Source-Dirs:       src/
-  Extensions:           ScopedTypeVariables, OverloadedStrings
-  Main-is:              engine.hs
