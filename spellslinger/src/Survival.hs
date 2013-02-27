@@ -24,6 +24,7 @@ import Text.Printf ( printf )
 import Types ( Direction(..) )
 import qualified Data.Map as M
 import qualified Data.Set as S
+import qualified Game.Entity as Entity
 
 type NpcId = Int
 
