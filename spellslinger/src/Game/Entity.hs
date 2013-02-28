@@ -1,11 +1,14 @@
-{-# LANGUAGE MultiParamTypeClasses, TypeFamilies #-}
+{-# LANGUAGE MultiParamTypeClasses, TypeFamilies, ExistentialQuantification #-}
 
 module Game.Entity (
-        Entity(..)
+        Entity(..), Behaviour(..), SomeEntity(..)
     ) where
 
 import Game.Engine ( Game, Picture )
 import Types ( EntityId )
+
+data SomeEntity w = forall a. Entity w a
+                  => SomeEntity a
 
 class Entity w a where
     data EntityParameters a :: *
