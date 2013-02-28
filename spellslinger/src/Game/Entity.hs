@@ -5,7 +5,7 @@ module Game.Entity (
     ) where
 
 import Game.Engine ( Game, Picture )
-import Types ( EntityId )
+import Types ( Position, EntityId )
 
 data SomeEntity w = forall a. Entity w a
                   => SomeEntity a
@@ -15,6 +15,7 @@ class Entity w a where
 
     init :: EntityParameters a -> Game w a
     entityId :: a -> EntityId
+    entityPosition :: a -> Position
     draw :: a -> Picture
     tickVisual :: a -> a
 

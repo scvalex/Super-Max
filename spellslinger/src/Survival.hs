@@ -17,14 +17,16 @@ import Game.Engine ( GameEvent(..)
                    , TextAlignment(..)
                    , Color(..), black, greyN
                    , Event(..), SDLKey(..), Keysym(..) )
+import Game.Entity ( SomeEntity(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Scheduler ( Scheduler, newScheduler
                  , runScheduledActions, scheduleAction, dropExpiredActions )
 import Spell ( )
 import Text.Printf ( printf )
-import Types ( Direction(..), EntityId(..) )
+import Types ( Direction(..), EntityId(..), Position(..) )
 import qualified Data.Map as M
 import qualified Data.Set as S
+import qualified Game.Entity as Entity
 import qualified Zombie as Zombie
 
 type Level = Int
@@ -46,7 +48,7 @@ data State =
                                           -- down at any time.  When we update the world,
                                           -- we process those keys as well as all the keys
                                           -- that were pressed and released.
-          , getNpcs         :: Map EntityId Npc
+          , getEntities     :: Map EntityId (SomeEntity State)
           }
 
 data RoundState = PreRound { getObjective :: String }
@@ -61,17 +63,13 @@ data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ The bounds of the
                                                           -- related to the display ones).
                                                           -- The top and right bounds are
                                                           -- exclusive.
-                 , getRoomStart   :: (Int, Int)           -- ^ the player's starting point
+                 , getRoomStart   :: Position             -- ^ the player's starting point
                  , getRoomExit    :: (Int, Int)           -- ^ the area's exit point
                  } deriving ( Eq, Show )
 
-data Player = Player { getPlayerPosition :: (Int, Int)
+data Player = Player { getPlayerPosition :: Position
                      , getPlayerMovement :: Maybe Direction
                      } deriving ( Eq, Show )
-
-data Npc = Zombie { getEntityId    :: EntityId
-                  , getNpcPosition :: (Int, Int)
-                  } deriving ( Eq, Show )
 
 ----------------------
 -- Callbacks
@@ -79,21 +77,21 @@ data Npc = Zombie { getEntityId    :: EntityId
 
 area1 :: Area
 area1 = Room { getRoomBounds = (0, 0, 100, 100)
-             , getRoomStart = (49, 5)
+             , getRoomStart = Position (49, 5)
              , getRoomExit = (49, 94)
              }
 
 initState :: Level -> Game a State
 initState lvl = do
     let area = area1
-        (x1, y1, x2, y2) = getRoomBounds area
-    npcs <- foldlM (\ns i -> do
-                         xz <- randomR (x1, x2)
-                         yz <- randomR (y1, y2)
-                         let z = Zombie { getEntityId = EntityId i, getNpcPosition = (xz, yz) }
-                         return (M.insert (EntityId i) z ns))
-                   M.empty
-                   [1..2^(lvl - 1)]
+        roomBounds = getRoomBounds area
+    entities <- foldlM (\ns i -> do
+                             z <- Entity.init (Zombie.RandomZombie
+                                                   { Zombie.getAreaBounds = roomBounds
+                                                   })
+                             return (M.insert (Entity.entityId z) (SomeEntity z) ns))
+                       M.empty
+                       [1..2^(lvl - 1)]
     let g = State { getState        = PreRound "Get to the exit"
                   , getScheduler    = newScheduler
                   , getLevel        = lvl
@@ -101,7 +99,7 @@ initState lvl = do
                   , getTick         = 0
                   , getArea         = area
                   , getHeldDownKeys = S.empty
-                  , getNpcs         = npcs
+                  , getEntities     = entities
                   , getPlayer       = Player { getPlayerPosition = getRoomStart area
                                              , getPlayerMovement = Nothing
                                              }
@@ -148,13 +146,8 @@ drawState w =
 
     -- All the non-player entities.
     npcs =
-        fromRoomCoordinates $
         mconcat $
-        flip map (M.elems (getNpcs w)) $
-        \npc -> case npc of
-            z@(Zombie {}) ->
-                Color (RGBA 255 0 0 255) $
-                personPicture (getNpcPosition z)
+        map (getEntities w) (\(SomeEntity e) -> Entity.draw e)
 
     -- The player.
     player =
@@ -187,7 +180,7 @@ drawState w =
     currentLevel = Translate 0.04 0.91 $ (mediumText LeftAligned (printf "Level: %d" (getLevel w)))
 
     -- Draw the picture of a person.
-    personPicture (xp, yp) =
+    personPicture (Position (xp, yp)) =
         intRectangle xp yp 1 1
 
     -- Convert a picture in room coordinates to one in drawing coordinates.
@@ -315,9 +308,9 @@ handleTick t = do
     checkVictory :: Game State ()
     checkVictory = do
         w <- getGameState
-        let npcPoss = map getNpcPosition $ M.elems (getNpcs w)
+        let entityPoss = map Entity.entityPosition $ M.elems (getEntities w)
             pos = getPlayerPosition (getPlayer w)
-        if pos `elem` npcPoss
+        if pos `elem` entityPoss
             then setGameState (w { getState = PostRound { getConclusion  = "You died"
                                                         , getCanContinue = False } })
             else if pos == getRoomExit (getArea w)
@@ -333,7 +326,7 @@ handleTick t = do
 movePlayer :: State -> State
 movePlayer w =
     let p = getPlayer w
-        (x, y) = getPlayerPosition p
+        Position (x, y) = getPlayerPosition p
         w' = scheduleIn 1 movePlayer w
     in case getPlayerMovement p of
         Nothing ->
@@ -348,7 +341,7 @@ movePlayer w =
     inBounds (x, y) =
         case getArea w of
             r@(Room {}) -> let (x1, y1, x2, y2) = getRoomBounds r in
-                           (max x1 (min x (x2 - 1)), max y1 (min y (y2 - 1)))
+                           Position (max x1 (min x (x2 - 1)), max y1 (min y (y2 - 1)))
 
     -- How much does the player move for each movement command.
     movementDisplacement :: Direction -> (Int, Int)
@@ -361,14 +354,14 @@ movePlayer w =
 moveNpcs :: State -> State
 moveNpcs w =
     let w' = scheduleIn 2 moveNpcs w in
-    w' { getNpcs = M.foldl (moveNpc w') (getNpcs w') (getNpcs w') }
+    w' { getEntities = M.foldl (moveNpc w') (getNpcs w') (getEntities w') }
 
 -- Move a single NPC.  Zombies follow the player.  If a zombie tries to move to an
 -- occupied space, it doesn't move.
 moveNpc :: State -> Map EntityId Npc -> Npc -> Map EntityId Npc
 moveNpc w npcs z@(Zombie {}) =
     let (xz, yz) = getNpcPosition z
-        (xp, yp) = getPlayerPosition (getPlayer w)
+        Position (xp, yp) = getPlayerPosition (getPlayer w)
         pos' = if abs (xp - xz) > abs (yp - yz)
                then (xz + signum (xp - xz), yz)
                else (xz, yz + signum (yp - yz)) in

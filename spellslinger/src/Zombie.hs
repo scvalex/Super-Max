@@ -1,14 +1,14 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
 module Zombie (
-        Zombie
+        Zombie, EntityParameters(..)
     ) where
 
 import Common ( intRectangle, fromAreaCoordinates )
 import Control.Applicative ( (<$>) )
 import Game.Engine ( Picture(..), Color(..), mkUid, randomR )
 import Game.Entity ( Entity(..) )
-import Types ( EntityId(..) )
+import Types ( EntityId(..), Position(..) )
 
 data Zombie = Zombie
     { getZombieId         :: EntityId
@@ -31,6 +31,8 @@ instance Entity w Zombie where
                        })
 
     entityId (Zombie { getZombieId = zid }) = zid
+
+    entityPosition (Zombie { getZombiePosition = pos }) = Position pos
 
     draw (Zombie { getZombiePosition = (xz, yz), getZombieAreaBounds = bounds }) =
         fromAreaCoordinates bounds $
