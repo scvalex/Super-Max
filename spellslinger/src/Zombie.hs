@@ -5,9 +5,10 @@ module Zombie (
     ) where
 
 import Common ( intRectangle )
-import Game.Engine ( Picture(..), Color(..) )
+import Control.Applicative ( (<$>) )
+import Game.Engine ( Picture(..), Color(..), mkUid )
 import Game.Entity ( Entity(..) )
-import Types ( EntityId )
+import Types ( EntityId(..) )
 
 data Zombie = Zombie
     { getZombieId       :: EntityId
@@ -18,7 +19,10 @@ instance Entity w Zombie where
     data EntityParameters Zombie = ZombieParameters
 
     init ZombieParameters = do
-        return (Zombie undefined undefined)
+        zid <- EntityId <$> mkUid
+        return (Zombie { getZombieId       = zid
+                       , getZombiePosition = undefined
+                       })
 
     entityId (Zombie { getZombieId = zid }) = zid
 

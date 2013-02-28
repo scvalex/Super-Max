@@ -15,7 +15,7 @@ module Game.Engine (
 
         -- * Engine interface
         play, quitGame, getGameState, setGameState, modifyGameState,
-        withAlternateGameState, randomR
+        withAlternateGameState, randomR, mkUid
     ) where
 
 import Control.Applicative ( Applicative(..), (<$>) )
@@ -121,6 +121,7 @@ data EngineState s = EngineState { getInnerState :: s
                                  , getThreads    :: Set ThreadId
                                  , isTerminating :: Bool
                                  , getGen        :: StdGen
+                                 , getNextUid    :: Int
                                  }
 
 -- | The events a game may receive.
@@ -171,6 +172,7 @@ withAlternateGameState alternateState setAlternateState innerAction =
                                      , getThreads    = getThreads s
                                      , isTerminating = isTerminating s
                                      , getGen        = getGen s
+                                     , getNextUid    = getNextUid s
                                      } in
                 let (x, as') = runGame innerAction as in
                 let s' = EngineState { getInnerState = setAlternateState (getInnerState as')
@@ -178,12 +180,17 @@ withAlternateGameState alternateState setAlternateState innerAction =
                                      , getThreads    = getThreads as'
                                      , isTerminating = isTerminating as'
                                      , getGen        = getGen as'
+                                     , getNextUid    = getNextUid as'
                                      } in
                 (x, s'))
 
 -- | Generate a random number using the game's random generator.
 randomR :: (Random a) => (a, a) -> Game s a
 randomR bounds = Game (\s -> let (x, g) = R.randomR bounds (getGen s) in (x, s { getGen = g }))
+
+-- | Return a unique 'Int'.  This function never returns the same value twice.
+mkUid :: Game s Int
+mkUid = Game (\s -> let uid = getNextUid s in (uid, s { getNextUid = uid + 1 }))
 
 --------------------------------
 -- Fonts
@@ -303,6 +310,7 @@ play tps wInit drawGame onEvent = do
                              , getThreads    = S.empty
                              , isTerminating = False
                              , getGen        = gen
+                             , getNextUid    = 1
                              }
         -- Set up the first tick.
         initTime <- getCurrentTime
