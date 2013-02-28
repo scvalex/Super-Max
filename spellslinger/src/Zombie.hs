@@ -17,11 +17,11 @@ data Zombie = Zombie
     } deriving ( Eq, Show )
 
 instance Entity w Zombie where
-    data EntityParameters Zombie = ZombieParameters
+    data EntityParameters Zombie = RandomZombie
         { getAreaBounds :: (Int, Int, Int, Int)
         }
 
-    init zp@(ZombieParameters { getAreaBounds = (x1, y1, x2, y2) }) = do
+    init zp@(RandomZombie { getAreaBounds = (x1, y1, x2, y2) }) = do
         zid <- EntityId <$> mkUid
         xz <- randomR (x1, x2)
         yz <- randomR (y1, y2)
