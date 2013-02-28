@@ -6,6 +6,7 @@ module Survival (
         drawState, handleEvent
     ) where
 
+import Common ( intRectangle )
 import Data.Foldable ( foldlM )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
@@ -21,12 +22,10 @@ import Scheduler ( Scheduler, newScheduler
                  , runScheduledActions, scheduleAction, dropExpiredActions )
 import Spell ( )
 import Text.Printf ( printf )
-import Types ( Direction(..) )
+import Types ( Direction(..), EntityId(..) )
 import qualified Data.Map as M
 import qualified Data.Set as S
-import qualified Game.Entity as Entity
-
-type NpcId = Int
+import qualified Zombie as Zombie
 
 type Level = Int
 
@@ -47,7 +46,7 @@ data State =
                                           -- down at any time.  When we update the world,
                                           -- we process those keys as well as all the keys
                                           -- that were pressed and released.
-          , getNpcs         :: Map NpcId Npc
+          , getNpcs         :: Map EntityId Npc
           }
 
 data RoundState = PreRound { getObjective :: String }
@@ -70,7 +69,7 @@ data Player = Player { getPlayerPosition :: (Int, Int)
                      , getPlayerMovement :: Maybe Direction
                      } deriving ( Eq, Show )
 
-data Npc = Zombie { getNpcId       :: NpcId
+data Npc = Zombie { getEntityId    :: EntityId
                   , getNpcPosition :: (Int, Int)
                   } deriving ( Eq, Show )
 
@@ -91,8 +90,8 @@ initState lvl = do
     npcs <- foldlM (\ns i -> do
                          xz <- randomR (x1, x2)
                          yz <- randomR (y1, y2)
-                         let z = Zombie { getNpcId = i, getNpcPosition = (xz, yz) }
-                         return (M.insert i z ns))
+                         let z = Zombie { getEntityId = EntityId i, getNpcPosition = (xz, yz) }
+                         return (M.insert (EntityId i) z ns))
                    M.empty
                    [1..2^(lvl - 1)]
     let g = State { getState        = PreRound "Get to the exit"
@@ -369,7 +368,7 @@ moveNpcs w =
 
 -- Move a single NPC.  Zombies follow the player.  If a zombie tries to move to an
 -- occupied space, it doesn't move.
-moveNpc :: State -> Map NpcId Npc -> Npc -> Map NpcId Npc
+moveNpc :: State -> Map EntityId Npc -> Npc -> Map EntityId Npc
 moveNpc w npcs z@(Zombie {}) =
     let (xz, yz) = getNpcPosition z
         (xp, yp) = getPlayerPosition (getPlayer w)
@@ -377,7 +376,7 @@ moveNpc w npcs z@(Zombie {}) =
                then (xz + signum (xp - xz), yz)
                else (xz, yz + signum (yp - yz)) in
     if not (posOccupied pos' npcs)
-    then M.insert (getNpcId z) (z { getNpcPosition = pos' }) npcs
+    then M.insert (getEntityId z) (z { getNpcPosition = pos' }) npcs
     else npcs
   where
     posOccupied pos = M.foldl (\o npc -> o || getNpcPosition npc == pos) False
@@ -397,10 +396,3 @@ formatSeconds t = let secs = floor t :: Int
                   printf "%02d:%02d.%d"
                          (mins `mod` 60)
                          (secs `mod` 60) ((floor ((t - fromIntegral secs) * 10.0) :: Int) `mod` 10)
-
--- | Draw a polygon with 'Int' coordinates.
-intRectangle :: Int -> Int -> Int -> Int -> Picture
-intRectangle x1 y1 w h = FilledRectangle (fromIntegral x1)
-                                         (fromIntegral y1)
-                                         (fromIntegral w)
-                                         (fromIntegral h)
