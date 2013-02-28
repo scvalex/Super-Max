@@ -6,7 +6,7 @@ module Survival (
         drawState, handleEvent
     ) where
 
-import Common ( intRectangle )
+import Common ( intRectangle, fromAreaCoordinates )
 import Data.Foldable ( foldlM )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
@@ -192,10 +192,7 @@ drawState w =
 
     -- Convert a picture in room coordinates to one in drawing coordinates.
     fromRoomCoordinates :: Picture -> Picture
-    fromRoomCoordinates =
-        let (x1, y1, x2, y2) = getRoomBounds (getArea w) in
-        Translate (fromIntegral x1) (fromIntegral y1) .
-        Scale (1.0 / fromIntegral (x2 - x1)) (1.0 / fromIntegral (y2 - y1))
+    fromRoomCoordinates = fromAreaCoordinates (getRoomBounds (getArea w))
 
     -- Text with fixed sizes
     bigText    = Text 40
