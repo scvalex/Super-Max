@@ -12,6 +12,8 @@ class Entity w a where
 
     init :: EntityParameters a -> Game w a
     entityId :: a -> EntityId
-    draw :: w -> a -> Picture
+    draw :: a -> Picture
     tickVisual :: a -> a
-    tick :: a -> Game w ()
+
+class (Entity w a) => Behaviour w a b where
+    behave :: a -> b -> Game w a

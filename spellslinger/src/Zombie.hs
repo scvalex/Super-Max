@@ -32,12 +32,9 @@ instance Entity w Zombie where
 
     entityId (Zombie { getZombieId = zid }) = zid
 
-    draw _ (Zombie { getZombiePosition = (xz, yz), getZombieAreaBounds = bounds }) =
+    draw (Zombie { getZombiePosition = (xz, yz), getZombieAreaBounds = bounds }) =
         fromAreaCoordinates bounds $
         Color (RGBA 255 0 0 255) $
         intRectangle xz yz 1 1
 
     tickVisual = id
-
-    tick _ = do
-        return ()
