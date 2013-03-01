@@ -7,25 +7,25 @@ module Scheduler (
     ) where
 
 import Data.PriorityQueue ( PriorityQueue )
+import Game.Engine ( Game )
 import qualified Data.PriorityQueue as PQ
 
 ----------------------
 -- Types
 ----------------------
 
-data ScheduledAction w = UpdateWorld { getScheduledTick  :: Int
-                                       -- FIXME Scheduler should use Game w ()
-                                     , getUpdateFunction :: w -> w }
+data Action w = Action { getScheduledTick  :: Int
+                       , getAction         :: Game w () }
 
-instance Eq (ScheduledAction w) where
-    UpdateWorld { getScheduledTick = n1 } == UpdateWorld { getScheduledTick = n2 } =
+instance Eq (Action w) where
+    Action { getScheduledTick = n1 } == Action { getScheduledTick = n2 } =
         n1 == n2
 
-instance Ord (ScheduledAction w) where
-    UpdateWorld { getScheduledTick = n1 } `compare` UpdateWorld {getScheduledTick = n2 } =
+instance Ord (Action w) where
+    Action { getScheduledTick = n1 } `compare` Action {getScheduledTick = n2 } =
         n1 `compare` n2
 
-data Scheduler w = Scheduler { getSchedule :: PriorityQueue (ScheduledAction w) }
+data Scheduler w = Scheduler { getSchedule :: PriorityQueue (Action w) }
 
 ----------------------
 -- Scheduler control
@@ -34,23 +34,23 @@ data Scheduler w = Scheduler { getSchedule :: PriorityQueue (ScheduledAction w) 
 -- | Apply all scheduled actions whose 'getScheduledTick' has passed.  Return the world
 -- after said actions have been applied.
 runScheduledActions :: Int         -- ^ The current tick
-                    -> w           -- ^ The initial state of the world
                     -> Scheduler w -- ^ The scheduler
-                    -> w           -- ^ The world after the actions have been applied
-runScheduledActions n w s =
+                    -> Game w ()   -- ^ The world after the actions have been applied
+runScheduledActions n s =
     case PQ.extractMin (getSchedule s) of
-        Just (UpdateWorld { getScheduledTick = t
-                          , getUpdateFunction = update }, pq)
-            | t <= n ->
-                runScheduledActions n (update w) (s { getSchedule = pq })
+        Just (Action { getScheduledTick = t
+                     , getAction        = act }, pq)
+            | t <= n -> do
+                act
+                runScheduledActions n (s { getSchedule = pq })
         _ ->
-            w
+            return ()
 
 -- | Drop expired actions.
 dropExpiredActions :: Int -> Scheduler w -> Scheduler w
 dropExpiredActions n s =
     case PQ.extractMin (getSchedule s) of
-        Just (UpdateWorld { getScheduledTick = t }, pq) | t <= n ->
+        Just (Action { getScheduledTick = t }, pq) | t <= n ->
             dropExpiredActions n (s { getSchedule = pq })
         _ ->
             s
@@ -60,7 +60,7 @@ newScheduler :: Scheduler w
 newScheduler = Scheduler { getSchedule = PQ.empty }
 
 -- | Run the given action on the given tick.
-scheduleAction :: Scheduler w -> Int -> (w -> w) -> Scheduler w
-scheduleAction s n update =
-    let act = UpdateWorld { getScheduledTick = n, getUpdateFunction = update } in
-    s { getSchedule = PQ.insert (getSchedule s) act }
+scheduleAction :: Scheduler w -> Int -> Game w () -> Scheduler w
+scheduleAction s n act =
+    let action = Action { getScheduledTick = n, getAction = act } in
+    s { getSchedule = PQ.insert (getSchedule s) action }
