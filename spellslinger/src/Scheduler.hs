@@ -1,3 +1,5 @@
+-- FIXME Get rid of Scheduler.
+
 -- | All changes to the world state happen sequentially.  For instance, first the player
 -- moves, then all the NPCs move, then the player moves again, and so on.  The 'Scheduler'
 -- encapsulates this behaviour.
