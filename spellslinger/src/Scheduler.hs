@@ -31,32 +31,34 @@ instance Ord (Action w) where
         n1 `compare` n2
 
 data Scheduler w = Scheduler { getSchedule :: PriorityQueue (Action w) }
+                 deriving ( Show )
 
 ----------------------
 -- Scheduler control
 ----------------------
 
--- | Apply all scheduled actions whose 'getScheduledTick' has passed.  Return the world
--- after said actions have been applied.
-runScheduledActions :: Int                  -- ^ The current tick
-                    -> Scheduler w          -- ^ The scheduler
-                    -> Game w (Scheduler w) -- ^ The world after the actions have been applied
-runScheduledActions n s =
+-- | Apply all scheduled actions whose 'getScheduledTick' has passed.  It is important to
+-- 'dropExpiredActions' after running this.
+runScheduledActions :: Scheduler w -- ^ The scheduler
+                    -> Game w ()   -- ^ The world after the actions have been applied
+runScheduledActions s = do
+    tick <- getGameTick
     case PQ.extractMin (getSchedule s) of
-        Just (Action { getScheduledTick = t
+        Just (Action { getScheduledTick = scheduledTick
                      , getAction        = act }, pq)
-            | t <= n -> do
+            | scheduledTick <= tick -> do
                 act
-                runScheduledActions n (s { getSchedule = pq })
+                runScheduledActions (s { getSchedule = pq })
         _ ->
-            return s
+            return ()
 
 -- | Drop expired actions.
 dropExpiredActions :: Int -> Scheduler w -> Scheduler w
-dropExpiredActions n s =
+dropExpiredActions tick s =
     case PQ.extractMin (getSchedule s) of
-        Just (Action { getScheduledTick = t }, pq) | t <= n ->
-            dropExpiredActions n (s { getSchedule = pq })
+        Just (Action { getScheduledTick = scheduledTick }, pq)
+            | scheduledTick <= tick ->
+                dropExpiredActions tick (s { getSchedule = pq })
         _ ->
             s
 
