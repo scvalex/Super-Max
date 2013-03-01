@@ -8,7 +8,7 @@ module Game.Engine (
         -- * Pictures
         Picture(..),
         TextAlignment(..),
-        Color(..), white, black, greyN,
+        Colour(..), white, black, greyN,
 
         -- * SDL events (re-export)
         Event(..), SDLKey(..), Keysym(..),
@@ -58,32 +58,31 @@ import qualified System.Random as R
 
 deriving instance Ord Keysym
 
--- FIXME Call it Colour
 --------------------------------
--- Colors -- I want to call them Colours :(
+-- Colours
 --------------------------------
 
-data Color = RGBA { colorRed   :: Word8
-                  , colorGreen :: Word8
-                  , colorBlue  :: Word8
-                  , colorAlpha :: Word8
-                  } deriving ( Eq )
+data Colour = RGBA { colorRed   :: Word8
+                   , colorGreen :: Word8
+                   , colorBlue  :: Word8
+                   , colorAlpha :: Word8
+                   } deriving ( Eq )
 
-instance Show Color where
+instance Show Colour where
     show c = printf "#%2x%2x%2x%2x" (colorRed c) (colorGreen c) (colorBlue c) (colorAlpha c)
 
-white, black :: Color
+white, black :: Colour
 white = RGBA 255 255 255 255
 black = RGBA 0   0   0   255
 
-greyN :: Double -> Color
+greyN :: Double -> Colour
 greyN prop = RGBA sat sat sat 255
   where
     sat = floor (prop * 255.0)
 
--- | Convert a 'Color' to an SDL 'SDL.Color'.  Drops the alpha component.
-colorToSdlColor :: Color -> SDL.Color
-colorToSdlColor (RGBA r g b _) = SDL.Color r g b
+-- | Convert a 'Colour' to an SDL 'SDL.Color'.  Drops the alpha component.
+colourToSdlColor :: Colour -> SDL.Color
+colourToSdlColor (RGBA r g b _) = SDL.Color r g b
 
 --------------------------------
 -- Pictures
@@ -104,7 +103,7 @@ data Picture = FilledRectangle Double Double Double Double
                -- Do /not/ use 'Scale' to flip the screen.
              | Scale Double Double Picture
              | Text Int TextAlignment String
-             | Color Color Picture
+             | Colour Colour Picture
              | Pictures [Picture]
              deriving ( Eq, Show )
 
@@ -131,8 +130,7 @@ data GameEvent = Tick (UTCTime, Double) -- ^ A logical tick with the current tim
                                         -- number of seconds since the last tick.
                | InputEvent Event       -- ^ An input (mouse, keyboard, etc.) event
 
--- FIXME Just use a StateT for the game state.  Don't forget to use gets and sets in
--- blind-horror.hs.  | Psych!  It's a state monad!
+-- | Psych!  It's (almost) a state monad!
 newtype Game s a = Game { runGame :: EngineState s -> (a, EngineState s) }
 
 instance Monad (Game s) where
@@ -213,7 +211,7 @@ type Fonts = Map Int TTF.Font
 -- Drawing
 --------------------------------
 
-draw :: Surface -> Fonts -> Mat3 -> Color -> Picture -> IO ()
+draw :: Surface -> Fonts -> Mat3 -> Colour -> Picture -> IO ()
 draw surface _ proj col (FilledRectangle x y w h) = do
     let pf = surfaceGetPixelFormat surface
     p <- mapRGBA pf (colorRed col) (colorGreen col) (colorBlue col) (colorAlpha col)
@@ -237,7 +235,7 @@ draw surface fonts proj col (Text size alignment text) = do
             return ()
         Just font -> do
             -- FIXME Do we need to manually free used surfaces?
-            textSurface <- TTF.renderUTF8Solid font text (colorToSdlColor col)
+            textSurface <- TTF.renderUTF8Solid font text (colourToSdlColor col)
             textR <- getClipRect textSurface
             let (x, y) = projectXY proj 0 0
                 x' = case alignment of
@@ -248,7 +246,7 @@ draw surface fonts proj col (Text size alignment text) = do
                       (Just (textR { rectX = x'
                                    , rectY = floor y - rectH textR }))
             assert ok (return ())
-draw surface fonts proj _ (Color col picture) = do
+draw surface fonts proj _ (Colour col picture) = do
     draw surface fonts proj col picture
 draw surface fonts proj col (Pictures ps) = do
     mapM_ (draw surface fonts proj col) ps

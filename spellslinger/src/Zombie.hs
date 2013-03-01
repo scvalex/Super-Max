@@ -7,7 +7,7 @@ module Zombie (
 
 import Common ( intRectangle, fromAreaCoordinates )
 import Control.Applicative ( (<$>) )
-import Game.Engine ( Picture(..), Color(..), mkUid, randomR )
+import Game.Engine ( Picture(..), Colour(..), mkUid, randomR )
 import Game.Entity ( Entity(..) )
 import Types ( EntityId(..), Position(..) )
 
@@ -38,7 +38,7 @@ instance Entity Zombie where
     draw (Zombie { getZombiePosition = Position (xz, yz)
                  , getZombieAreaBounds = bounds }) =
         fromAreaCoordinates bounds $
-        Color (RGBA 255 0 0 255) $
+        Colour (RGBA 255 0 0 255) $
         intRectangle xz yz 1 1
 
     tickVisual = id

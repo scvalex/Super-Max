@@ -18,7 +18,7 @@ import Game.Engine ( GameEvent(..)
                    , Game, getsGameState, modifyGameState, getGameTick
                    , Picture(..)
                    , TextAlignment(..)
-                   , Color(..), black, greyN
+                   , Colour(..), black, greyN
                    , Event(..), SDLKey(..), Keysym(..) )
 import Game.Entity ( Entity, Behaviour(..) )
 import GlobalCommand ( GlobalCommand(..) )
@@ -124,9 +124,9 @@ drawState w =
             ]
   where
     -- The wireframe in the background.
-    wireframe = mappend (Color (greyN 0.1) $
+    wireframe = mappend (Colour (greyN 0.1) $
                          FilledRectangle 0.0 0.0 1.0 1.0) $
-                Color black $
+                Colour black $
                 mconcat $ [ FilledRectangle (i + 0.001) (j + 0.001) 0.099 0.099
                           | i <- [0.0, 0.1 .. 0.9]
                           , j <- [0.0, 0.1 .. 0.9]
@@ -158,7 +158,7 @@ drawState w =
     player =
         fromRoomCoordinates $
         let pos = getPlayerPosition (getPlayer w) in
-        Color (RGBA 255 140 0 255) $
+        Colour (RGBA 255 140 0 255) $
         personPicture pos
 
     -- The current room/map/area.
@@ -167,7 +167,7 @@ drawState w =
         roomExit
 
     roomExit = let Position (xe, ye) = getRoomExit (getArea w) in
-               mconcat [ Color (RGBA 255 215 0 255) $
+               mconcat [ Colour (RGBA 255 215 0 255) $
                          intRectangle xe ye 2 1
                        , Translate (fromIntegral (xe + 1)) (fromIntegral (ye + 1)) $
                          smallText CenterAligned "Exit"
@@ -292,7 +292,6 @@ handleTick t = do
     -- Run actions pending in the scheduler.
     runPendingActions :: Game State ()
     runPendingActions = do
-        -- FIXME Move the tick counter to the engine state.
         scheduler <- getsGameState getScheduler
         runScheduledActions scheduler
         scheduler' <- getsGameState getScheduler
