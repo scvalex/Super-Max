@@ -26,8 +26,6 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Game.Entity as Entity
 import qualified Zombie as Zombie
-import Scheduler ( Scheduler, newScheduler
-                 , runScheduledActions, scheduleAction, dropExpiredActions )
 import Spell ( )
 import Text.Printf ( printf )
 import Types ( Direction(..), EntityId(..), Position(..) )
@@ -40,7 +38,6 @@ type Level = Int
 -- 'handleTick').
 data State =
     State { getState        :: RoundState
-          , getScheduler    :: Scheduler State
           , getLevel        :: Int
           , getTime         :: Double
           , getArea         :: Area
@@ -97,12 +94,7 @@ initState lvl = do
                              return (M.insert (Entity.eid z) (SomeEntity z) ns))
                        M.empty
                        [(1 :: Int) ..2^(lvl - 1)]
-    tick <- getGameTick
-    let scheduler = foldl (\s (tag, d, act) -> scheduleAction s tag (tick + d) act) newScheduler $
-                    [ ("movePlayer", 1, movePlayer)
-                    , ("tickEntities", 2, tickEntities) ]
     return (State { getState        = PreRound "Get to the exit"
-                  , getScheduler    = scheduler
                   , getLevel        = lvl
                   , getTime         = 0.0
                   , getArea         = area
@@ -280,7 +272,8 @@ handleTick t = do
     handleTickInRound =
         sequence_ [ processHeldDownKeys
                   , updateTime
-                  , runPendingActions
+                  , movePlayer
+                  , tickEntities
                   , checkVictory
                   ]
 
@@ -288,16 +281,6 @@ handleTick t = do
     updateTime :: Game State ()
     updateTime = do
         modifyGameState (\w -> w { getTime = getTime w + t })
-
-    -- Run actions pending in the scheduler.
-    runPendingActions :: Game State ()
-    runPendingActions = do
-        scheduler <- getsGameState getScheduler
-        runScheduledActions scheduler
-        scheduler' <- getsGameState getScheduler
-        tick <- getGameTick
-        let scheduler'' = dropExpiredActions tick scheduler'
-        modifyGameState (\w -> w { getScheduler = scheduler'' })
 
     -- Some keys were held down, so we didn't see them "happen" this turn.  Simulate key
     -- presses for all keys that are currently being held down.
@@ -331,7 +314,6 @@ movePlayer :: Game State ()
 movePlayer = do
     p <- getsGameState getPlayer
     let Position (x, y) = getPlayerPosition p
-    scheduleIn "movePlayer" 1 movePlayer
     case getPlayerMovement p of
         Nothing ->
             return ()
@@ -358,7 +340,6 @@ movePlayer = do
 -- Tick entities according the their own rules.
 tickEntities :: Game State ()
 tickEntities = do
-    scheduleIn "tickEntities" 2 tickEntities
     entities <- getsGameState getEntities
     mapM_ tickEntity (M.elems entities)
 
@@ -377,28 +358,27 @@ tickEntity (SomeEntity e) = do
 -- occupied space, it doesn't move.
 instance Behaviour State Zombie where
     behave z = do
-        let Position (xz, yz) = Entity.position z
-        Position (xp, yp) <- getPlayerPosition <$> getsGameState getPlayer
-        let pos' = if abs (xp - xz) > abs (yp - yz)
-                   then Position (xz + signum (xp - xz), yz)
-                   else Position (xz, yz + signum (yp - yz))
-        entities <- getsGameState getEntities
-        if not (posOccupied pos' entities)
-            then return (Zombie.setPosition z pos')
+        tick <- getGameTick
+        if tick `mod` 2 == 0
+            then moveZombie
             else return z
       where
+        moveZombie = do
+            let Position (xz, yz) = Entity.position z
+            Position (xp, yp) <- getPlayerPosition <$> getsGameState getPlayer
+            let pos' = if abs (xp - xz) > abs (yp - yz)
+                       then Position (xz + signum (xp - xz), yz)
+                       else Position (xz, yz + signum (yp - yz))
+            entities <- getsGameState getEntities
+            if not (posOccupied pos' entities)
+                then return (Zombie.setPosition z pos')
+                else return z
+
         posOccupied pos = M.foldl (\o (SomeEntity e) -> o || Entity.position e == pos) False
 
 ----------------------
 -- Helpers
 ----------------------
-
--- | Schedule an action to run in the given number of ticks.
-scheduleIn :: String -> Int -> Game State () -> Game State ()
-scheduleIn tag d act = do
-    tick <- getGameTick
-    modifyGameState (\w ->
-        w { getScheduler = scheduleAction (getScheduler w) tag (tick + d) act })
 
 formatSeconds :: Double -> String
 formatSeconds t = let secs = floor t :: Int
