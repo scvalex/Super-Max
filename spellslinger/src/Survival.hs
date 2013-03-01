@@ -13,12 +13,12 @@ import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
 import Game.Engine ( GameEvent(..)
-                   , Game, getGameState, getsGameState, modifyGameState, randomR
+                   , Game, getsGameState, modifyGameState
                    , Picture(..)
                    , TextAlignment(..)
                    , Color(..), black, greyN
                    , Event(..), SDLKey(..), Keysym(..) )
-import Game.Entity ( Entity, SomeEntity(..) )
+import Game.Entity ( SomeEntity(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Scheduler ( Scheduler, newScheduler
                  , runScheduledActions, scheduleAction, dropExpiredActions )
@@ -49,7 +49,7 @@ data State =
                                           -- down at any time.  When we update the world,
                                           -- we process those keys as well as all the keys
                                           -- that were pressed and released.
-          , getEntities     :: Map EntityId (SomeEntity State)
+          , getEntities     :: Map EntityId SomeEntity
           }
 
 data RoundState = PreRound { getObjective :: String }
@@ -86,13 +86,13 @@ initState :: Level -> Game a State
 initState lvl = do
     let area = area1
         roomBounds = getRoomBounds area
-    entities <- foldlM (\ns i -> do
+    entities <- foldlM (\ns _ -> do
                              z <- Entity.init (Zombie.RandomZombie
                                                    { Zombie.getAreaBounds = roomBounds
                                                    })
                              return (M.insert (Entity.entityId z) (SomeEntity z) ns))
                        M.empty
-                       [1..2^(lvl - 1)]
+                       [(1 :: Int) ..2^(lvl - 1)]
     return (State { getState        = PreRound "Get to the exit"
                   , getScheduler    = newScheduler
                   , getLevel        = lvl
@@ -317,12 +317,12 @@ handleTick t = do
         entityPoss <- map (\(SomeEntity e) -> Entity.entityPosition e) .
                       M.elems <$>
                       getsGameState getEntities
-        w <- getGameState
+        area <- getsGameState getArea
         pos <- getPlayerPosition <$> getsGameState getPlayer
         if pos `elem` entityPoss
             then modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You died"
                                                                  , getCanContinue = False } })
-            else if pos == getRoomExit (getArea w)
+            else if pos == getRoomExit area
             then modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You win"
                                                                  , getCanContinue = True } })
             else return ()
@@ -370,9 +370,9 @@ tickEntities = do
 
 -- Move a single entity.  Zombies follow the player.  If a zombie tries to move to an
 -- occupied space, it doesn't move.
-tickEntity :: Map EntityId (SomeEntity State)
-           -> SomeEntity State
-           -> Game State (Map EntityId (SomeEntity State))
+tickEntity :: Map EntityId SomeEntity
+           -> SomeEntity
+           -> Game State (Map EntityId SomeEntity)
 tickEntity entities _ = return entities
 
 -- moveEntity w npcs z@(Zombie {}) =

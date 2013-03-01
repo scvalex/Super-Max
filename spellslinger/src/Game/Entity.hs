@@ -7,10 +7,10 @@ module Game.Entity (
 import Game.Engine ( Game, Picture )
 import Types ( Position, EntityId )
 
-data SomeEntity w = forall a. Entity w a
+data SomeEntity = forall a. Entity a
                   => SomeEntity a
 
-class Entity w a where
+class Entity a where
     data EntityParameters a :: *
 
     init :: EntityParameters a -> Game w a
@@ -19,5 +19,5 @@ class Entity w a where
     draw :: a -> Picture
     tickVisual :: a -> a
 
-class (Entity w a) => Behaviour w a b where
+class (Entity a) => Behaviour w a b where
     behave :: a -> b -> Game w a

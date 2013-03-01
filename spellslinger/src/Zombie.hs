@@ -16,7 +16,7 @@ data Zombie = Zombie
     , getZombieAreaBounds :: (Int, Int, Int, Int)
     } deriving ( Eq, Show )
 
-instance Entity w Zombie where
+instance Entity Zombie where
     data EntityParameters Zombie = RandomZombie
         { getAreaBounds :: (Int, Int, Int, Int)
         }

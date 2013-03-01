@@ -1,7 +1,7 @@
 module Main where
 
 import Game.Engine ( Game, GameEvent, play, quitGame
-                   , setGameState, getGameState, withAlternateGameState
+                   , modifyGameState, getGameState, withAlternateGameState
                    , Picture(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import qualified MainMenu as MainMenu
@@ -73,9 +73,9 @@ handleEvent ev = do
     handleGlobalCommand (Just ToNewGame) = do
         (dims, _) <- getGameState
         survivalState <- Survival.initState 1
-        setGameState (dims, Survival survivalState)
+        modifyGameState (\_ -> (dims, Survival survivalState))
     handleGlobalCommand (Just ToMainMenu) = do
         (dims, _) <- getGameState
-        setGameState (dims, MainMenu MainMenu.initState)
+        modifyGameState (\_ -> (dims, MainMenu MainMenu.initState))
     handleGlobalCommand (Just ToQuit) =
         quitGame
