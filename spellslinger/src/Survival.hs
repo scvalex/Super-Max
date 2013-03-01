@@ -288,10 +288,12 @@ handleTick t = do
     runPendingActions :: Game State ()
     runPendingActions = do
         -- FIXME Move the tick counter to the engine state.
-        tick <- getsGameState getTick
         scheduler <- getsGameState getScheduler
-        scheduler' <- runScheduledActions tick scheduler
-        modifyGameState (\w -> w { getScheduler = dropExpiredActions tick scheduler' })
+        runScheduledActions scheduler
+        scheduler' <- getsGameState getScheduler
+        tick <- getGameTick
+        let scheduler'' = dropExpiredActions tick scheduler'
+        modifyGameState (\w -> w { getScheduler = scheduler'' })
 
     -- Some keys were held down, so we didn't see them "happen" this turn.  Simulate key
     -- presses for all keys that are currently being held down.
