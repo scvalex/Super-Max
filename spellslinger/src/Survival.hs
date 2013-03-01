@@ -347,8 +347,10 @@ tickEntities = do
 tickEntity :: SomeEntity -> Game State ()
 tickEntity (SomeEntity e) = do
     e' <- behave e
+    -- FIXME Add support for fps > tps.
+    let e'' = Entity.tickVisual e'
     modifyGameState (\w ->
-        w { getEntities = M.insert (Entity.eid e') (SomeEntity e') (getEntities w) })
+        w { getEntities = M.insert (Entity.eid e'') (SomeEntity e'') (getEntities w) })
 
 ----------------------
 -- Entity behaviour
