@@ -15,7 +15,7 @@ module Game.Engine (
 
         -- * Engine interface
         play, quitGame, getGameState, getsGameState, modifyGameState,
-        withAlternateGameState, randomR, mkUid
+        withAlternateGameState, randomR, mkUid, getGameTick
     ) where
 
 import Control.Applicative ( Applicative(..), (<$>) )
@@ -122,12 +122,13 @@ data EngineState s = EngineState { getInnerState :: s
                                  , isTerminating :: Bool
                                  , getGen        :: StdGen
                                  , getNextUid    :: Int
+                                 , getTick       :: Int
                                  }
 
 -- | The events a game may receive.
-data GameEvent = Tick Int (UTCTime, Double) -- ^ A logical tick with the current time and
-                                            -- the number of seconds since the last tick.
-               | InputEvent Event           -- ^ An input (mouse, keyboard, etc.) event
+data GameEvent = Tick (UTCTime, Double) -- ^ A logical tick with the current time and the
+                                        -- number of seconds since the last tick.
+               | InputEvent Event       -- ^ An input (mouse, keyboard, etc.) event
 
 -- FIXME Just use a StateT for the game state.  Don't forget to use gets and sets in
 -- blind-horror.hs.  | Psych!  It's a state monad!
@@ -175,6 +176,7 @@ withAlternateGameState alternateState setAlternateState innerAction =
                                      , isTerminating = isTerminating s
                                      , getGen        = getGen s
                                      , getNextUid    = getNextUid s
+                                     , getTick       = getTick s
                                      } in
                 let (x, as') = runGame innerAction as in
                 let s' = EngineState { getInnerState = setAlternateState (getInnerState as')
@@ -183,6 +185,7 @@ withAlternateGameState alternateState setAlternateState innerAction =
                                      , isTerminating = isTerminating as'
                                      , getGen        = getGen as'
                                      , getNextUid    = getNextUid as'
+                                     , getTick       = getTick as'
                                      } in
                 (x, s'))
 
@@ -193,6 +196,11 @@ randomR bounds = Game (\s -> let (x, g) = R.randomR bounds (getGen s) in (x, s {
 -- | Return a unique 'Int'.  This function never returns the same value twice.
 mkUid :: Game s Int
 mkUid = Game (\s -> let uid = getNextUid s in (uid, s { getNextUid = uid + 1 }))
+
+-- | Get the current tick of the game.  This is the total number of 'Tick' events that
+-- have taken place.
+getGameTick :: Game s Int
+getGameTick = Game (\s -> (getTick s, s))
 
 --------------------------------
 -- Fonts
@@ -313,10 +321,11 @@ play tps wInit drawGame onEvent = do
                              , isTerminating = False
                              , getGen        = gen
                              , getNextUid    = 1
+                             , getTick       = 0
                              }
         -- Set up the first tick.
         initTime <- getCurrentTime
-        es' <- tick 0 initTime es
+        es' <- tick initTime es
 
         -- Forward SDL event.
         es'' <- forwardEvents es'
@@ -343,20 +352,20 @@ play tps wInit drawGame onEvent = do
 
         -- Set up the next tick.
         es'' <- case event of
-            Tick cnt (prevTime, _) -> tick (cnt + 1) prevTime es'
-            _                      -> return es'
+            Tick (prevTime, _) -> tick prevTime (es' { getTick = getTick es' + 1 })
+            _                  -> return es'
 
         if isTerminating es''
             then shutdown es''
             else playLoop screen screenW screenH fonts es''
 
-    tick :: Int -> UTCTime -> EngineState s -> IO (EngineState s)
-    tick cnt prevTime es = managedForkIO es $ do
+    tick :: UTCTime -> EngineState s -> IO (EngineState s)
+    tick prevTime es = managedForkIO es $ do
         now <- getCurrentTime
         let delta = fromRational (toRational (diffUTCTime now prevTime))
             desiredDelay = fromIntegral (1000000 `div` tps)
         threadDelay (floor (min desiredDelay (2.0 * desiredDelay - delta * 1000000.0)))
-        atomically (writeTChan (getEventChan es) (Tick cnt (now, delta)))
+        atomically (writeTChan (getEventChan es) (Tick (now, delta)))
 
     -- | Wait for SDL event and forward them to the event channel.
     forwardEvents :: EngineState s -> IO (EngineState s)

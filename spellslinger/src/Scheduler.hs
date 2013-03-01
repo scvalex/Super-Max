@@ -7,15 +7,20 @@ module Scheduler (
     ) where
 
 import Data.PriorityQueue ( PriorityQueue )
-import Game.Engine ( Game )
+import Game.Engine ( Game, getGameTick )
 import qualified Data.PriorityQueue as PQ
+import Text.Printf ( printf )
 
 ----------------------
 -- Types
 ----------------------
 
-data Action w = Action { getScheduledTick  :: Int
+data Action w = Action { getTag            :: String
+                       , getScheduledTick  :: Int
                        , getAction         :: Game w () }
+
+instance Show (Action w) where
+    show a = printf "[%s at %d]" (getTag a) (getScheduledTick a)
 
 instance Eq (Action w) where
     Action { getScheduledTick = n1 } == Action { getScheduledTick = n2 } =
@@ -60,7 +65,9 @@ newScheduler :: Scheduler w
 newScheduler = Scheduler { getSchedule = PQ.empty }
 
 -- | Run the given action on the given tick.
-scheduleAction :: Scheduler w -> Int -> Game w () -> Scheduler w
-scheduleAction s n act =
-    let action = Action { getScheduledTick = n, getAction = act } in
+scheduleAction :: Scheduler w -> String -> Int -> Game w () -> Scheduler w
+scheduleAction s tag tick act =
+    let action = Action { getTag = tag
+                        , getScheduledTick = tick
+                        , getAction = act } in
     s { getSchedule = PQ.insert (getSchedule s) action }

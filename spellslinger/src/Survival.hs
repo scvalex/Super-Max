@@ -13,7 +13,7 @@ import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
 import Game.Engine ( GameEvent(..)
-                   , Game, getsGameState, modifyGameState
+                   , Game, getsGameState, modifyGameState, getGameTick
                    , Picture(..)
                    , TextAlignment(..)
                    , Color(..), black, greyN
@@ -40,7 +40,6 @@ data State =
           , getScheduler    :: Scheduler State
           , getLevel        :: Int
           , getTime         :: Double
-          , getTick         :: Int
           , getArea         :: Area
           , getPlayer       :: Player
           , getHeldDownKeys :: Set Keysym -- ^ We get key up and key down events, but we
@@ -93,11 +92,14 @@ initState lvl = do
                              return (M.insert (Entity.entityId z) (SomeEntity z) ns))
                        M.empty
                        [(1 :: Int) ..2^(lvl - 1)]
+    tick <- getGameTick
+    let scheduler = foldl (\s (tag, d, act) -> scheduleAction s tag (tick + d) act) newScheduler $
+                    [ ("movePlayer", 1, movePlayer)
+                    , ("tickEntities", 2, tickEntities) ]
     return (State { getState        = PreRound "Get to the exit"
-                  , getScheduler    = newScheduler
+                  , getScheduler    = scheduler
                   , getLevel        = lvl
                   , getTime         = 0.0
-                  , getTick         = 0
                   , getArea         = area
                   , getHeldDownKeys = S.empty
                   , getEntities     = entities
@@ -193,14 +195,7 @@ drawState w =
 handleEvent :: GameEvent -> Game State (Maybe GlobalCommand)
 handleEvent (InputEvent ev) =
     handleInputEvent ev
-handleEvent (Tick 0 (_, t)) = do
-    -- FIXME Using the first tick to prime the scheduler seems weird.
-    -- First tick.  Prime the world.
-    scheduleIn 0 movePlayer
-    scheduleIn 1 tickEntities
-    handleTick t
-    return Nothing
-handleEvent (Tick _ (_, t)) = do
+handleEvent (Tick (_, t)) = do
     handleTick t
     return Nothing
 
@@ -279,16 +274,10 @@ handleTick t = do
     handleTickInRound :: Game State ()
     handleTickInRound =
         sequence_ [ processHeldDownKeys
-                  , updateTick
                   , updateTime
                   , runPendingActions
                   , checkVictory
                   ]
-
-    -- Increment the tick count.
-    updateTick :: Game State ()
-    updateTick = do
-        modifyGameState (\w -> w { getTick  = getTick w + 1 })
 
     -- Increment the ticker by the elapsed amount of time.
     updateTime :: Game State ()
@@ -336,7 +325,7 @@ movePlayer :: Game State ()
 movePlayer = do
     p <- getsGameState getPlayer
     let Position (x, y) = getPlayerPosition p
-    scheduleIn 1 movePlayer
+    scheduleIn "movePlayer" 1 movePlayer
     case getPlayerMovement p of
         Nothing ->
             return ()
@@ -363,7 +352,7 @@ movePlayer = do
 -- Move entities according the their own rules.
 tickEntities :: Game State ()
 tickEntities = do
-    scheduleIn 2 tickEntities
+    scheduleIn "tickEntities" 2 tickEntities
     entities <- getsGameState getEntities
     entities' <- foldlM tickEntity entities (M.elems entities)
     modifyGameState (\w -> w { getEntities = entities' })
@@ -373,7 +362,8 @@ tickEntities = do
 tickEntity :: Map EntityId SomeEntity
            -> SomeEntity
            -> Game State (Map EntityId SomeEntity)
-tickEntity entities _ = return entities
+tickEntity entities _ = do
+    return entities
 
 -- moveEntity w npcs z@(Zombie {}) =
   --   let (xz, yz) = getNpcPosition z
@@ -392,10 +382,11 @@ tickEntity entities _ = return entities
 ----------------------
 
 -- | Schedule an action to run in the given number of ticks.
-scheduleIn :: Int -> Game State () -> Game State ()
-scheduleIn d act = do
+scheduleIn :: String -> Int -> Game State () -> Game State ()
+scheduleIn tag d act = do
+    tick <- getGameTick
     modifyGameState (\w ->
-        w { getScheduler = scheduleAction (getScheduler w) (getTick w + d) act })
+        w { getScheduler = scheduleAction (getScheduler w) tag (tick + d) act })
 
 formatSeconds :: Double -> String
 formatSeconds t = let secs = floor t :: Int
