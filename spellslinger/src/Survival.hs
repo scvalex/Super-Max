@@ -1,3 +1,5 @@
+{-# LANGUAGE MultiParamTypeClasses, ExistentialQuantification, FlexibleContexts #-}
+
 module Survival (
         -- * State
         State, initState,
@@ -18,17 +20,18 @@ import Game.Engine ( GameEvent(..)
                    , TextAlignment(..)
                    , Color(..), black, greyN
                    , Event(..), SDLKey(..), Keysym(..) )
-import Game.Entity ( SomeEntity(..) )
+import Game.Entity ( Entity, Behaviour(..) )
 import GlobalCommand ( GlobalCommand(..) )
+import qualified Data.Map as M
+import qualified Data.Set as S
+import qualified Game.Entity as Entity
+import qualified Zombie as Zombie
 import Scheduler ( Scheduler, newScheduler
                  , runScheduledActions, scheduleAction, dropExpiredActions )
 import Spell ( )
 import Text.Printf ( printf )
 import Types ( Direction(..), EntityId(..), Position(..) )
-import qualified Data.Map as M
-import qualified Data.Set as S
-import qualified Game.Entity as Entity
-import qualified Zombie as Zombie
+import Zombie ( Zombie )
 
 type Level = Int
 
@@ -50,6 +53,8 @@ data State =
                                           -- that were pressed and released.
           , getEntities     :: Map EntityId SomeEntity
           }
+
+data SomeEntity = forall a. (Entity a, Behaviour State a) => SomeEntity a
 
 data RoundState = PreRound { getObjective :: String }
                 | InRound
@@ -89,7 +94,7 @@ initState lvl = do
                              z <- Entity.init (Zombie.RandomZombie
                                                    { Zombie.getAreaBounds = roomBounds
                                                    })
-                             return (M.insert (Entity.entityId z) (SomeEntity z) ns))
+                             return (M.insert (Entity.eid z) (SomeEntity z) ns))
                        M.empty
                        [(1 :: Int) ..2^(lvl - 1)]
     tick <- getGameTick
@@ -305,7 +310,7 @@ handleTick t = do
     -- Check if the player has lost yet.
     checkVictory :: Game State ()
     checkVictory = do
-        entityPoss <- map (\(SomeEntity e) -> Entity.entityPosition e) .
+        entityPoss <- map (\(SomeEntity e) -> Entity.position e) .
                       M.elems <$>
                       getsGameState getEntities
         area <- getsGameState getArea
@@ -351,33 +356,39 @@ movePlayer = do
     movementDisplacement West  = (-1, 0)
     movementDisplacement East  = (1, 0)
 
--- Move entities according the their own rules.
+-- Tick entities according the their own rules.
 tickEntities :: Game State ()
 tickEntities = do
     scheduleIn "tickEntities" 2 tickEntities
     entities <- getsGameState getEntities
-    entities' <- foldlM tickEntity entities (M.elems entities)
-    modifyGameState (\w -> w { getEntities = entities' })
+    mapM_ tickEntity (M.elems entities)
 
--- Move a single entity.  Zombies follow the player.  If a zombie tries to move to an
+-- Tick a single entity.
+tickEntity :: SomeEntity -> Game State ()
+tickEntity (SomeEntity e) = do
+    e' <- behave e
+    modifyGameState (\w ->
+        w { getEntities = M.insert (Entity.eid e') (SomeEntity e') (getEntities w) })
+
+----------------------
+-- Entity behaviour
+----------------------
+
+-- Zombies follow the player.  If a zombie tries to move to an
 -- occupied space, it doesn't move.
-tickEntity :: Map EntityId SomeEntity
-           -> SomeEntity
-           -> Game State (Map EntityId SomeEntity)
-tickEntity entities _ = do
-    return entities
-
--- moveEntity w npcs z@(Zombie {}) =
-  --   let (xz, yz) = getNpcPosition z
-  --       Position (xp, yp) = getPlayerPosition (getPlayer w)
-  --       pos' = if abs (xp - xz) > abs (yp - yz)
-  --              then (xz + signum (xp - xz), yz)
-  --              else (xz, yz + signum (yp - yz)) in
-  --   if not (posOccupied pos' npcs)
-  --   then M.insert (getEntityId z) (z { getNpcPosition = pos' }) npcs
-  --   else npcs
-  -- where
-  --   posOccupied pos = M.foldl (\o npc -> o || getNpcPosition npc == pos) False
+instance Behaviour State Zombie where
+    behave z = do
+        let Position (xz, yz) = Entity.position z
+        Position (xp, yp) <- getPlayerPosition <$> getsGameState getPlayer
+        let pos' = if abs (xp - xz) > abs (yp - yz)
+                   then Position (xz + signum (xp - xz), yz)
+                   else Position (xz, yz + signum (yp - yz))
+        entities <- getsGameState getEntities
+        if not (posOccupied pos' entities)
+            then return (Zombie.setPosition z pos')
+            else return z
+      where
+        posOccupied pos = M.foldl (\o (SomeEntity e) -> o || Entity.position e == pos) False
 
 ----------------------
 -- Helpers

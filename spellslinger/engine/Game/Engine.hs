@@ -58,6 +58,7 @@ import qualified System.Random as R
 
 deriving instance Ord Keysym
 
+-- FIXME Call it Colour
 --------------------------------
 -- Colors -- I want to call them Colours :(
 --------------------------------

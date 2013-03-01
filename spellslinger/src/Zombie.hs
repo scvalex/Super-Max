@@ -1,7 +1,8 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
 module Zombie (
-        Zombie, EntityParameters(..)
+        Zombie, EntityParameters(..),
+        setPosition
     ) where
 
 import Common ( intRectangle, fromAreaCoordinates )
@@ -12,7 +13,7 @@ import Types ( EntityId(..), Position(..) )
 
 data Zombie = Zombie
     { getZombieId         :: EntityId
-    , getZombiePosition   :: (Int, Int)
+    , getZombiePosition   :: Position
     , getZombieAreaBounds :: (Int, Int, Int, Int)
     } deriving ( Eq, Show )
 
@@ -26,17 +27,21 @@ instance Entity Zombie where
         xz <- randomR (x1, x2)
         yz <- randomR (y1, y2)
         return (Zombie { getZombieId         = zid
-                       , getZombiePosition   = (xz, yz)
+                       , getZombiePosition   = Position (xz, yz)
                        , getZombieAreaBounds = getAreaBounds zp
                        })
 
-    entityId (Zombie { getZombieId = zid }) = zid
+    eid (Zombie { getZombieId = zid }) = zid
 
-    entityPosition (Zombie { getZombiePosition = pos }) = Position pos
+    position (Zombie { getZombiePosition = pos }) = pos
 
-    draw (Zombie { getZombiePosition = (xz, yz), getZombieAreaBounds = bounds }) =
+    draw (Zombie { getZombiePosition = Position (xz, yz)
+                 , getZombieAreaBounds = bounds }) =
         fromAreaCoordinates bounds $
         Color (RGBA 255 0 0 255) $
         intRectangle xz yz 1 1
 
     tickVisual = id
+
+setPosition :: Zombie -> Position -> Zombie
+setPosition z pos = z { getZombiePosition = pos }
