@@ -14,7 +14,7 @@ module Game.Engine (
         Event(..), SDLKey(..), Keysym(..),
 
         -- * Engine interface
-        play, quitGame, getGameState, setGameState, modifyGameState,
+        play, quitGame, getGameState, getsGameState, modifyGameState,
         withAlternateGameState, randomR, mkUid
     ) where
 
@@ -125,9 +125,9 @@ data EngineState s = EngineState { getInnerState :: s
                                  }
 
 -- | The events a game may receive.
-data GameEvent = Tick (UTCTime, Double) -- ^ A logical tick with the current time and the
-                                        -- number of seconds since the last tick.
-               | InputEvent Event       -- ^ An input (mouse, keyboard, etc.) event
+data GameEvent = Tick Int (UTCTime, Double) -- ^ A logical tick with the current time and
+                                            -- the number of seconds since the last tick.
+               | InputEvent Event           -- ^ An input (mouse, keyboard, etc.) event
 
 -- FIXME Just use a StateT for the game state.  Don't forget to use gets and sets in
 -- blind-horror.hs.  | Psych!  It's a state monad!
@@ -152,13 +152,15 @@ instance Applicative (Game s) where
 getGameState :: Game s s
 getGameState = Game (\s -> (getInnerState s, s))
 
--- | Overwrite the current game state.
-setGameState :: s -> Game s ()
-setGameState is = Game (\s -> ((), s { getInnerState = is }))
+-- | Get an inner field of the game state.
+getsGameState :: (s -> a) -> Game s a
+getsGameState getField = Game (\s -> (getField (getInnerState s), s))
 
 -- | Pass the current game state through the given function.
 modifyGameState :: (s -> s) -> Game s ()
 modifyGameState f = Game (\s -> ((), s { getInnerState = f (getInnerState s) }))
+
+-- 'setGameState' is unsafe and should not be used; use 'modifyGameState' instead.
 
 -- | Instruct the engine to close after the current callback returns.
 quitGame :: Game s ()
@@ -314,7 +316,7 @@ play tps wInit drawGame onEvent = do
                              }
         -- Set up the first tick.
         initTime <- getCurrentTime
-        es' <- tick initTime es
+        es' <- tick 0 initTime es
 
         -- Forward SDL event.
         es'' <- forwardEvents es'
@@ -341,20 +343,20 @@ play tps wInit drawGame onEvent = do
 
         -- Set up the next tick.
         es'' <- case event of
-            Tick (prevTime, _) -> tick prevTime es'
-            _                  -> return es'
+            Tick cnt (prevTime, _) -> tick (cnt + 1) prevTime es'
+            _                      -> return es'
 
         if isTerminating es''
             then shutdown es''
             else playLoop screen screenW screenH fonts es''
 
-    tick :: UTCTime -> EngineState s -> IO (EngineState s)
-    tick prevTime es = managedForkIO es $ do
+    tick :: Int -> UTCTime -> EngineState s -> IO (EngineState s)
+    tick cnt prevTime es = managedForkIO es $ do
         now <- getCurrentTime
         let delta = fromRational (toRational (diffUTCTime now prevTime))
             desiredDelay = fromIntegral (1000000 `div` tps)
         threadDelay (floor (min desiredDelay (2.0 * desiredDelay - delta * 1000000.0)))
-        atomically (writeTChan (getEventChan es) (Tick (now, delta)))
+        atomically (writeTChan (getEventChan es) (Tick cnt (now, delta)))
 
     -- | Wait for SDL event and forward them to the event channel.
     forwardEvents :: EngineState s -> IO (EngineState s)

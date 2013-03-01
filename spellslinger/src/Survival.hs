@@ -7,17 +7,18 @@ module Survival (
     ) where
 
 import Common ( intRectangle, fromAreaCoordinates )
+import Control.Applicative ( (<$>) )
 import Data.Foldable ( foldlM )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
 import Game.Engine ( GameEvent(..)
-                   , Game, getGameState, setGameState, modifyGameState, randomR
+                   , Game, getGameState, getsGameState, modifyGameState, randomR
                    , Picture(..)
                    , TextAlignment(..)
                    , Color(..), black, greyN
                    , Event(..), SDLKey(..), Keysym(..) )
-import Game.Entity ( SomeEntity(..) )
+import Game.Entity ( Entity, SomeEntity(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Scheduler ( Scheduler, newScheduler
                  , runScheduledActions, scheduleAction, dropExpiredActions )
@@ -64,7 +65,7 @@ data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ The bounds of the
                                                           -- The top and right bounds are
                                                           -- exclusive.
                  , getRoomStart   :: Position             -- ^ the player's starting point
-                 , getRoomExit    :: (Int, Int)           -- ^ the area's exit point
+                 , getRoomExit    :: Position             -- ^ the area's exit point
                  } deriving ( Eq, Show )
 
 data Player = Player { getPlayerPosition :: Position
@@ -78,7 +79,7 @@ data Player = Player { getPlayerPosition :: Position
 area1 :: Area
 area1 = Room { getRoomBounds = (0, 0, 100, 100)
              , getRoomStart = Position (49, 5)
-             , getRoomExit = (49, 94)
+             , getRoomExit = Position (49, 94)
              }
 
 initState :: Level -> Game a State
@@ -92,7 +93,7 @@ initState lvl = do
                              return (M.insert (Entity.entityId z) (SomeEntity z) ns))
                        M.empty
                        [1..2^(lvl - 1)]
-    let g = State { getState        = PreRound "Get to the exit"
+    return (State { getState        = PreRound "Get to the exit"
                   , getScheduler    = newScheduler
                   , getLevel        = lvl
                   , getTime         = 0.0
@@ -103,17 +104,14 @@ initState lvl = do
                   , getPlayer       = Player { getPlayerPosition = getRoomStart area
                                              , getPlayerMovement = Nothing
                                              }
-                  }
-    return (scheduleIn 1 movePlayer $
-            scheduleIn 2 moveNpcs $
-            g)
+                  })
 
 drawState :: State -> Picture
 drawState w =
     mconcat [ wireframe
             , room
             , player
-            , npcs
+            , entities
             , hud
             , prePostMessage
             ]
@@ -145,9 +143,9 @@ drawState w =
                         ]
 
     -- All the non-player entities.
-    npcs =
+    entities =
         mconcat $
-        map (getEntities w) (\(SomeEntity e) -> Entity.draw e)
+        map (\(SomeEntity e) -> Entity.draw e) (M.elems (getEntities w))
 
     -- The player.
     player =
@@ -161,7 +159,7 @@ drawState w =
         fromRoomCoordinates $
         roomExit
 
-    roomExit = let (xe, ye) = getRoomExit (getArea w) in
+    roomExit = let Position (xe, ye) = getRoomExit (getArea w) in
                mconcat [ Color (RGBA 255 215 0 255) $
                          intRectangle xe ye 2 1
                        , Translate (fromIntegral (xe + 1)) (fromIntegral (ye + 1)) $
@@ -195,18 +193,25 @@ drawState w =
 handleEvent :: GameEvent -> Game State (Maybe GlobalCommand)
 handleEvent (InputEvent ev) =
     handleInputEvent ev
-handleEvent (Tick (_, t)) = do
+handleEvent (Tick 0 (_, t)) = do
+    -- FIXME Using the first tick to prime the scheduler seems weird.
+    -- First tick.  Prime the world.
+    scheduleIn 0 movePlayer
+    scheduleIn 1 tickEntities
+    handleTick t
+    return Nothing
+handleEvent (Tick _ (_, t)) = do
     handleTick t
     return Nothing
 
 handleInputEvent :: Event -> Game State (Maybe GlobalCommand)
 handleInputEvent ev = handleGlobalKey ev $ do
-    w <- getGameState
-    case getState w of
+    state <- getsGameState getState
+    case state of
         PreRound {}  -> do
             case ev of
                 KeyUp (Keysym { symKey = SDLK_SPACE }) -> do
-                    setGameState (w { getState = InRound })
+                    modifyGameState (\w' -> w' { getState = InRound })
                     return Nothing
                 _ -> do
                     handleInRoundEvent
@@ -219,7 +224,9 @@ handleInputEvent ev = handleGlobalKey ev $ do
                 KeyUp (Keysym { symKey = SDLK_SPACE })-> do
                     if canContinue
                         then do
-                            setGameState =<< initState (getLevel w + 1)
+                            lvl <- getsGameState getLevel
+                            w' <- initState (lvl + 1)
+                            modifyGameState (\_ -> w')
                             return Nothing
                         else do
                             return (Just ToMainMenu)
@@ -228,14 +235,13 @@ handleInputEvent ev = handleGlobalKey ev $ do
   where
     handleInRoundEvent :: Game State ()
     handleInRoundEvent = do
-        w <- getGameState
-        let keys = getHeldDownKeys w
+        keys <- getsGameState getHeldDownKeys
         case ev of
             KeyDown key -> do
-                setGameState (w { getHeldDownKeys = S.insert key keys })
+                modifyGameState (\w -> w { getHeldDownKeys = S.insert key keys })
                 processKey key
             KeyUp key -> do
-                setGameState (w { getHeldDownKeys = S.delete key keys })
+                modifyGameState (\w -> w { getHeldDownKeys = S.delete key keys })
             _ -> do
                 return ()
 
@@ -249,24 +255,23 @@ handleInputEvent ev = handleGlobalKey ev $ do
 -- | A key is pressed -- update the world accordingly.
 processKey :: Keysym -> Game State ()
 processKey key = do
-    w <- getGameState
-    let p = getPlayer w
+    p <- getsGameState getPlayer
     case key of
         Keysym { symKey = SDLK_LEFT } ->
-            setGameState (w { getPlayer = p { getPlayerMovement = Just West } })
+            modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just West } })
         Keysym { symKey = SDLK_RIGHT } ->
-            setGameState (w { getPlayer = p { getPlayerMovement = Just East } })
+            modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just East } })
         Keysym { symKey = SDLK_DOWN } ->
-            setGameState (w { getPlayer = p { getPlayerMovement = Just South } })
+            modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just South } })
         Keysym { symKey = SDLK_UP } ->
-            setGameState (w { getPlayer = p { getPlayerMovement = Just North } })
+            modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just North } })
         _ ->
             return ()
 
 handleTick :: Double -> Game State ()
 handleTick t = do
-    w0 <- getGameState
-    case getState w0 of
+    state <- getsGameState getState
+    case state of
         PreRound {}  -> return ()
         InRound      -> handleTickInRound
         PostRound {} -> return ()
@@ -293,29 +298,33 @@ handleTick t = do
     -- Run actions pending in the scheduler.
     runPendingActions :: Game State ()
     runPendingActions = do
-        w <- getGameState
-        let w' = runScheduledActions (getTick w) w (getScheduler w)
-        setGameState (w' { getScheduler = dropExpiredActions (getTick w') (getScheduler w') })
+        -- FIXME Move the tick counter to the engine state.
+        tick <- getsGameState getTick
+        scheduler <- getsGameState getScheduler
+        scheduler' <- runScheduledActions tick scheduler
+        modifyGameState (\w -> w { getScheduler = dropExpiredActions tick scheduler' })
 
     -- Some keys were held down, so we didn't see them "happen" this turn.  Simulate key
     -- presses for all keys that are currently being held down.
     processHeldDownKeys :: Game State ()
     processHeldDownKeys = do
-        w <- getGameState
-        mapM_ processKey (S.toList (getHeldDownKeys w))
+        keys <- getsGameState getHeldDownKeys
+        mapM_ processKey (S.toList keys)
 
     -- Check if the player has lost yet.
     checkVictory :: Game State ()
     checkVictory = do
+        entityPoss <- map (\(SomeEntity e) -> Entity.entityPosition e) .
+                      M.elems <$>
+                      getsGameState getEntities
         w <- getGameState
-        let entityPoss = map Entity.entityPosition $ M.elems (getEntities w)
-            pos = getPlayerPosition (getPlayer w)
+        pos <- getPlayerPosition <$> getsGameState getPlayer
         if pos `elem` entityPoss
-            then setGameState (w { getState = PostRound { getConclusion  = "You died"
-                                                        , getCanContinue = False } })
+            then modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You died"
+                                                                 , getCanContinue = False } })
             else if pos == getRoomExit (getArea w)
-            then setGameState (w { getState = PostRound { getConclusion  = "You win"
-                                                        , getCanContinue = True } })
+            then modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You win"
+                                                                 , getCanContinue = True } })
             else return ()
 
 ----------------------
@@ -323,25 +332,26 @@ handleTick t = do
 ----------------------
 
 -- Move the player according to its movement, then, reset its movement.
-movePlayer :: State -> State
-movePlayer w =
-    let p = getPlayer w
-        Position (x, y) = getPlayerPosition p
-        w' = scheduleIn 1 movePlayer w
-    in case getPlayerMovement p of
+movePlayer :: Game State ()
+movePlayer = do
+    p <- getsGameState getPlayer
+    let Position (x, y) = getPlayerPosition p
+    scheduleIn 1 movePlayer
+    case getPlayerMovement p of
         Nothing ->
-            w'
-        Just m ->
-            let (xd, yd) = movementDisplacement m in
-            w' { getPlayer = p { getPlayerPosition = inBounds (x + xd, y + yd)
-                               , getPlayerMovement = Nothing } }
+            return ()
+        Just m -> do
+            let (xd, yd) = movementDisplacement m
+            area <- getsGameState getArea
+            modifyGameState $ \w ->
+                w { getPlayer = p { getPlayerPosition = inBounds area (Position (x + xd, y + yd))
+                                  , getPlayerMovement = Nothing } }
   where
     -- Force the coordinates back in the area's bounds.
-    inBounds :: (Int, Int) -> (Int, Int)
-    inBounds (x, y) =
-        case getArea w of
-            r@(Room {}) -> let (x1, y1, x2, y2) = getRoomBounds r in
-                           Position (max x1 (min x (x2 - 1)), max y1 (min y (y2 - 1)))
+    inBounds :: Area -> Position -> Position
+    inBounds r@(Room {}) (Position (x, y)) =
+        let (x1, y1, x2, y2) = getRoomBounds r in
+        Position (max x1 (min x (x2 - 1)), max y1 (min y (y2 - 1)))
 
     -- How much does the player move for each movement command.
     movementDisplacement :: Direction -> (Int, Int)
@@ -350,35 +360,42 @@ movePlayer w =
     movementDisplacement West  = (-1, 0)
     movementDisplacement East  = (1, 0)
 
--- Move NPCs according the their own rules.
-moveNpcs :: State -> State
-moveNpcs w =
-    let w' = scheduleIn 2 moveNpcs w in
-    w' { getEntities = M.foldl (moveNpc w') (getNpcs w') (getEntities w') }
+-- Move entities according the their own rules.
+tickEntities :: Game State ()
+tickEntities = do
+    scheduleIn 2 tickEntities
+    entities <- getsGameState getEntities
+    entities' <- foldlM tickEntity entities (M.elems entities)
+    modifyGameState (\w -> w { getEntities = entities' })
 
--- Move a single NPC.  Zombies follow the player.  If a zombie tries to move to an
+-- Move a single entity.  Zombies follow the player.  If a zombie tries to move to an
 -- occupied space, it doesn't move.
-moveNpc :: State -> Map EntityId Npc -> Npc -> Map EntityId Npc
-moveNpc w npcs z@(Zombie {}) =
-    let (xz, yz) = getNpcPosition z
-        Position (xp, yp) = getPlayerPosition (getPlayer w)
-        pos' = if abs (xp - xz) > abs (yp - yz)
-               then (xz + signum (xp - xz), yz)
-               else (xz, yz + signum (yp - yz)) in
-    if not (posOccupied pos' npcs)
-    then M.insert (getEntityId z) (z { getNpcPosition = pos' }) npcs
-    else npcs
-  where
-    posOccupied pos = M.foldl (\o npc -> o || getNpcPosition npc == pos) False
+tickEntity :: Map EntityId (SomeEntity State)
+           -> SomeEntity State
+           -> Game State (Map EntityId (SomeEntity State))
+tickEntity entities _ = return entities
+
+-- moveEntity w npcs z@(Zombie {}) =
+  --   let (xz, yz) = getNpcPosition z
+  --       Position (xp, yp) = getPlayerPosition (getPlayer w)
+  --       pos' = if abs (xp - xz) > abs (yp - yz)
+  --              then (xz + signum (xp - xz), yz)
+  --              else (xz, yz + signum (yp - yz)) in
+  --   if not (posOccupied pos' npcs)
+  --   then M.insert (getEntityId z) (z { getNpcPosition = pos' }) npcs
+  --   else npcs
+  -- where
+  --   posOccupied pos = M.foldl (\o npc -> o || getNpcPosition npc == pos) False
 
 ----------------------
 -- Helpers
 ----------------------
 
 -- | Schedule an action to run in the given number of ticks.
-scheduleIn :: Int -> (State -> State) -> State -> State
-scheduleIn d update w =
-    w { getScheduler = scheduleAction (getScheduler w) (getTick w + d) update }
+scheduleIn :: Int -> Game State () -> Game State ()
+scheduleIn d act = do
+    modifyGameState (\w ->
+        w { getScheduler = scheduleAction (getScheduler w) (getTick w + d) act })
 
 formatSeconds :: Double -> String
 formatSeconds t = let secs = floor t :: Int

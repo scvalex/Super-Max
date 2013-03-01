@@ -33,9 +33,9 @@ data Scheduler w = Scheduler { getSchedule :: PriorityQueue (Action w) }
 
 -- | Apply all scheduled actions whose 'getScheduledTick' has passed.  Return the world
 -- after said actions have been applied.
-runScheduledActions :: Int         -- ^ The current tick
-                    -> Scheduler w -- ^ The scheduler
-                    -> Game w ()   -- ^ The world after the actions have been applied
+runScheduledActions :: Int                  -- ^ The current tick
+                    -> Scheduler w          -- ^ The scheduler
+                    -> Game w (Scheduler w) -- ^ The world after the actions have been applied
 runScheduledActions n s =
     case PQ.extractMin (getSchedule s) of
         Just (Action { getScheduledTick = t
@@ -44,7 +44,7 @@ runScheduledActions n s =
                 act
                 runScheduledActions n (s { getSchedule = pq })
         _ ->
-            return ()
+            return s
 
 -- | Drop expired actions.
 dropExpiredActions :: Int -> Scheduler w -> Scheduler w
