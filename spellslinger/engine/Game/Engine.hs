@@ -169,29 +169,50 @@ modifyGameState f = Game (\s -> ((), s { getInnerState = f (getInnerState s) }))
 quitGame :: Game s ()
 quitGame = Game (\s -> ((), s { isTerminating = True }))
 
--- | Run an action in the 'Game' monad but with a different game state.
-withAlternateGameState :: t -> (t -> s) -> Game t a -> Game s a
-withAlternateGameState alternateState setAlternateState innerAction =
-    Game (\s -> let as = EngineState { getInnerState = alternateState
-                                     , getEventChan  = getEventChan s
-                                     , getThreads    = getThreads s
-                                     , isTerminating = isTerminating s
-                                     , getGen        = getGen s
-                                     , getNextUid    = getNextUid s
-                                     , getTick       = getTick s
-                                     , getQueuedIO   = [] --getQueuedIO s
-                                     } in
-                let (x, as') = runGame innerAction as in
-                let s' = EngineState { getInnerState = setAlternateState (getInnerState as')
-                                     , getEventChan  = getEventChan as'
-                                     , getThreads    = getThreads as'
-                                     , isTerminating = isTerminating as'
-                                     , getGen        = getGen as'
-                                     , getNextUid    = getNextUid as'
-                                     , getTick       = getTick as'
-                                     , getQueuedIO   = [] -- getQueuedIO as'
-                                     } in
-                (x, s'))
+-- | Run an action in the 'Game' monad but with a different game state.  If the alternate
+-- state is 'Nothing', doesn't do anything.
+withAlternateGameState :: forall s t a.
+                          (s -> Maybe t)    -- ^ get alternate state
+                       -> (t -> s)          -- ^ set alternate state
+                       -> Game t (Maybe a)  -- ^ action with alternate state
+                       -> Game s (Maybe a)
+withAlternateGameState getAlternateState setAlternateState innerAction =
+    Game (\s -> case getAlternateState (getInnerState s) of
+                     Just alternateState ->
+                         let as = EngineState { getInnerState = alternateState
+                                              , getEventChan  = getEventChan s
+                                              , getThreads    = getThreads s
+                                              , isTerminating = isTerminating s
+                                              , getGen        = getGen s
+                                              , getNextUid    = getNextUid s
+                                              , getTick       = getTick s
+                                              , getQueuedIO   = [] -- there's not point in
+                                                                   -- passing them down
+                                              } in
+                         let (x, as') = runGame innerAction as in
+                         let s' = EngineState { getInnerState = setAlternateState (getInnerState as')
+                                              , getEventChan  = getEventChan as'
+                                              , getThreads    = getThreads as'
+                                              , isTerminating = isTerminating as'
+                                              , getGen        = getGen as'
+                                              , getNextUid    = getNextUid as'
+                                              , getTick       = getTick as'
+                                              , getQueuedIO   = getQueuedIO s ++
+                                                                mapToInnerState (getQueuedIO as')
+                                              } in
+                         (x, s')
+                     Nothing -> (Nothing, s))
+  where
+    mapToInnerState :: [IOAction t] -> [IOAction s]
+    mapToInnerState = map (\(IOAction act handler) -> IOAction act (toInnerState handler))
+
+    toInnerState :: (b -> Game t ()) -> (b -> Game s ())
+    toInnerState act = \x -> do
+        _ <- withAlternateGameState
+            getAlternateState
+            setAlternateState
+            (act x >> return Nothing)
+        return ()
 
 -- | Generate a random number using the game's random generator.
 randomR :: (Random a) => (a, a) -> Game s a

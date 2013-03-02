@@ -59,12 +59,20 @@ handleEvent :: GameEvent -> Game FullState ()
 handleEvent ev = do
     (dims, gs) <- getGameState
     mcommand <- case gs of
-        MainMenu state -> do
-            withAlternateGameState state (\state' -> (dims, MainMenu state')) $
-                MainMenu.handleEvent ev
-        Survival state -> do
-            withAlternateGameState state (\state' -> (dims, Survival state')) $
-                Survival.handleEvent ev
+        MainMenu _ -> do
+            withAlternateGameState
+                (\state -> case state of
+                      (_, MainMenu menuState) -> Just menuState
+                      _                       -> Nothing)
+                (\state' -> (dims, MainMenu state'))
+                (MainMenu.handleEvent ev)
+        Survival _ -> do
+            withAlternateGameState
+                (\state -> case state of
+                      (_, Survival survivalState) -> Just survivalState
+                      _                           -> Nothing)
+                (\state' -> (dims, Survival state'))
+                (Survival.handleEvent ev)
     handleGlobalCommand mcommand
   where
     handleGlobalCommand :: Maybe GlobalCommand -> Game FullState ()
