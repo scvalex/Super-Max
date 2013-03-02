@@ -108,6 +108,7 @@ initState lvl = do
     let area = area1
         roomBounds = getRoomBounds area
     entities <- foldlM (\ns _ -> do
+                             -- FIXME Zombies may spawn on top of player.  And on top of filled entities.
                              z <- Entity.init (Zombie.RandomZombie
                                                    { Zombie.getAreaBounds = roomBounds
                                                    })
@@ -366,13 +367,13 @@ instance Behaviour State Zombie where
                 else return z
 
         posOccupied pos =
-            M.foldl (\o (SomeEntity e) -> o || pos `S.member` Entity.positions e) False
+            M.foldl (\o (SomeEntity e) -> o || pos `S.member` Entity.occupiedPositions e) False
 
 -- Stepping onto the room exit wins you the round.
 instance Behaviour State RoomExit where
     behave re = do
         posp <- getPlayerPosition <$> getsGameState getPlayer
-        when (posp `S.member` Entity.positions re) roundWon
+        when (RoomExit.contains re posp) roundWon
         return re
 
 instance Behaviour State Notice where

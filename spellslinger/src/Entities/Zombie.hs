@@ -35,7 +35,8 @@ instance Entity Zombie where
 
     eid (Zombie { getZombieId = zid }) = zid
 
-    positions (Zombie { getZombiePosition = pos }) = S.singleton pos
+    occupiedPositions (Zombie { getZombiePosition = pos }) =
+        S.singleton pos
 
     draw (Zombie { getZombiePosition   = Position (xz, yz)
                  , getZombieAreaBounds = bounds

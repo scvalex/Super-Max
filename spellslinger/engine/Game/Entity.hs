@@ -18,7 +18,7 @@ class Entity a where
 
     init :: EntityParameters a -> Game w a
     eid :: a -> EntityId
-    positions :: a -> Set Position
+    occupiedPositions :: a -> Set Position
     draw :: a -> Picture
     tickVisual :: a -> a
 

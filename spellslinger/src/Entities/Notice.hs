@@ -41,7 +41,8 @@ instance Entity Notice where
 
     eid (Notice { getNoticeId = nid }) = nid
 
-    positions (Notice { getNoticePosition = pos }) = S.singleton pos
+    occupiedPositions (Notice { getNoticePosition = pos }) =
+        S.singleton pos
 
     draw (Notice { getNoticePosition   = Position (xn, yn)
                  , getNoticeAreaBounds = bounds

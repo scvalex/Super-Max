@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
 module Entities.RoomExit (
-        RoomExit, EntityParameters(..)
+        RoomExit, EntityParameters(..), contains
     ) where
 
 import Common ( intRectangle, fromAreaCoordinates, smallText )
@@ -34,10 +34,8 @@ instance Entity RoomExit where
 
     eid (RE { getREId = reid }) = reid
 
-    positions (RE { getREPosition = pos@(Position (xe, ye)) }) =
-        S.fromList [ pos, Position (xe + 1, ye)
-                   , Position (xe, ye + 1), Position (xe + 1, ye + 1)
-                   ]
+    occupiedPositions _ =
+        S.empty -- You can walk over the room exit.
 
     draw (RE { getREPosition   = Position (xe, ye)
              , getREAreaBounds = bounds }) =
@@ -53,3 +51,10 @@ instance Entity RoomExit where
                 ]
 
     tickVisual = id
+
+contains :: RoomExit -> Position -> Bool
+contains (RE { getREPosition = Position (xe, ye) }) pos =
+    let exitPoss = S.fromList [ Position (xe, ye), Position (xe + 1, ye)
+                              , Position (xe, ye + 1), Position (xe + 1, ye + 1)
+                              ] in
+    pos `S.member` exitPoss
