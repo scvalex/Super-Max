@@ -1,4 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses, ExistentialQuantification, FlexibleContexts #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Survival (
         -- * State
@@ -27,7 +28,6 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Game.Entity as Entity
 import qualified Zombie as Zombie
-import qualified RoomExit as RoomExit
 import RoomExit ( RoomExit, EntityParameters(..) )
 import Spell ( )
 import Text.Printf ( printf )
@@ -69,7 +69,7 @@ data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ The bounds of the
                                                           -- The top and right bounds are
                                                           -- exclusive.
                  , getRoomStart   :: Position             -- ^ The player's starting point
-                 , getRoomEntities :: [Game State SomeEntity] -- ^ The room's starting entities.
+                 , getRoomEntities :: forall a. [Game a SomeEntity] -- ^ The room's starting entities.
                  }
 
 data Player = Player { getPlayerPosition :: Position
@@ -101,12 +101,14 @@ initState lvl = do
                              return (M.insert (Entity.eid z) (SomeEntity z) ns))
                        M.empty
                        [(1 :: Int) ..2^(lvl - 1)]
+    roomEntities <- sequence (getRoomEntities area)
+    let entities' = foldl (\m se@(SomeEntity e) -> M.insert (Entity.eid e) se m) entities roomEntities
     return (State { getState        = PreRound "Get to the exit"
                   , getLevel        = lvl
                   , getTime         = 0.0
                   , getArea         = area
                   , getHeldDownKeys = S.empty
-                  , getEntities     = entities
+                  , getEntities     = entities'
                   , getPlayer       = Player { getPlayerPosition = getRoomStart area
                                              , getPlayerMovement = Nothing
                                              }
@@ -284,7 +286,6 @@ handleTick t = do
         entityPoss <- map (\(SomeEntity e) -> Entity.position e) .
                       M.elems <$>
                       getsGameState getEntities
-        area <- getsGameState getArea
         pos <- getPlayerPosition <$> getsGameState getPlayer
         if pos `elem` entityPoss
             then modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You died"
