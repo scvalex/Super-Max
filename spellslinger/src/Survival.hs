@@ -163,6 +163,7 @@ drawState w =
                               Restart  -> "<press space to try again>"
                         ]
 
+    -- FIXME The order of entities is not well-defined (zombies can be hidden by the room exit).
     -- All the non-player entities.
     entities =
         mconcat $
@@ -307,17 +308,10 @@ movePlayer = do
             return ()
         Just m -> do
             let (xd, yd) = movementDisplacement m
-            area <- getsGameState getArea
             modifyGameState $ \w ->
-                w { getPlayer = p { getPlayerPosition = inBounds area (Position (x + xd, y + yd))
+                w { getPlayer = p { getPlayerPosition = Position (x + xd, y + yd)
                                   , getPlayerMovement = Nothing } }
   where
-    -- Force the coordinates back in the area's bounds.
-    inBounds :: Area -> Position -> Position
-    inBounds r@(Room {}) (Position (x, y)) =
-        let (x1, y1, x2, y2) = getRoomBounds r in
-        Position (max x1 (min x (x2 - 1)), max y1 (min y (y2 - 1)))
-
     -- How much does the player move for each movement command.
     movementDisplacement :: Direction -> (Int, Int)
     movementDisplacement North = (0, 1)
