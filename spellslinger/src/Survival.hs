@@ -17,6 +17,7 @@ import Data.Foldable ( foldlM )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
+import Entities.Notice ( Notice, EntityParameters(..) )
 import Entities.RoomExit ( RoomExit, EntityParameters(..) )
 import Entities.Zombie ( Zombie )
 import Game.Engine ( GameEvent(..)
@@ -29,6 +30,8 @@ import Game.Entity ( Entity, Behaviour(..), EntityId(..), Position(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import qualified Data.Map as M
 import qualified Data.Set as S
+import qualified Entities.Notice as Notice
+import qualified Entities.RoomExit as RoomExit
 import qualified Entities.Zombie as Zombie
 import qualified Game.Entity as Entity
 import Spell ( )
@@ -87,11 +90,17 @@ data Player = Player { getPlayerPosition :: Position
 area1 :: Area
 area1 =
     let bounds = (0, 0, 60, 60) in
-    let initExit = Entity.init (StaticExit { getAreaBounds = bounds
+    let initExit = Entity.init (StaticExit { RoomExit.getAreaBounds = bounds
                                            , getAreaExitPosition = Position (29, 55) }) in
+    let initNotice = Entity.init (StaticNotice { Notice.getAreaBounds = bounds
+                                               , getStaticPosition = Position ( 26, 6 )
+                                               , getStaticText = "Hello, World"
+                                               }) in
     Room { getRoomBounds = bounds
          , getRoomStart = Position (29, 5)
-         , getRoomEntities = [SomeEntity <$> initExit]
+         , getRoomEntities = [ SomeEntity <$> initExit
+                             , SomeEntity <$> initNotice
+                             ]
          }
 
 initState :: Level -> Game a State
@@ -357,11 +366,16 @@ instance Behaviour State Zombie where
         posOccupied pos =
             M.foldl (\o (SomeEntity e) -> o || pos `S.member` Entity.positions e) False
 
+-- Stepping onto the room exit wins you the round.
 instance Behaviour State RoomExit where
     behave re = do
         posp <- getPlayerPosition <$> getsGameState getPlayer
         when (posp `S.member` Entity.positions re) roundWon
         return re
+
+instance Behaviour State Notice where
+    behave n = do
+        return n
 
 ----------------------
 -- Helpers
