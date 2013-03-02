@@ -4,6 +4,7 @@ module Game.Entity (
         Entity(..), Behaviour(..)
     ) where
 
+import Data.Set ( Set )
 import Game.Engine ( Game, Picture )
 import Types ( Position, EntityId )
 
@@ -12,7 +13,7 @@ class Entity a where
 
     init :: EntityParameters a -> Game w a
     eid :: a -> EntityId
-    position :: a -> Position
+    positions :: a -> Set Position
     draw :: a -> Picture
     tickVisual :: a -> a
 

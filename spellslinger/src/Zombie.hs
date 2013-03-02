@@ -2,13 +2,14 @@
 
 module Zombie (
         Zombie, EntityParameters(..),
-        setPosition
+        setPosition, getPosition
     ) where
 
 import Common ( intRectangle, fromAreaCoordinates )
 import Control.Applicative ( (<$>) )
 import Game.Engine ( Picture(..), Colour(..), mkUid, randomR )
 import Game.Entity ( Entity(..) )
+import qualified Data.Set as S
 import Types ( EntityId(..), Position(..) )
 
 data Zombie = Zombie
@@ -35,7 +36,7 @@ instance Entity Zombie where
 
     eid (Zombie { getZombieId = zid }) = zid
 
-    position (Zombie { getZombiePosition = pos }) = pos
+    positions (Zombie { getZombiePosition = pos }) = S.singleton pos
 
     draw (Zombie { getZombiePosition   = Position (xz, yz)
                  , getZombieAreaBounds = bounds
@@ -49,3 +50,6 @@ instance Entity Zombie where
 
 setPosition :: Zombie -> Position -> Zombie
 setPosition z pos = z { getZombiePosition = pos }
+
+getPosition :: Zombie -> Position
+getPosition (Zombie { getZombiePosition = pos }) = pos

@@ -85,7 +85,7 @@ area1 :: Area
 area1 =
     let bounds = (0, 0, 100, 100) in
     let initExit = Entity.init (StaticExit { getAreaBounds = bounds
-                                           , getAreaExitPosition = Position (49, 10) }) in
+                                           , getAreaExitPosition = Position (49, 90) }) in
     Room { getRoomBounds = bounds
          , getRoomStart = Position (49, 5)
          , getRoomEntities = [SomeEntity <$> initExit]
@@ -341,7 +341,7 @@ instance Behaviour State Zombie where
             else return z
       where
         moveZombie = do
-            let Position (xz, yz) = Entity.position z
+            let Position (xz, yz) = Zombie.getPosition z
             posp@(Position (xp, yp)) <- getPlayerPosition <$> getsGameState getPlayer
             let pos' = if abs (xp - xz) > abs (yp - yz)
                        then Position (xz + signum (xp - xz), yz)
@@ -354,12 +354,13 @@ instance Behaviour State Zombie where
                 then return (Zombie.setPosition z pos')
                 else return z
 
-        posOccupied pos = M.foldl (\o (SomeEntity e) -> o || Entity.position e == pos) False
+        posOccupied pos =
+            M.foldl (\o (SomeEntity e) -> o || pos `S.member` Entity.positions e) False
 
 instance Behaviour State RoomExit where
     behave re = do
         posp <- getPlayerPosition <$> getsGameState getPlayer
-        when (Entity.position re == posp) $ do
+        when (posp `S.member` Entity.positions re) $ do
             modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You win"
                                                             , getCanContinue = True } })
         return re

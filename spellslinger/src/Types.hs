@@ -9,4 +9,4 @@ newtype EntityId = EntityId Int
                  deriving ( Eq, Ord, Show )
 
 newtype Position = Position (Int, Int)
-                 deriving ( Eq, Show )
+                 deriving ( Eq, Ord, Show )

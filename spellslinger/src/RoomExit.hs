@@ -10,6 +10,7 @@ import Data.Monoid ( mconcat )
 import Game.Engine ( Picture(..), Colour(..), TextAlignment(..)
                    , mkUid )
 import Game.Entity ( Entity(..) )
+import qualified Data.Set as S
 import Types ( EntityId(..), Position(..) )
 
 data RoomExit = RE
@@ -34,7 +35,8 @@ instance Entity RoomExit where
 
     eid (RE { getREId = reid }) = reid
 
-    position (RE { getREPosition = pos }) = pos
+    positions (RE { getREPosition = pos@(Position (xe, ye)) }) =
+        S.fromList [pos, Position (xe + 1, ye)]
 
     draw (RE { getREPosition   = Position (xe, ye)
              , getREAreaBounds = bounds }) =
