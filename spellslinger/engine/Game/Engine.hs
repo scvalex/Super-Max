@@ -270,7 +270,7 @@ withScreen act = do
         vi <- getVideoInfo
         let screenW = videoInfoWidth vi
             screenH = videoInfoHeight vi
-        s <- setVideoMode screenW screenH 32 [HWSurface, Fullscreen]
+        s <- setVideoMode screenW screenH 32 [HWSurface]
         act screenW screenH s
 
 --------------------------------
