@@ -1,12 +1,13 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
 module Entities.Notice (
-        Notice, EntityParameters(..)
+        Notice, EntityParameters(..),
+        getPosition, activated, deactivated
     ) where
 
 import Common ( intRectangle, fromAreaCoordinates, smallText )
 import Control.Applicative ( (<$>) )
-import Data.Monoid ( mconcat )
+import Data.Monoid ( Monoid(..) )
 import Game.Engine ( Picture(..), Colour(..), TextAlignment(..)
                    , mkUid )
 import Game.Entity ( Entity(..), EntityId(..), Position(..) )
@@ -15,6 +16,7 @@ import qualified Data.Set as S
 data Notice = Notice
     { getNoticeId         :: EntityId
     , getNoticePosition   :: Position
+    , getNoticeActive     :: Bool
     , getNoticeText       :: String
     , getNoticeAreaBounds :: (Int, Int, Int, Int)
     } deriving ( Eq, Show )
@@ -32,6 +34,7 @@ instance Entity Notice where
         nid <- EntityId <$> mkUid
         return (Notice { getNoticeId         = nid
                        , getNoticePosition   = pos
+                       , getNoticeActive     = False
                        , getNoticeText       = text
                        , getNoticeAreaBounds = areaBounds
                        })
@@ -42,13 +45,29 @@ instance Entity Notice where
 
     draw (Notice { getNoticePosition   = Position (xn, yn)
                  , getNoticeAreaBounds = bounds
+                 , getNoticeActive     = active
                  , getNoticeText       = text }) =
         fromAreaCoordinates bounds $
         Translate (fromIntegral xn) (fromIntegral yn) $
-        mconcat [ Colour (RGBA 160 160 255 255) $
+        let colour = if active
+                     then Colour (RGBA 200 200 255 255)
+                     else Colour (RGBA 160 160 255 255) in
+        let msg = if active
+                  then Translate 0.5 1 $
+                       smallText CenterAligned text
+                  else mempty in
+        mconcat [ colour $
                   intRectangle 0 0 1 1
-                , Translate 0.5 1 $
-                  smallText CenterAligned text
+                , msg
                 ]
 
     tickVisual = id
+
+getPosition :: Notice -> Position
+getPosition (Notice { getNoticePosition = pos }) = pos
+
+activated :: Notice -> Notice
+activated n = n { getNoticeActive = True }
+
+deactivated :: Notice -> Notice
+deactivated n = n { getNoticeActive = False }

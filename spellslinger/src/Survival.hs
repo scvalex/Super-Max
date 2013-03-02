@@ -375,7 +375,11 @@ instance Behaviour State RoomExit where
 
 instance Behaviour State Notice where
     behave n = do
-        return n
+        Position (xp, yp) <- getPlayerPosition <$> getsGameState getPlayer
+        let Position (xn, yn) = Notice.getPosition n
+        if abs (xp - xn) + abs (yp - yn) == 2
+            then return (Notice.activated n)
+            else return (Notice.deactivated n)
 
 ----------------------
 -- Helpers
