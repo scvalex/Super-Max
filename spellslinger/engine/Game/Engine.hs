@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, StandaloneDeriving #-}
+{-# LANGUAGE DeriveDataTypeable, StandaloneDeriving, ExistentialQuantification #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Game.Engine (
@@ -15,7 +15,7 @@ module Game.Engine (
 
         -- * Engine interface
         play, quitGame, getGameState, getsGameState, modifyGameState,
-        withAlternateGameState, randomR, mkUid, getGameTick
+        withAlternateGameState, randomR, mkUid, getGameTick, upon
     ) where
 
 import Control.Applicative ( Applicative(..), (<$>) )
@@ -116,6 +116,8 @@ instance Monoid Picture where
 -- Game/Engine interface
 --------------------------------
 
+data IOAction s = forall a. IOAction (IO a) (a -> Game s ())
+
 data EngineState s = EngineState { getInnerState :: s
                                  , getEventChan  :: TChan GameEvent
                                  , getThreads    :: Set ThreadId
@@ -123,6 +125,7 @@ data EngineState s = EngineState { getInnerState :: s
                                  , getGen        :: StdGen
                                  , getNextUid    :: Int
                                  , getTick       :: Int
+                                 , getQueuedIO   :: [IOAction s]
                                  }
 
 -- | The events a game may receive.
@@ -176,6 +179,7 @@ withAlternateGameState alternateState setAlternateState innerAction =
                                      , getGen        = getGen s
                                      , getNextUid    = getNextUid s
                                      , getTick       = getTick s
+                                     , getQueuedIO   = [] --getQueuedIO s
                                      } in
                 let (x, as') = runGame innerAction as in
                 let s' = EngineState { getInnerState = setAlternateState (getInnerState as')
@@ -185,6 +189,7 @@ withAlternateGameState alternateState setAlternateState innerAction =
                                      , getGen        = getGen as'
                                      , getNextUid    = getNextUid as'
                                      , getTick       = getTick as'
+                                     , getQueuedIO   = [] -- getQueuedIO as'
                                      } in
                 (x, s'))
 
@@ -200,6 +205,12 @@ mkUid = Game (\s -> let uid = getNextUid s in (uid, s { getNextUid = uid + 1 }))
 -- have taken place.
 getGameTick :: Game s Int
 getGameTick = Game (\s -> (getTick s, s))
+
+-- | Run an 'IO' action on a separate thread, and then run the handler on the result.
+-- Remember, there is only one game thread, so the handler will be run at some
+-- indeterminate time in the future.
+upon :: IO a -> (a -> Game s ()) -> Game s ()
+upon act handler = Game (\s -> ((), s { getQueuedIO = IOAction act handler : getQueuedIO s }))
 
 --------------------------------
 -- Fonts
@@ -283,7 +294,6 @@ data Shutdown = Shutdown
 
 instance Exception Shutdown
 
--- FIXME Add IO action scheduling.
 play :: forall w.
         Int                         -- ^ Logical ticks per second
      -> (Int -> Int -> w)           -- ^ Take the screen width and height, and return the
@@ -322,6 +332,7 @@ play tps wInit drawGame onEvent = do
                              , getGen        = gen
                              , getNextUid    = 1
                              , getTick       = 0
+                             , getQueuedIO   = []
                              }
         -- Set up the first tick.
         initTime <- getCurrentTime
