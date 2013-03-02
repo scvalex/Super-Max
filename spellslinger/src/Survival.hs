@@ -83,11 +83,11 @@ data Player = Player { getPlayerPosition :: Position
 
 area1 :: Area
 area1 =
-    let bounds = (0, 0, 100, 100) in
+    let bounds = (0, 0, 60, 60) in
     let initExit = Entity.init (StaticExit { getAreaBounds = bounds
-                                           , getAreaExitPosition = Position (49, 90) }) in
+                                           , getAreaExitPosition = Position (29, 55) }) in
     Room { getRoomBounds = bounds
-         , getRoomStart = Position (49, 5)
+         , getRoomStart = Position (29, 5)
          , getRoomEntities = [SomeEntity <$> initExit]
          }
 
