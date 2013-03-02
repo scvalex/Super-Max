@@ -50,14 +50,17 @@ instance Entity Notice where
         fromAreaCoordinates bounds $
         Translate (fromIntegral xn) (fromIntegral yn) $
         let colour = if active
-                     then Colour (RGBA 200 200 255 255)
+                     then Colour (RGBA 220 220 255 255)
                      else Colour (RGBA 160 160 255 255) in
         let msg = if active
                   then Translate 0.5 1 $
                        smallText CenterAligned text
                   else mempty in
-        mconcat [ colour $
+        -- FIXME Add some sort of palette, informally or explicitly.
+        mconcat [ Colour (RGBA 50 50 160 255) $
                   intRectangle 0 0 1 1
+                , colour $
+                  FilledRectangle 0.2 0.1 0.7 0.7
                 , msg
                 ]
 
