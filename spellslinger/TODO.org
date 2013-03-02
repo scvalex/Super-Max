@@ -4,7 +4,7 @@ Todo
 - [X] Fullscreen
 - [X] Flexible NPC (Entity) abstraction
 - [X] Notices
-- [ ] IO Scheduler
+- [X] IO Scheduler
 - [ ] Player profile
 - [ ] Score
 - [ ] High Scores

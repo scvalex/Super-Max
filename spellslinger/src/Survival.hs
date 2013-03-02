@@ -10,7 +10,8 @@ module Survival (
     ) where
 
 import Common ( intRectangle, fromAreaCoordinates
-              , bigText, mediumText )
+              , bigText, mediumText
+              , writeAppFile )
 import Control.Applicative ( (<$>) )
 import Control.Monad ( when )
 import Data.Foldable ( foldlM )
@@ -22,7 +23,7 @@ import Entities.Notice ( Notice, EntityParameters(..) )
 import Entities.RoomExit ( RoomExit, EntityParameters(..) )
 import Entities.Zombie ( Zombie )
 import Game.Engine ( GameEvent(..)
-                   , Game, getsGameState, modifyGameState, getGameTick
+                   , Game, getsGameState, modifyGameState, getGameTick, upon
                    , Picture(..)
                    , TextAlignment(..)
                    , Colour(..), black, greyN
@@ -402,7 +403,10 @@ formatSeconds t = let secs = floor t :: Int
 
 -- | Switch the state to post-round win.
 roundWon :: Game State ()
-roundWon =
+roundWon = do
+    lvl <- getsGameState getLevel
+    writeAppFile "lastLevel" (show (lvl + 1))
+        `upon` (\_ -> return ())
     modifyGameState (\w -> w { getState = PostRound { getConclusion     = "You win"
                                                     , getFurtherOptions = Continue } })
 

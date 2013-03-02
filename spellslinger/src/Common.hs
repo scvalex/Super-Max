@@ -2,10 +2,15 @@
 module Common (
         -- * Drawing
         intRectangle, fromAreaCoordinates,
-        bigText, mediumText, smallText
+        bigText, mediumText, smallText,
+
+        -- * File operations
+        writeAppFile
     ) where
 
 import Game.Engine ( Picture(..), TextAlignment )
+import System.FilePath ( (</>) )
+import System.Directory ( getAppUserDataDirectory, createDirectoryIfMissing )
 
 -- | Draw a polygon with 'Int' coordinates.
 intRectangle :: Int -> Int -> Int -> Int -> Picture
@@ -25,3 +30,9 @@ bigText, mediumText, smallText :: TextAlignment -> String -> Picture
 bigText    = Text 40
 mediumText = Text 30
 smallText  = Text 20
+
+writeAppFile :: FilePath -> String -> IO ()
+writeAppFile fn contents = do
+    dir <- getAppUserDataDirectory "spellslinger"
+    createDirectoryIfMissing False dir
+    writeFile (dir </> fn) contents
