@@ -372,24 +372,33 @@ play tps wInit drawGame onEvent = do
         -- Notify game of event.
         let ((), es') = runGame (onEvent event) es
 
-        -- Draw the current state.
-        draw screen fonts idmtx black $
-            FilledRectangle 0 0 (fromIntegral screenW) (fromIntegral screenH)
-        draw screen fonts idmtx white $
-            -- The origin is in the bottom right corner
-            Translate 0.0 (fromIntegral screenH) $
-            Scale 1.0 (-1.0) $
-            (drawGame (getInnerState es'))
-        SDL.flip screen
+        if isTerminating es'
+            then do
+                shutdown es'
+            else do
+                -- Draw the current state.
+                draw screen fonts idmtx black $
+                    FilledRectangle 0 0 (fromIntegral screenW) (fromIntegral screenH)
+                draw screen fonts idmtx white $
+                    -- The origin is in the bottom right corner
+                    Translate 0.0 (fromIntegral screenH) $
+                    Scale 1.0 (-1.0) $
+                    (drawGame (getInnerState es'))
+                SDL.flip screen
 
-        -- Set up the next tick.
-        es'' <- case event of
-            Tick (prevTime, _) -> tick prevTime (es' { getTick = getTick es' + 1 })
-            _                  -> return es'
+                -- Start queued IO actions
+                es'' <- startQueuedIO es'
 
-        if isTerminating es''
-            then shutdown es''
-            else playLoop screen screenW screenH fonts es''
+                -- Set up the next tick.
+                es''' <- case event of
+                    Tick (prevTime, _) -> tick prevTime (es'' { getTick = getTick es'' + 1 })
+                    _                  -> return es''
+
+                playLoop screen screenW screenH fonts es'''
+
+    startQueuedIO :: EngineState w -> IO (EngineState w)
+    startQueuedIO es = do
+        return (es { getQueuedIO = [] })
 
     tick :: UTCTime -> EngineState s -> IO (EngineState s)
     tick prevTime es = managedForkIO es $ do
