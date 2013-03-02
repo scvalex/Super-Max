@@ -23,7 +23,7 @@ import Game.Engine ( GameEvent(..)
                    , TextAlignment(..)
                    , Colour(..), black, greyN
                    , Event(..), SDLKey(..), Keysym(..) )
-import Game.Entity ( Entity, Behaviour(..) )
+import Game.Entity ( Entity, Behaviour(..), EntityId(..), Position(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -32,7 +32,7 @@ import qualified Zombie as Zombie
 import RoomExit ( RoomExit, EntityParameters(..) )
 import Spell ( )
 import Text.Printf ( printf )
-import Types ( Direction(..), EntityId(..), Position(..) )
+import Types ( Direction(..) )
 import Zombie ( Zombie )
 
 type Level = Int

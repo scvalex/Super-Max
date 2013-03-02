@@ -9,9 +9,8 @@ import Control.Applicative ( (<$>) )
 import Data.Monoid ( mconcat )
 import Game.Engine ( Picture(..), Colour(..), TextAlignment(..)
                    , mkUid )
-import Game.Entity ( Entity(..) )
+import Game.Entity ( Entity(..), EntityId(..), Position(..) )
 import qualified Data.Set as S
-import Types ( EntityId(..), Position(..) )
 
 data RoomExit = RE
     { getREId         :: EntityId

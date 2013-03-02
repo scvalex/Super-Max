@@ -1,12 +1,17 @@
 {-# LANGUAGE MultiParamTypeClasses, TypeFamilies #-}
 
 module Game.Entity (
-        Entity(..), Behaviour(..)
+        Entity(..), EntityId(..), Position(..), Behaviour(..)
     ) where
 
 import Data.Set ( Set )
 import Game.Engine ( Game, Picture )
-import Types ( Position, EntityId )
+
+newtype EntityId = EntityId Int
+                 deriving ( Eq, Ord, Show )
+
+newtype Position = Position (Int, Int)
+                 deriving ( Eq, Ord, Show )
 
 class Entity a where
     data EntityParameters a :: *

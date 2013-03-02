@@ -8,9 +8,8 @@ module Zombie (
 import Common ( intRectangle, fromAreaCoordinates )
 import Control.Applicative ( (<$>) )
 import Game.Engine ( Picture(..), Colour(..), mkUid, randomR )
-import Game.Entity ( Entity(..) )
+import Game.Entity ( Entity(..), EntityId(..), Position(..) )
 import qualified Data.Set as S
-import Types ( EntityId(..), Position(..) )
 
 data Zombie = Zombie
     { getZombieId         :: EntityId

@@ -28,7 +28,7 @@ Library
   Ghc-options:          -Wall
   Hs-Source-Dirs:       engine/
   Extensions:           ScopedTypeVariables, OverloadedStrings
-  Exposed-modules:      Game.Engine
+  Exposed-modules:      Game.Engine, Game.Entity
 
 Executable spellslinger
   Build-depends:        base >= 4 && < 5, containers, spellslinger
