@@ -12,6 +12,7 @@ module Survival (
 import Common ( intRectangle, fromAreaCoordinates
               , bigText, mediumText )
 import Control.Applicative ( (<$>) )
+import Control.Monad ( when )
 import Data.Foldable ( foldlM )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
@@ -265,7 +266,6 @@ handleTick t = do
                   , updateTime
                   , movePlayer
                   , tickEntities
-                  , checkVictory
                   ]
 
     -- Increment the ticker by the elapsed amount of time.
@@ -279,21 +279,6 @@ handleTick t = do
     processHeldDownKeys = do
         keys <- getsGameState getHeldDownKeys
         mapM_ processKey (S.toList keys)
-
-    -- Check if the player has lost yet.
-    checkVictory :: Game State ()
-    checkVictory = do
-        entityPoss <- map (\(SomeEntity e) -> Entity.position e) .
-                      M.elems <$>
-                      getsGameState getEntities
-        pos <- getPlayerPosition <$> getsGameState getPlayer
-        if pos `elem` entityPoss
-            then modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You died"
-                                                                 , getCanContinue = False } })
-            -- else if pos == getRoomExit area
-            -- then modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You win"
-            --                                                      , getCanContinue = True } })
-            else return ()
 
 ----------------------
 -- State updates
@@ -357,10 +342,13 @@ instance Behaviour State Zombie where
       where
         moveZombie = do
             let Position (xz, yz) = Entity.position z
-            Position (xp, yp) <- getPlayerPosition <$> getsGameState getPlayer
+            posp@(Position (xp, yp)) <- getPlayerPosition <$> getsGameState getPlayer
             let pos' = if abs (xp - xz) > abs (yp - yz)
                        then Position (xz + signum (xp - xz), yz)
                        else Position (xz, yz + signum (yp - yz))
+            when (pos' == posp) $ do
+                modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You died"
+                                                                , getCanContinue = False } })
             entities <- getsGameState getEntities
             if not (posOccupied pos' entities)
                 then return (Zombie.setPosition z pos')
@@ -370,6 +358,10 @@ instance Behaviour State Zombie where
 
 instance Behaviour State RoomExit where
     behave re = do
+        posp <- getPlayerPosition <$> getsGameState getPlayer
+        when (Entity.position re == posp) $ do
+            modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You win"
+                                                            , getCanContinue = True } })
         return re
 
 ----------------------
