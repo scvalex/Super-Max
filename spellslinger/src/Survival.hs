@@ -295,6 +295,7 @@ handleTick t = do
 -- State updates
 ----------------------
 
+-- FIXME Players can move through filled objects.
 -- Move the player according to its movement, then, reset its movement.
 movePlayer :: Game State ()
 movePlayer = do
@@ -342,6 +343,7 @@ tickEntity (SomeEntity e) = do
 -- Entity behaviour
 ----------------------
 
+-- FIXME Zombies can technically walk out of the room.  There should be an invisible border.
 -- Zombies follow the player.  If a zombie tries to move to an
 -- occupied space, it doesn't move.
 instance Behaviour State Zombie where
