@@ -297,7 +297,6 @@ handleTick t = do
 -- State updates
 ----------------------
 
--- FIXME Players can move through filled objects.
 -- Move the player according to its movement, then, reset its movement.
 movePlayer :: Game State ()
 movePlayer = do
@@ -308,9 +307,16 @@ movePlayer = do
             return ()
         Just m -> do
             let (xd, yd) = movementDisplacement m
-            modifyGameState $ \w ->
-                w { getPlayer = p { getPlayerPosition = Position (x + xd, y + yd)
-                                  , getPlayerMovement = Nothing } }
+                pos' = Position (x + xd, y + yd)
+            entities <- getsGameState getEntities
+            if posOccupied pos' entities
+                then do
+                    modifyGameState $ \w ->
+                        w { getPlayer = p { getPlayerMovement = Nothing } }
+                else do
+                    modifyGameState $ \w ->
+                        w { getPlayer = p { getPlayerPosition = pos'
+                                          , getPlayerMovement = Nothing } }
   where
     -- How much does the player move for each movement command.
     movementDisplacement :: Direction -> (Int, Int)
@@ -360,9 +366,6 @@ instance Behaviour State Zombie where
                 then return (Zombie.setPosition z pos')
                 else return z
 
-        posOccupied pos =
-            M.foldl (\o (SomeEntity e) -> o || pos `S.member` Entity.occupiedPositions e) False
-
 -- Stepping onto the room exit wins you the round.
 instance Behaviour State RoomExit where
     behave re = do
@@ -400,3 +403,8 @@ roundLost :: Game State ()
 roundLost =
     modifyGameState (\w -> w { getState = PostRound { getConclusion     = "You died"
                                                     , getFurtherOptions = Restart } })
+
+-- | Is the given position occupied by some entity?
+posOccupied :: Position -> Map EntityId SomeEntity -> Bool
+posOccupied pos =
+    M.foldl (\o (SomeEntity e) -> o || pos `S.member` Entity.occupiedPositions e) False
