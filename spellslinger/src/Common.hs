@@ -1,10 +1,11 @@
 -- | Dumping ground for common functions
 module Common (
         -- * Drawing
-        intRectangle, fromAreaCoordinates
+        intRectangle, fromAreaCoordinates,
+        bigText, mediumText, smallText
     ) where
 
-import Game.Engine ( Picture(..) )
+import Game.Engine ( Picture(..), TextAlignment )
 
 -- | Draw a polygon with 'Int' coordinates.
 intRectangle :: Int -> Int -> Int -> Int -> Picture
@@ -18,3 +19,9 @@ fromAreaCoordinates :: (Int, Int, Int, Int) -> Picture -> Picture
 fromAreaCoordinates (x1, y1, x2, y2) =
     Translate (fromIntegral x1) (fromIntegral y1) .
     Scale (1.0 / fromIntegral (x2 - x1)) (1.0 / fromIntegral (y2 - y1))
+
+-- Text with fixed sizes
+bigText, mediumText, smallText :: TextAlignment -> String -> Picture
+bigText    = Text 40
+mediumText = Text 30
+smallText  = Text 20

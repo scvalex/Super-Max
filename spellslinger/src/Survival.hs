@@ -8,7 +8,8 @@ module Survival (
         drawState, handleEvent
     ) where
 
-import Common ( intRectangle, fromAreaCoordinates )
+import Common ( intRectangle, fromAreaCoordinates
+              , bigText, mediumText )
 import Control.Applicative ( (<$>) )
 import Data.Foldable ( foldlM )
 import Data.Map ( Map )
@@ -26,6 +27,8 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Game.Entity as Entity
 import qualified Zombie as Zombie
+import qualified RoomExit as RoomExit
+import RoomExit ( RoomExit, EntityParameters(..) )
 import Spell ( )
 import Text.Printf ( printf )
 import Types ( Direction(..), EntityId(..), Position(..) )
@@ -65,9 +68,9 @@ data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ The bounds of the
                                                           -- related to the display ones).
                                                           -- The top and right bounds are
                                                           -- exclusive.
-                 , getRoomStart   :: Position             -- ^ the player's starting point
-                 , getRoomExit    :: Position             -- ^ the area's exit point
-                 } deriving ( Eq, Show )
+                 , getRoomStart   :: Position             -- ^ The player's starting point
+                 , getRoomEntities :: [Game State SomeEntity] -- ^ The room's starting entities.
+                 }
 
 data Player = Player { getPlayerPosition :: Position
                      , getPlayerMovement :: Maybe Direction
@@ -78,10 +81,14 @@ data Player = Player { getPlayerPosition :: Position
 ----------------------
 
 area1 :: Area
-area1 = Room { getRoomBounds = (0, 0, 100, 100)
-             , getRoomStart = Position (49, 5)
-             , getRoomExit = Position (49, 94)
-             }
+area1 =
+    let bounds = (0, 0, 100, 100) in
+    let initExit = Entity.init (StaticExit { getAreaBounds = bounds
+                                           , getAreaExitPosition = Position (49, 10) }) in
+    Room { getRoomBounds = bounds
+         , getRoomStart = Position (49, 5)
+         , getRoomEntities = [SomeEntity <$> initExit]
+         }
 
 initState :: Level -> Game a State
 initState lvl = do
@@ -108,7 +115,6 @@ initState lvl = do
 drawState :: State -> Picture
 drawState w =
     mconcat [ wireframe
-            , room
             , player
             , entities
             , hud
@@ -153,18 +159,6 @@ drawState w =
         Colour (RGBA 255 140 0 255) $
         personPicture pos
 
-    -- The current room/map/area.
-    room =
-        fromRoomCoordinates $
-        roomExit
-
-    roomExit = let Position (xe, ye) = getRoomExit (getArea w) in
-               mconcat [ Colour (RGBA 255 215 0 255) $
-                         intRectangle xe ye 2 1
-                       , Translate (fromIntegral (xe + 1)) (fromIntegral (ye + 1)) $
-                         smallText CenterAligned "Exit"
-                       ]
-
     -- The HUD is overlayed on the game.
     hud = mconcat [ survivalTime
                   , currentLevel
@@ -183,11 +177,6 @@ drawState w =
     -- Convert a picture in room coordinates to one in drawing coordinates.
     fromRoomCoordinates :: Picture -> Picture
     fromRoomCoordinates = fromAreaCoordinates (getRoomBounds (getArea w))
-
-    -- Text with fixed sizes
-    bigText    = Text 40
-    mediumText = Text 30
-    smallText  = Text 20
 
 handleEvent :: GameEvent -> Game State (Maybe GlobalCommand)
 handleEvent (InputEvent ev) =
@@ -300,9 +289,9 @@ handleTick t = do
         if pos `elem` entityPoss
             then modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You died"
                                                                  , getCanContinue = False } })
-            else if pos == getRoomExit area
-            then modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You win"
-                                                                 , getCanContinue = True } })
+            -- else if pos == getRoomExit area
+            -- then modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You win"
+            --                                                      , getCanContinue = True } })
             else return ()
 
 ----------------------
@@ -377,6 +366,10 @@ instance Behaviour State Zombie where
                 else return z
 
         posOccupied pos = M.foldl (\o (SomeEntity e) -> o || Entity.position e == pos) False
+
+instance Behaviour State RoomExit where
+    behave re = do
+        return re
 
 ----------------------
 -- Helpers
