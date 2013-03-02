@@ -377,7 +377,7 @@ instance Behaviour State Notice where
     behave n = do
         Position (xp, yp) <- getPlayerPosition <$> getsGameState getPlayer
         let Position (xn, yn) = Notice.getPosition n
-        if abs (xp - xn) + abs (yp - yn) == 2
+        if abs (xp - xn) + abs (yp - yn) <= 2
             then return (Notice.activated n)
             else return (Notice.deactivated n)
 
