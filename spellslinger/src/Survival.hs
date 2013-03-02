@@ -17,6 +17,8 @@ import Data.Foldable ( foldlM )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
+import Entities.RoomExit ( RoomExit, EntityParameters(..) )
+import Entities.Zombie ( Zombie )
 import Game.Engine ( GameEvent(..)
                    , Game, getsGameState, modifyGameState, getGameTick
                    , Picture(..)
@@ -27,13 +29,11 @@ import Game.Entity ( Entity, Behaviour(..), EntityId(..), Position(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import qualified Data.Map as M
 import qualified Data.Set as S
+import qualified Entities.Zombie as Zombie
 import qualified Game.Entity as Entity
-import qualified Zombie as Zombie
-import RoomExit ( RoomExit, EntityParameters(..) )
 import Spell ( )
 import Text.Printf ( printf )
 import Types ( Direction(..) )
-import Zombie ( Zombie )
 
 type Level = Int
 

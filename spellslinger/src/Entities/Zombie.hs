@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
-module Zombie (
+module Entities.Zombie (
         Zombie, EntityParameters(..),
         setPosition, getPosition
     ) where

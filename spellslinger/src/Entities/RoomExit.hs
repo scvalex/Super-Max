@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
-module RoomExit (
+module Entities.RoomExit (
         RoomExit, EntityParameters(..)
     ) where
 
