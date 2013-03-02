@@ -24,6 +24,7 @@ import Control.Concurrent.STM ( atomically
                               , TChan, newTChanIO, readTChan, writeTChan )
 import Control.Exception ( Exception, assert )
 import Control.Monad ( forever )
+import Data.Foldable ( foldlM )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
@@ -119,7 +120,7 @@ instance Monoid Picture where
 data IOAction s = forall a. IOAction (IO a) (a -> Game s ())
 
 data EngineState s = EngineState { getInnerState :: s
-                                 , getEventChan  :: TChan GameEvent
+                                 , getEventChan  :: TChan (EngineEvent s)
                                  , getThreads    :: Set ThreadId
                                  , isTerminating :: Bool
                                  , getGen        :: StdGen
@@ -127,6 +128,10 @@ data EngineState s = EngineState { getInnerState :: s
                                  , getTick       :: Int
                                  , getQueuedIO   :: [IOAction s]
                                  }
+
+-- | The events the engine's asynchronous components may send/receive.
+data EngineEvent s = GameEvent GameEvent
+                   | GameAction (Game s ())
 
 -- | The events a game may receive.
 data GameEvent = Tick (UTCTime, Double) -- ^ A logical tick with the current time and the
@@ -179,8 +184,9 @@ withAlternateGameState :: forall s t a.
 withAlternateGameState getAlternateState setAlternateState innerAction =
     Game (\s -> case getAlternateState (getInnerState s) of
                      Just alternateState ->
+                         -- Note that the alternate engine state is *not* fully functional.
                          let as = EngineState { getInnerState = alternateState
-                                              , getEventChan  = getEventChan s
+                                              , getEventChan  = undefined
                                               , getThreads    = getThreads s
                                               , isTerminating = isTerminating s
                                               , getGen        = getGen s
@@ -191,7 +197,7 @@ withAlternateGameState getAlternateState setAlternateState innerAction =
                                               } in
                          let (x, as') = runGame innerAction as in
                          let s' = EngineState { getInnerState = setAlternateState (getInnerState as')
-                                              , getEventChan  = getEventChan as'
+                                              , getEventChan  = getEventChan s
                                               , getThreads    = getThreads as'
                                               , isTerminating = isTerminating as'
                                               , getGen        = getGen as'
@@ -370,7 +376,9 @@ play tps wInit drawGame onEvent = do
         event <- atomically (readTChan (getEventChan es))
 
         -- Notify game of event.
-        let ((), es') = runGame (onEvent event) es
+        let ((), es') = case event of
+                GameEvent gevent -> runGame (onEvent gevent) es
+                GameAction gact  -> runGame gact es
 
         if isTerminating es'
             then do
@@ -391,14 +399,22 @@ play tps wInit drawGame onEvent = do
 
                 -- Set up the next tick.
                 es''' <- case event of
-                    Tick (prevTime, _) -> tick prevTime (es'' { getTick = getTick es'' + 1 })
-                    _                  -> return es''
+                    GameEvent (Tick (prevTime, _)) ->
+                        tick prevTime (es'' { getTick = getTick es'' + 1 })
+                    _ ->
+                        return es''
 
                 playLoop screen screenW screenH fonts es'''
 
     startQueuedIO :: EngineState w -> IO (EngineState w)
-    startQueuedIO es = do
-        return (es { getQueuedIO = [] })
+    startQueuedIO (es@EngineState { getQueuedIO = ioacts }) = do
+        es' <- foldlM startIOAction es ioacts
+        return (es' { getQueuedIO = [] })
+      where
+        startIOAction es0 (IOAction act handler) =
+            managedForkIO es0 $ do
+                x <- act
+                atomically (writeTChan (getEventChan es0) (GameAction (handler x)))
 
     tick :: UTCTime -> EngineState s -> IO (EngineState s)
     tick prevTime es = managedForkIO es $ do
@@ -406,13 +422,13 @@ play tps wInit drawGame onEvent = do
         let delta = fromRational (toRational (diffUTCTime now prevTime))
             desiredDelay = fromIntegral (1000000 `div` tps)
         threadDelay (floor (min desiredDelay (2.0 * desiredDelay - delta * 1000000.0)))
-        atomically (writeTChan (getEventChan es) (Tick (now, delta)))
+        atomically (writeTChan (getEventChan es) (GameEvent (Tick (now, delta))))
 
     -- | Wait for SDL event and forward them to the event channel.
     forwardEvents :: EngineState s -> IO (EngineState s)
     forwardEvents es = managedForkIO es $ forever $ do
         event <- waitEvent
-        atomically (writeTChan (getEventChan es) (InputEvent event))
+        atomically (writeTChan (getEventChan es) (GameEvent (InputEvent event)))
 
     -- | Fork a thread and keep track of its id.
     managedForkIO :: EngineState s -> IO () -> IO (EngineState s)
