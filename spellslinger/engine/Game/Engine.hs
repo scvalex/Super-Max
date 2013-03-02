@@ -283,6 +283,7 @@ data Shutdown = Shutdown
 
 instance Exception Shutdown
 
+-- FIXME Add IO action scheduling.
 play :: forall w.
         Int                         -- ^ Logical ticks per second
      -> (Int -> Int -> w)           -- ^ Take the screen width and height, and return the
