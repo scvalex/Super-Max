@@ -57,10 +57,13 @@ data State =
 
 data SomeEntity = forall a. (Entity a, Behaviour State a) => SomeEntity a
 
+data FurtherOptions = Restart | Continue
+                    deriving ( Eq, Show )
+
 data RoundState = PreRound { getObjective :: String }
                 | InRound
-                | PostRound { getConclusion  :: String
-                            , getCanContinue :: Bool }
+                | PostRound { getConclusion     :: String
+                            , getFurtherOptions :: FurtherOptions }
                 deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
@@ -142,12 +145,12 @@ drawState w =
                         ]
             InRound {} ->
                 mempty
-            pg@(PostRound { getCanContinue = canContinue }) ->
+            pg@(PostRound { getFurtherOptions = opts }) ->
                 mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getConclusion pg)
                         , Translate 0.5 0.40 $ mediumText CenterAligned $
-                          if canContinue
-                          then "<press space for next level>"
-                          else "<press space for main menu>"
+                          case opts of
+                              Continue -> "<press space for next level>"
+                              Restart  -> "<press space to try again>"
                         ]
 
     -- All the non-player entities.
@@ -196,26 +199,25 @@ handleInputEvent ev = handleGlobalKey ev $ do
             case ev of
                 KeyUp (Keysym { symKey = SDLK_SPACE }) -> do
                     modifyGameState (\w' -> w' { getState = InRound })
-                    return Nothing
                 _ -> do
                     handleInRoundEvent
-                    return Nothing
         InRound -> do
             handleInRoundEvent
-            return Nothing
-        PostRound { getCanContinue = canContinue } -> do
+        PostRound { getFurtherOptions = opts } -> do
             case ev of
                 KeyUp (Keysym { symKey = SDLK_SPACE })-> do
-                    if canContinue
-                        then do
+                    case opts of
+                        Continue -> do
                             lvl <- getsGameState getLevel
                             w' <- initState (lvl + 1)
                             modifyGameState (\_ -> w')
-                            return Nothing
-                        else do
-                            return (Just ToMainMenu)
+                        Restart -> do
+                            lvl <- getsGameState getLevel
+                            w' <- initState lvl
+                            modifyGameState (\_ -> w')
                 _ -> do
-                    return Nothing
+                    return ()
+    return Nothing
   where
     handleInRoundEvent :: Game State ()
     handleInRoundEvent = do
@@ -346,9 +348,7 @@ instance Behaviour State Zombie where
             let pos' = if abs (xp - xz) > abs (yp - yz)
                        then Position (xz + signum (xp - xz), yz)
                        else Position (xz, yz + signum (yp - yz))
-            when (pos' == posp) $ do
-                modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You died"
-                                                                , getCanContinue = False } })
+            when (pos' == posp) roundLost
             entities <- getsGameState getEntities
             if not (posOccupied pos' entities)
                 then return (Zombie.setPosition z pos')
@@ -360,9 +360,7 @@ instance Behaviour State Zombie where
 instance Behaviour State RoomExit where
     behave re = do
         posp <- getPlayerPosition <$> getsGameState getPlayer
-        when (posp `S.member` Entity.positions re) $ do
-            modifyGameState (\w -> w { getState = PostRound { getConclusion  = "You win"
-                                                            , getCanContinue = True } })
+        when (posp `S.member` Entity.positions re) roundWon
         return re
 
 ----------------------
@@ -375,3 +373,15 @@ formatSeconds t = let secs = floor t :: Int
                   printf "%02d:%02d.%d"
                          (mins `mod` 60)
                          (secs `mod` 60) ((floor ((t - fromIntegral secs) * 10.0) :: Int) `mod` 10)
+
+-- | Switch the state to post-round win.
+roundWon :: Game State ()
+roundWon =
+    modifyGameState (\w -> w { getState = PostRound { getConclusion     = "You win"
+                                                    , getFurtherOptions = Continue } })
+
+-- | Switch the state to post-round loss.
+roundLost :: Game State ()
+roundLost =
+    modifyGameState (\w -> w { getState = PostRound { getConclusion     = "You died"
+                                                    , getFurtherOptions = Restart } })
