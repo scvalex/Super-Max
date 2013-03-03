@@ -99,8 +99,8 @@ area1 =
     let initExit = Entity.init (StaticExit { RoomExit.getAreaBounds = bounds
                                            , getAreaExitPosition = Position (29, 55) }) in
     let initNotice = Entity.init (StaticNotice { Notice.getAreaBounds = bounds
-                                               , getStaticPosition = Position ( 26, 6 )
-                                               , getStaticText = "Hello, World"
+                                               , getStaticPosition = Position ( 29, 30 )
+                                               , getStaticText = "ProTip: Run from the green things."
                                                }) in
     let initWalls = Entity.init (BorderWall { InvisibleWall.getAreaBounds = bounds }) in
     Room { getRoomBounds = bounds
