@@ -8,11 +8,12 @@ module MainMenu (
 
 import Data.Char ( digitToInt )
 import Data.Monoid ( Monoid(..) )
-import Game.Engine ( Game, modifyGameState, getGameState, upon, getResourceDirectory
+import Game.Engine ( Game, modifyGameState, getGameState, getsGameState
+                   , randomR, upon, getResourceDirectory
                    , Picture(..), TextAlignment(..), Colour(..)
                    , GameEvent(..), Event(..), SDLKey(..), Keysym(..) )
 import GlobalCommand ( GlobalCommand(..) )
-import Profile ( Profile(..), loadOrNewProfile )
+import Profile ( Profile(..), loadOrNewProfile, saveProfile )
 import System.FilePath ( (</>) )
 import Text.Printf ( printf )
 
@@ -96,6 +97,26 @@ handleEvent (InputEvent (KeyDown (Keysym { symKey = key })))
         state <- getGameState
         -- The index can't be wrong, unless we screwed up updating getSelectedItem.
         return (Just (snd (getItems state !! getSelectedItem state)))
+handleEvent (InputEvent (KeyDown (Keysym { symKey = SDLK_r }))) = do
+    resDir <- getResourceDirectory
+    loadColours (resDir </> "rgb.txt") `upon` \cols -> do
+        i <- randomR (0, length cols)
+        let (col, colName) = cols !! i
+        modifyGameState (\(s@(State { getPlayerProfile = mprofile })) ->
+                          case mprofile of
+                              Nothing ->
+                                  s
+                              Just profile ->
+                                  s { getPlayerProfile    = Just (profile { getPlayerColour = col })
+                                    , getPlayerColourName = Just colName })
+        mprofile <- getsGameState getPlayerProfile
+        case mprofile of
+            Nothing ->
+                return ()
+            Just profile ->
+                saveProfile profile `upon` \() ->
+                    return ()
+    return Nothing
 handleEvent _ =
     return Nothing
 

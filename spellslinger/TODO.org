@@ -5,6 +5,6 @@ Todo
 - [X] Flexible NPC (Entity) abstraction
 - [X] Notices
 - [X] IO Scheduler
-- [ ] Player profile
+- [X] Player profile
 - [ ] Score
 - [ ] High Scores
