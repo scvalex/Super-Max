@@ -10,6 +10,8 @@ module Common (
 
 import Control.Applicative ( (<$>) )
 import Game.Engine ( Picture(..), TextAlignment )
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy.Char8 as BL
 import System.FilePath ( (</>) )
 import System.Directory ( getAppUserDataDirectory, createDirectoryIfMissing
                         , doesFileExist )
@@ -40,12 +42,12 @@ writeAppFile fn contents = do
     createDirectoryIfMissing False dir
     writeFile (dir </> fn) contents
 
--- | Read a file from the application directory.
+-- | Read a file from the application directory.  Uses strict IO.
 readAppFile :: FilePath -> IO (Maybe String)
 readAppFile fn = do
     dir <- getAppUserDataDirectory "spellslinger"
     let ffn = dir </> fn
     ok <- doesFileExist ffn
     if ok
-        then Just <$> readFile ffn
+        then Just . BL.unpack . BL.fromChunks . (:[]) <$> BS.readFile ffn
         else return Nothing
