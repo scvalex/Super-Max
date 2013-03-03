@@ -35,7 +35,7 @@ initState = State { getItems = [ ("Continue", ToContinue)
 
 start :: Game State ()
 start =
-    loadOrNewProfile $ \profile ->
+    loadOrNewProfile `upon` \profile ->
     lookupColourName (getPlayerColour profile) `upon` \mcolourName ->
     modifyGameState (\w -> w { getPlayerProfile = Just profile
                              , getPlayerColourName = mcolourName

@@ -4,24 +4,20 @@ module Profile (
 
 import Common ( writeAppFile, readAppFile )
 import Control.Applicative ( (<$>) )
-import Game.Engine ( Game, Colour(..)
-                   , upon )
+import Game.Engine ( Game, Colour(..) )
 import System.Posix.User ( getLoginName )
 
 data Profile = Profile { getPlayerName   :: String
                        , getPlayerColour :: Colour
                        } deriving ( Show, Read )
 
-loadOrNewProfile :: (Profile -> Game a ()) -> Game a ()
-loadOrNewProfile handler = do
-    go `upon` handler
+loadOrNewProfile :: IO Profile
+loadOrNewProfile = do
+    mprofile <- loadProfile
+    case mprofile of
+        Just profile -> return profile
+        Nothing      -> newSaveProfile
   where
-    go = do
-        mprofile <- loadProfile
-        case mprofile of
-            Just profile -> return profile
-            Nothing      -> newSaveProfile
-
     newSaveProfile = do
         profile <- newProfile
         saveProfile profile
