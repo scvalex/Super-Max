@@ -91,7 +91,11 @@ handleEvent ev = do
     handleGlobalCommand (Just ToQuit) =
         quitGame
 
--- | Lift an action in the 'Survival' state to one in the 'FullState'.
+----------------------
+-- Sub-state manipulations
+----------------------
+
+-- | Lift an action in the 'Survival' sub-state to one in the 'FullState'.
 inSurvival :: Game Survival.State (Maybe a) -> Game FullState (Maybe a)
 inSurvival act = do
     (dims, _) <- getGameState
@@ -102,7 +106,7 @@ inSurvival act = do
         (\state' -> (dims, Survival state'))
         act
 
--- | Lift an action in the 'MainMenu' state to one in the 'FullState'.
+-- | Lift an action in the 'MainMenu' sub-state to one in the 'FullState'.
 inMainMenu :: Game MainMenu.State (Maybe a) -> Game FullState (Maybe a)
 inMainMenu act = do
     (dims, _) <- getGameState
