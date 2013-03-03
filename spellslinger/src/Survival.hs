@@ -122,10 +122,12 @@ initState =
                                      }
           }
 
-start :: Game State ()
-start =
+start :: Maybe Level -> Game State ()
+start Nothing =
     readAppFile "lastLevel" `upon` \mtext -> do
         loadLevel (maybe 1 read mtext)
+start (Just lvl) =
+    loadLevel lvl
 
 loadLevel :: Level -> Game State ()
 loadLevel lvl = do

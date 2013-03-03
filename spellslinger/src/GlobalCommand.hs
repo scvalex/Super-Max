@@ -6,6 +6,7 @@ module GlobalCommand (
 -- Global commands
 ----------------------
 
-data GlobalCommand = ToNewGame
+data GlobalCommand = ToContinue
+                   | ToNewGame
                    | ToMainMenu
                    | ToQuit

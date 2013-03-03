@@ -66,10 +66,15 @@ handleEvent ev = do
     handleGlobalCommand :: Maybe GlobalCommand -> Game FullState ()
     handleGlobalCommand Nothing =
         return ()
+    handleGlobalCommand (Just ToContinue) = do
+        (dims, _) <- getGameState
+        modifyGameState (\_ -> (dims, Survival Survival.initState))
+        Nothing <- inSurvival (Survival.start Nothing >> return Nothing)
+        return ()
     handleGlobalCommand (Just ToNewGame) = do
         (dims, _) <- getGameState
         modifyGameState (\_ -> (dims, Survival Survival.initState))
-        Nothing <- inSurvival (Survival.start >> return Nothing)
+        Nothing <- inSurvival (Survival.start (Just 1) >> return Nothing)
         return ()
     handleGlobalCommand (Just ToMainMenu) = do
         (dims, _) <- getGameState
