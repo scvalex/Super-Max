@@ -1,10 +1,16 @@
 Todo
 ====
 
+* SpellSlinger: Survival
 - [X] Fullscreen
 - [X] Flexible NPC (Entity) abstraction
 - [X] Notices
 - [X] IO Scheduler
 - [X] Player profile
+- [ ] Resource pre-loading
+- [ ] Zombies are alerted by player movement 20 squares away
 - [ ] Score
 - [ ] High Scores
+
+* SpellSlinger 2D
+- [ ] GL/GLUT/GLEW-based engine
