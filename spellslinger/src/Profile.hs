@@ -4,13 +4,14 @@ module Profile (
 
 import Common ( writeAppFile, readAppFile )
 import Control.Applicative ( (<$>) )
-import Game.Engine ( Game, Colour(..) )
+import Game.Engine ( Colour(..) )
 import System.Posix.User ( getLoginName )
 
 data Profile = Profile { getPlayerName   :: String
                        , getPlayerColour :: Colour
                        } deriving ( Show, Read )
 
+-- | Load a profile from disk, if it exists, or generate a new one.
 loadOrNewProfile :: IO Profile
 loadOrNewProfile = do
     mprofile <- loadProfile
