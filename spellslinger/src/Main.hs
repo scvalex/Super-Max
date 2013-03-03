@@ -57,22 +57,10 @@ drawState ((screenW, screenH), gs) =
 
 handleEvent :: GameEvent -> Game FullState ()
 handleEvent ev = do
-    (dims, gs) <- getGameState
+    (_, gs) <- getGameState
     mcommand <- case gs of
-        MainMenu _ -> do
-            withAlternateGameState
-                (\state -> case state of
-                      (_, MainMenu menuState) -> Just menuState
-                      _                       -> Nothing)
-                (\state' -> (dims, MainMenu state'))
-                (MainMenu.handleEvent ev)
-        Survival _ -> do
-            withAlternateGameState
-                (\state -> case state of
-                      (_, Survival survivalState) -> Just survivalState
-                      _                           -> Nothing)
-                (\state' -> (dims, Survival state'))
-                (Survival.handleEvent ev)
+        MainMenu _ -> inMainMenu (MainMenu.handleEvent ev)
+        Survival _ -> inSurvival (Survival.handleEvent ev)
     handleGlobalCommand mcommand
   where
     handleGlobalCommand :: Maybe GlobalCommand -> Game FullState ()
@@ -80,10 +68,31 @@ handleEvent ev = do
         return ()
     handleGlobalCommand (Just ToNewGame) = do
         (dims, _) <- getGameState
-        survivalState <- Survival.initState 1
-        modifyGameState (\_ -> (dims, Survival survivalState))
+        modifyGameState (\_ -> (dims, Survival Survival.initState))
+        Nothing <- inSurvival (Survival.start >> return Nothing)
+        return ()
     handleGlobalCommand (Just ToMainMenu) = do
         (dims, _) <- getGameState
         modifyGameState (\_ -> (dims, MainMenu MainMenu.initState))
     handleGlobalCommand (Just ToQuit) =
         quitGame
+
+    inSurvival :: Game Survival.State (Maybe a) -> Game FullState (Maybe a)
+    inSurvival act = do
+        (dims, _) <- getGameState
+        withAlternateGameState
+            (\state -> case state of
+                  (_, Survival survivalState) -> Just survivalState
+                  _                           -> Nothing)
+            (\state' -> (dims, Survival state'))
+            act
+
+    inMainMenu :: Game MainMenu.State (Maybe a) -> Game FullState (Maybe a)
+    inMainMenu act = do
+        (dims, _) <- getGameState
+        withAlternateGameState
+            (\state -> case state of
+                  (_, MainMenu menuState) -> Just menuState
+                  _                       -> Nothing)
+            (\state' -> (dims, MainMenu state'))
+            act

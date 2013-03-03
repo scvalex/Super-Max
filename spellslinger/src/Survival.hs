@@ -3,7 +3,7 @@
 
 module Survival (
         -- * State
-        State, initState,
+        State, initState, start,
 
         -- * Callbacks
         drawState, handleEvent
@@ -11,7 +11,7 @@ module Survival (
 
 import Common ( intRectangle, fromAreaCoordinates
               , bigText, mediumText
-              , writeAppFile )
+              , writeAppFile, readAppFile )
 import Control.Applicative ( (<$>) )
 import Control.Monad ( when )
 import Data.Foldable ( foldlM )
@@ -48,7 +48,7 @@ type Level = Int
 -- 'handleTick').
 data State =
     State { getState        :: RoundState
-          , getLevel        :: Int
+          , getLevel        :: Maybe Int
           , getTime         :: Double
           , getArea         :: Area
           , getPlayer       :: Player
@@ -66,7 +66,8 @@ data SomeEntity = forall a. (Entity a, Behaviour State a) => SomeEntity a
 data FurtherOptions = Restart | Continue
                     deriving ( Eq, Show )
 
-data RoundState = PreRound { getObjective :: String }
+data RoundState = Loading
+                | PreRound { getObjective :: String }
                 | InRound
                 | PostRound { getConclusion     :: String
                             , getFurtherOptions :: FurtherOptions }
@@ -108,30 +109,48 @@ area1 =
                              ]
          }
 
-initState :: Level -> Game a State
-initState lvl = do
-    let area = area1
-        roomBounds = getRoomBounds area
-    entities <- foldlM (\ns _ -> do
-                             -- FIXME Zombies may spawn on top of player.  And on top of filled entities.
-                             z <- Entity.init (Zombie.RandomZombie
+initState :: State
+initState =
+    State { getState        = Loading
+          , getLevel        = Nothing
+          , getTime         = 0.0
+          , getArea         = area1
+          , getHeldDownKeys = S.empty
+          , getEntities     = M.empty
+          , getPlayer       = Player { getPlayerPosition = getRoomStart area1
+                                     , getPlayerMovement = Nothing
+                                     }
+          }
+
+start :: Game State ()
+start =
+    readAppFile "lastLevel" `upon` \mtext -> do
+        loadLevel (maybe 1 read mtext)
+
+loadLevel :: Level -> Game State ()
+loadLevel lvl = do
+    let roomBounds = getRoomBounds area1
+    zombies <- foldlM (\ns _ -> do
+                            -- FIXME Zombies may spawn on top of player.  And on top of filled entities.
+                            z <- Entity.init (Zombie.RandomZombie
                                                    { Zombie.getAreaBounds = roomBounds
                                                    })
-                             return (M.insert (Entity.eid z) (SomeEntity z) ns))
-                       M.empty
-                       [(1 :: Int) ..2^(lvl - 1)]
-    roomEntities <- sequence (getRoomEntities area)
-    let entities' = foldl (\m se@(SomeEntity e) -> M.insert (Entity.eid e) se m) entities roomEntities
-    return (State { getState        = PreRound "Get to the exit"
-                  , getLevel        = lvl
+                            return (M.insert (Entity.eid z) (SomeEntity z) ns))
+                      M.empty
+                      [(1 :: Int) ..2^(lvl - 1)]
+    roomEntities <- sequence (getRoomEntities area1)
+    let entities = foldl (\m se@(SomeEntity e) -> M.insert (Entity.eid e) se m) zombies roomEntities
+    let w = State { getState        = PreRound "Get to the exit"
+                  , getLevel        = Just lvl
                   , getTime         = 0.0
-                  , getArea         = area
+                  , getArea         = area1
                   , getHeldDownKeys = S.empty
-                  , getEntities     = entities'
-                  , getPlayer       = Player { getPlayerPosition = getRoomStart area
+                  , getEntities     = entities
+                  , getPlayer       = Player { getPlayerPosition = getRoomStart area1
                                              , getPlayerMovement = Nothing
                                              }
-                  })
+                  }
+    modifyGameState (\_ -> w)
 
 drawState :: State -> Picture
 drawState w =
@@ -154,6 +173,8 @@ drawState w =
     -- A message shown at the beginning and at the end.
     prePostMessage =
         case getState w of
+            Loading ->
+                Translate 0.5 0.45 $ bigText CenterAligned "Loading..."
             pg@(PreRound {}) ->
                 mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getObjective pg)
                         , Translate 0.5 0.40 $ mediumText CenterAligned "<press space to start>"
@@ -187,10 +208,12 @@ drawState w =
                   ]
 
     -- Survival time in top-left corner
-    survivalTime = Translate 0.04 0.94 $ (bigText LeftAligned (formatSeconds (getTime w)))
+    survivalTime = Translate 0.04 0.94 $
+                   bigText LeftAligned (formatSeconds (getTime w))
 
     -- Current level in the top-left corner
-    currentLevel = Translate 0.04 0.91 $ (mediumText LeftAligned (printf "Level: %d" (getLevel w)))
+    currentLevel = Translate 0.04 0.91 $
+                   mediumText LeftAligned (printf "Level: %s" (maybe "?" show (getLevel w)))
 
     -- Draw the picture of a person.
     personPicture (Position (xp, yp)) =
@@ -211,6 +234,8 @@ handleInputEvent :: Event -> Game State (Maybe GlobalCommand)
 handleInputEvent ev = handleGlobalKey ev $ do
     state <- getsGameState getState
     case state of
+        Loading ->
+            return ()
         PreRound {}  -> do
             case ev of
                 KeyUp (Keysym { symKey = SDLK_SPACE }) -> do
@@ -224,13 +249,11 @@ handleInputEvent ev = handleGlobalKey ev $ do
                 KeyUp (Keysym { symKey = SDLK_SPACE })-> do
                     case opts of
                         Continue -> do
-                            lvl <- getsGameState getLevel
-                            w' <- initState (lvl + 1)
-                            modifyGameState (\_ -> w')
+                            Just lvl <- getsGameState getLevel
+                            loadLevel (lvl + 1)
                         Restart -> do
-                            lvl <- getsGameState getLevel
-                            w' <- initState lvl
-                            modifyGameState (\_ -> w')
+                            Just lvl <- getsGameState getLevel
+                            loadLevel lvl
                 _ -> do
                     return ()
     return Nothing
@@ -274,6 +297,9 @@ handleTick :: Double -> Game State ()
 handleTick t = do
     state <- getsGameState getState
     case state of
+        -- We enumerate all the cases here so that, when we add a new one, we don't forget
+        -- about this.
+        Loading      -> return ()
         PreRound {}  -> return ()
         InRound      -> handleTickInRound
         PostRound {} -> return ()
@@ -404,7 +430,7 @@ formatSeconds t = let secs = floor t :: Int
 -- | Switch the state to post-round win.
 roundWon :: Game State ()
 roundWon = do
-    lvl <- getsGameState getLevel
+    Just lvl <- getsGameState getLevel
     writeAppFile "lastLevel" (show (lvl + 1))
         `upon` (\_ -> return ())
     modifyGameState (\w -> w { getState = PostRound { getConclusion     = "You win"

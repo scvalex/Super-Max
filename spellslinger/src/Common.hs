@@ -5,12 +5,14 @@ module Common (
         bigText, mediumText, smallText,
 
         -- * File operations
-        writeAppFile
+        writeAppFile, readAppFile
     ) where
 
+import Control.Applicative ( (<$>) )
 import Game.Engine ( Picture(..), TextAlignment )
 import System.FilePath ( (</>) )
-import System.Directory ( getAppUserDataDirectory, createDirectoryIfMissing )
+import System.Directory ( getAppUserDataDirectory, createDirectoryIfMissing
+                        , doesFileExist )
 
 -- | Draw a polygon with 'Int' coordinates.
 intRectangle :: Int -> Int -> Int -> Int -> Picture
@@ -31,8 +33,19 @@ bigText    = Text 40
 mediumText = Text 30
 smallText  = Text 20
 
+-- | Write a file to the application directory.
 writeAppFile :: FilePath -> String -> IO ()
 writeAppFile fn contents = do
     dir <- getAppUserDataDirectory "spellslinger"
     createDirectoryIfMissing False dir
     writeFile (dir </> fn) contents
+
+-- | Read a file from the application directory.
+readAppFile :: FilePath -> IO (Maybe String)
+readAppFile fn = do
+    dir <- getAppUserDataDirectory "spellslinger"
+    let ffn = dir </> fn
+    ok <- doesFileExist ffn
+    if ok
+        then Just <$> readFile ffn
+        else return Nothing
