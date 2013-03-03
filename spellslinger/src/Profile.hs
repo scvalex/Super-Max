@@ -4,11 +4,12 @@ module Profile (
 
 import Common ( writeAppFile, readAppFile )
 import Control.Applicative ( (<$>) )
+import Data.Maybe ( listToMaybe )
 import Game.Engine ( Colour(..) )
 import System.Posix.User ( getLoginName )
 
-data Profile = Profile { getPlayerName   :: String
-                       , getPlayerColour :: Colour
+data Profile = Profile { getProfilePlayerName   :: String
+                       , getProfilePlayerColour :: Colour
                        } deriving ( Show, Read )
 
 -- | Load a profile from disk, if it exists, or generate a new one.
@@ -26,8 +27,8 @@ loadOrNewProfile = do
 
     newProfile = do
         username <- getLoginName
-        return (Profile { getPlayerName = username
-                        , getPlayerColour = RGBA 255 140 0 255
+        return (Profile { getProfilePlayerName   = username
+                        , getProfilePlayerColour = RGBA 191 144 5 255
                         })
 
 -- | Save the user profile to disk.
@@ -39,4 +40,7 @@ saveProfile profile = do
 loadProfile :: IO (Maybe Profile)
 loadProfile = do
     text <- readAppFile "profile"
-    return (read <$> text)
+    return (maybeRead =<< text)
+  where
+    maybeRead :: (Read a) => String -> Maybe a
+    maybeRead = ((fst <$>) . listToMaybe . reads)

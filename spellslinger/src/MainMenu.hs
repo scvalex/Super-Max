@@ -41,8 +41,8 @@ start :: Game State ()
 start =
     getResourceDirectory >>= \resDir ->
     loadOrNewProfile `upon` \profile ->
-    lookupColourName (resDir </> "rgb.txt") (getPlayerColour profile) `upon` \mcolourName ->
-    modifyGameState (\w -> w { getPlayerProfile = Just profile
+    lookupColourName (resDir </> "rgb.txt") (getProfilePlayerColour profile) `upon` \mcolourName ->
+    modifyGameState (\w -> w { getPlayerProfile    = Just profile
                              , getPlayerColourName = mcolourName
                              })
 
@@ -70,7 +70,7 @@ drawState state =
             Nothing ->
                 mempty
             Just profile ->
-                let name = getPlayerName profile
+                let name = getProfilePlayerName profile
                     headline =
                         case getPlayerColourName state of
                             Nothing -> name
@@ -107,8 +107,10 @@ handleEvent (InputEvent (KeyDown (Keysym { symKey = SDLK_r }))) = do
                               Nothing ->
                                   s
                               Just profile ->
-                                  s { getPlayerProfile    = Just (profile { getPlayerColour = col })
-                                    , getPlayerColourName = Just colName })
+                                  s { getPlayerProfile =
+                                           Just (profile { getProfilePlayerColour = col })
+                                    , getPlayerColourName =
+                                           Just colName })
         mprofile <- getsGameState getPlayerProfile
         case mprofile of
             Nothing ->

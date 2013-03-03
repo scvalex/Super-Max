@@ -30,6 +30,7 @@ import Game.Engine ( GameEvent(..)
                    , Event(..), SDLKey(..), Keysym(..) )
 import Game.Entity ( Entity, Behaviour(..), EntityId(..), Position(..) )
 import GlobalCommand ( GlobalCommand(..) )
+import Profile ( Profile(..), loadOrNewProfile )
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Entities.InvisibleWall as InvisibleWall
@@ -59,6 +60,7 @@ data State =
                                           -- we process those keys as well as all the keys
                                           -- that were pressed and released.
           , getEntities     :: Map EntityId SomeEntity
+          , getPlayerColour :: Colour
           }
 
 data SomeEntity = forall a. (Entity a, Behaviour State a) => SomeEntity a
@@ -120,14 +122,19 @@ initState =
           , getPlayer       = Player { getPlayerPosition = getRoomStart area1
                                      , getPlayerMovement = Nothing
                                      }
+          , getPlayerColour = RGBA 255 140 0 255
           }
 
 start :: Maybe Level -> Game State ()
 start Nothing =
-    readAppFile "lastLevel" `upon` \mtext -> do
-        loadLevel (maybe 1 read mtext)
+    loadOrNewProfile `upon` \profile -> do
+        modifyGameState (\w -> w { getPlayerColour = getProfilePlayerColour profile })
+        readAppFile "lastLevel" `upon` \mtext -> do
+            loadLevel (maybe 1 read mtext)
 start (Just lvl) =
-    loadLevel lvl
+    loadOrNewProfile `upon` \profile -> do
+        modifyGameState (\w -> w { getPlayerColour = getProfilePlayerColour profile })
+        loadLevel lvl
 
 loadLevel :: Level -> Game State ()
 loadLevel lvl = do
@@ -142,17 +149,16 @@ loadLevel lvl = do
                       [(1 :: Int) ..2^(lvl - 1)]
     roomEntities <- sequence (getRoomEntities area1)
     let entities = foldl (\m se@(SomeEntity e) -> M.insert (Entity.eid e) se m) zombies roomEntities
-    let w = State { getState        = PreRound "Get to the exit"
-                  , getLevel        = Just lvl
-                  , getTime         = 0.0
-                  , getArea         = area1
-                  , getHeldDownKeys = S.empty
-                  , getEntities     = entities
-                  , getPlayer       = Player { getPlayerPosition = getRoomStart area1
-                                             , getPlayerMovement = Nothing
-                                             }
-                  }
-    modifyGameState (\_ -> w)
+    modifyGameState (\w ->
+        w { getState        = PreRound "Get to the exit"
+          , getLevel        = Just lvl
+          , getTime         = 0.0
+          , getHeldDownKeys = S.empty
+          , getEntities     = entities
+          , getPlayer       = Player { getPlayerPosition = getRoomStart area1
+                                     , getPlayerMovement = Nothing
+                                     }
+          })
 
 drawState :: State -> Picture
 drawState w =
@@ -201,7 +207,7 @@ drawState w =
     player =
         fromRoomCoordinates $
         let pos = getPlayerPosition (getPlayer w) in
-        Colour (RGBA 255 140 0 255) $
+        Colour (getPlayerColour w) $
         personPicture pos
 
     -- The HUD is overlayed on the game.
