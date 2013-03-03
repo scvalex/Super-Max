@@ -15,7 +15,8 @@ module Game.Engine (
 
         -- * Engine interface
         play, quitGame, getGameState, getsGameState, modifyGameState,
-        withAlternateGameState, randomR, mkUid, getGameTick, upon
+        withAlternateGameState, randomR, mkUid, getGameTick, upon,
+        getResourceDirectory
     ) where
 
 import Control.Applicative ( Applicative(..), (<$>) )
@@ -124,6 +125,7 @@ data EngineState s = EngineState { getInnerState :: s
                                  , getNextUid    :: Int
                                  , getTick       :: Int
                                  , getQueuedIO   :: [IOAction s]
+                                 , getResDir     :: FilePath
                                  }
 
 -- | The events the engine's asynchronous components may send/receive.
@@ -192,6 +194,7 @@ withAlternateGameState getAlternateState setAlternateState innerAction =
                                               , getTick       = getTick s
                                               , getQueuedIO   = [] -- there's not point in
                                                                    -- passing them down
+                                              , getResDir     = getResDir s
                                               } in
                          let (x, as') = runGame innerAction as in
                          let s' = EngineState { getInnerState = setAlternateState (getInnerState as')
@@ -203,6 +206,7 @@ withAlternateGameState getAlternateState setAlternateState innerAction =
                                               , getTick       = getTick as'
                                               , getQueuedIO   = getQueuedIO s ++
                                                                 mapToInnerState (getQueuedIO as')
+                                              , getResDir     = getResDir as'
                                               } in
                          (x, s')
                      Nothing -> (Nothing, s))
@@ -236,6 +240,10 @@ getGameTick = Game (\s -> (getTick s, s))
 -- indeterminate time in the future.
 upon :: IO a -> (a -> Game s ()) -> Game s ()
 upon act handler = Game (\s -> ((), s { getQueuedIO = IOAction act handler : getQueuedIO s }))
+
+-- | Get the directory from where resources can be loaded.
+getResourceDirectory :: Game s FilePath
+getResourceDirectory = Game (\s -> (getResDir s, s))
 
 --------------------------------
 -- Fonts
@@ -359,6 +367,7 @@ play tps wInit start drawGame onEvent = do
                              , getNextUid    = 1
                              , getTick       = 0
                              , getQueuedIO   = []
+                             , getResDir     = resDir
                              }
         -- Set up the first tick.
         initTime <- getCurrentTime
