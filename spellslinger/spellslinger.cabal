@@ -32,7 +32,7 @@ Library
 
 Executable spellslinger
   Build-depends:        base >= 4 && < 5, containers, directory,
-                        filepath, spellslinger
+                        filepath, spellslinger, unix
   Ghc-options:          -Wall -threaded
   Hs-Source-Dirs:       src/
   Extensions:           ScopedTypeVariables, OverloadedStrings

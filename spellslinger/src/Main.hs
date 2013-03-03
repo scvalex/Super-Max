@@ -37,8 +37,15 @@ main = do
     play
         tps
         (\screenW screenH -> ((screenW, screenH), MainMenu MainMenu.initState))
+        start
         drawState
         handleEvent
+
+start :: Game FullState ()
+start = do
+    -- Actually start the MainMenu.
+    Nothing <- inMainMenu (MainMenu.start >> return Nothing)
+    return ()
 
 ----------------------
 -- Callbacks
@@ -79,25 +86,29 @@ handleEvent ev = do
     handleGlobalCommand (Just ToMainMenu) = do
         (dims, _) <- getGameState
         modifyGameState (\_ -> (dims, MainMenu MainMenu.initState))
+        Nothing <- inMainMenu (MainMenu.start >> return Nothing)
+        return ()
     handleGlobalCommand (Just ToQuit) =
         quitGame
 
-    inSurvival :: Game Survival.State (Maybe a) -> Game FullState (Maybe a)
-    inSurvival act = do
-        (dims, _) <- getGameState
-        withAlternateGameState
-            (\state -> case state of
-                  (_, Survival survivalState) -> Just survivalState
-                  _                           -> Nothing)
-            (\state' -> (dims, Survival state'))
-            act
+-- | Lift an action in the 'Survival' state to one in the 'FullState'.
+inSurvival :: Game Survival.State (Maybe a) -> Game FullState (Maybe a)
+inSurvival act = do
+    (dims, _) <- getGameState
+    withAlternateGameState
+        (\state -> case state of
+              (_, Survival survivalState) -> Just survivalState
+              _                           -> Nothing)
+        (\state' -> (dims, Survival state'))
+        act
 
-    inMainMenu :: Game MainMenu.State (Maybe a) -> Game FullState (Maybe a)
-    inMainMenu act = do
-        (dims, _) <- getGameState
-        withAlternateGameState
-            (\state -> case state of
-                  (_, MainMenu menuState) -> Just menuState
-                  _                       -> Nothing)
-            (\state' -> (dims, MainMenu state'))
-            act
+-- | Lift an action in the 'MainMenu' state to one in the 'FullState'.
+inMainMenu :: Game MainMenu.State (Maybe a) -> Game FullState (Maybe a)
+inMainMenu act = do
+    (dims, _) <- getGameState
+    withAlternateGameState
+        (\state -> case state of
+              (_, MainMenu menuState) -> Just menuState
+              _                       -> Nothing)
+        (\state' -> (dims, MainMenu state'))
+        act

@@ -67,10 +67,7 @@ data Colour = RGBA { colorRed   :: Word8
                    , colorGreen :: Word8
                    , colorBlue  :: Word8
                    , colorAlpha :: Word8
-                   } deriving ( Eq )
-
-instance Show Colour where
-    show c = printf "#%2x%2x%2x%2x" (colorRed c) (colorGreen c) (colorBlue c) (colorAlpha c)
+                   } deriving ( Eq, Read, Show )
 
 white, black :: Colour
 white = RGBA 255 255 255 255
@@ -174,6 +171,7 @@ modifyGameState f = Game (\s -> ((), s { getInnerState = f (getInnerState s) }))
 quitGame :: Game s ()
 quitGame = Game (\s -> ((), s { isTerminating = True }))
 
+-- FIXME The half-functioning state thing in 'withAlternateGameState' is horrible.
 -- | Run an action in the 'Game' monad but with a different game state.  If the alternate
 -- state is 'Nothing', doesn't do anything.
 withAlternateGameState :: forall s t a.
@@ -325,10 +323,11 @@ play :: forall w.
         Int                         -- ^ Logical ticks per second
      -> (Int -> Int -> w)           -- ^ Take the screen width and height, and return the
                                     -- initial game state
+     -> Game w ()                   -- ^ An initialization action.
      -> (w -> Picture)              -- ^ Draw a particular state
      -> (GameEvent -> Game w ())    -- ^ Update the state after a 'GameEvent'
      -> IO ()
-play tps wInit drawGame onEvent = do
+play tps wInit start drawGame onEvent = do
     withScreen $ \screenW screenH screen -> do
         putStrLn "SDL initialised"
 
@@ -368,7 +367,10 @@ play tps wInit drawGame onEvent = do
         -- Forward SDL event.
         es'' <- forwardEvents es'
 
-        playLoop screen screenW screenH fonts es''
+        -- Start the game
+        let ((), es''') = runGame start es''
+
+        playLoop screen screenW screenH fonts es'''
   where
     playLoop :: Surface -> Int -> Int -> Fonts -> EngineState w -> IO ()
     playLoop screen screenW screenH fonts es = do

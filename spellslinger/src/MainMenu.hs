@@ -1,6 +1,6 @@
 module MainMenu (
         -- * State
-        State, initState,
+        State, initState, start,
 
         -- * Callbacks
         drawState, handleEvent
@@ -11,13 +11,15 @@ import Game.Engine ( Game, modifyGameState, getGameState
                    , Picture(..), TextAlignment(..)
                    , GameEvent(..), Event(..), SDLKey(..), Keysym(..) )
 import GlobalCommand ( GlobalCommand(..) )
+import Profile ( Profile(..), loadOrNewProfile )
 
 ----------------------
 -- State
 ----------------------
 
-data State = State { getItems        :: [(String, GlobalCommand)]
-                   , getSelectedItem :: Int
+data State = State { getItems         :: [(String, GlobalCommand)]
+                   , getSelectedItem  :: Int
+                   , getPlayerProfile :: Maybe Profile
                    }
 
 initState :: State
@@ -26,7 +28,13 @@ initState = State { getItems = [ ("Continue", ToContinue)
                                , ("Quit", ToQuit)
                                ]
                   , getSelectedItem = 0
+                  , getPlayerProfile = Nothing
                   }
+
+start :: Game State ()
+start = do
+    loadOrNewProfile $ \profile ->
+        modifyGameState (\w -> w { getPlayerProfile = Just profile })
 
 ----------------------
 -- Callbacks
@@ -35,16 +43,30 @@ initState = State { getItems = [ ("Continue", ToContinue)
 drawState :: State -> Picture
 drawState state =
     mconcat $
-    [ Translate 0.5 0.7 $ Text 80 CenterAligned "Spellslinger"
+    [ Translate 0.5 0.75 $ Text 80 CenterAligned "Spellslinger"
+    , featuring
     , mconcat $
       map drawMenuItem (zip [0 :: Int ..] (map fst (getItems state)))
     ]
   where
-    drawMenuItem (i, text) = Translate 0.5 (0.6 - (fromIntegral i) * 0.1) $
+    drawMenuItem (i, text) = Translate 0.5 (0.5 - (fromIntegral i) * 0.1) $
                              Text 50 CenterAligned $
                              if i == getSelectedItem state
                              then "- " ++ text ++ " -"
                              else text
+
+    featuring =
+        case getPlayerProfile state of
+            Nothing ->
+                -- mempty
+                Translate 0.5 0.7 $
+                Text 40 CenterAligned "no profile"
+            Just profile ->
+                Translate 0.5 0.7 $
+                mconcat [ Text 40 CenterAligned "featuring"
+                        , Translate 0 (-0.05) $
+                          Text 60 CenterAligned (getPlayerName profile)
+                        ]
 
 handleEvent :: GameEvent -> Game State (Maybe GlobalCommand)
 handleEvent (InputEvent (KeyDown (Keysym { symKey = SDLK_ESCAPE }))) = do
