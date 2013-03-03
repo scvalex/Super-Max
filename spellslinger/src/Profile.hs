@@ -1,8 +1,9 @@
 module Profile (
-       Profile(..), loadOrNewProfile, saveProfile
+       Profile(..), loadOrNewProfile, saveProfile, loadProfile
     ) where
 
-import Common ( writeAppFile )
+import Common ( writeAppFile, readAppFile )
+import Control.Applicative ( (<$>) )
 import Game.Engine ( Game, Colour(..)
                    , upon )
 import System.Posix.User ( getLoginName )
@@ -13,8 +14,14 @@ data Profile = Profile { getPlayerName   :: String
 
 loadOrNewProfile :: (Profile -> Game a ()) -> Game a ()
 loadOrNewProfile handler = do
-    newSaveProfile `upon` handler
+    go `upon` handler
   where
+    go = do
+        mprofile <- loadProfile
+        case mprofile of
+            Just profile -> return profile
+            Nothing      -> newSaveProfile
+
     newSaveProfile = do
         profile <- newProfile
         saveProfile profile
@@ -26,7 +33,13 @@ loadOrNewProfile handler = do
                         , getPlayerColour = RGBA 255 140 0 255
                         })
 
--- | Save a profile to disk.
+-- | Save the user profile to disk.
 saveProfile :: Profile -> IO ()
 saveProfile profile = do
     writeAppFile "profile" (show profile)
+
+-- | Read the user profile from disk.
+loadProfile :: IO (Maybe Profile)
+loadProfile = do
+    text <- readAppFile "profile"
+    return (read <$> text)
