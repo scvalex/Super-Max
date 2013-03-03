@@ -7,8 +7,8 @@ module MainMenu (
     ) where
 
 import Data.Monoid ( Monoid(..) )
-import Game.Engine ( Game, modifyGameState, getGameState
-                   , Picture(..), TextAlignment(..)
+import Game.Engine ( Game, modifyGameState, getGameState, upon
+                   , Picture(..), TextAlignment(..), Colour(..)
                    , GameEvent(..), Event(..), SDLKey(..), Keysym(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Profile ( Profile(..), loadOrNewProfile )
@@ -17,9 +17,10 @@ import Profile ( Profile(..), loadOrNewProfile )
 -- State
 ----------------------
 
-data State = State { getItems         :: [(String, GlobalCommand)]
-                   , getSelectedItem  :: Int
-                   , getPlayerProfile :: Maybe Profile
+data State = State { getItems            :: [(String, GlobalCommand)]
+                   , getSelectedItem     :: Int
+                   , getPlayerProfile    :: Maybe Profile
+                   , getPlayerColourName :: Maybe String
                    }
 
 initState :: State
@@ -27,14 +28,18 @@ initState = State { getItems = [ ("Continue", ToContinue)
                                , ("New Game", ToNewGame)
                                , ("Quit", ToQuit)
                                ]
-                  , getSelectedItem = 0
-                  , getPlayerProfile = Nothing
+                  , getSelectedItem     = 0
+                  , getPlayerProfile    = Nothing
+                  , getPlayerColourName = Nothing
                   }
 
 start :: Game State ()
-start = do
+start =
     loadOrNewProfile $ \profile ->
-        modifyGameState (\w -> w { getPlayerProfile = Just profile })
+    lookupColourName (getPlayerColour profile) `upon` \mcolourName ->
+    modifyGameState (\w -> w { getPlayerProfile = Just profile
+                             , getPlayerColourName = mcolourName
+                             })
 
 ----------------------
 -- Callbacks
@@ -84,4 +89,12 @@ handleEvent (InputEvent (KeyDown (Keysym { symKey = key })))
         -- The index can't be wrong, unless we screwed up updating getSelectedItem.
         return (Just (snd (getItems state !! getSelectedItem state)))
 handleEvent _ =
+    return Nothing
+
+----------------------
+-- Flavour text
+----------------------
+
+lookupColourName :: Colour -> IO (Maybe String)
+lookupColourName _ =
     return Nothing
