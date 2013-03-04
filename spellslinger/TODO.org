@@ -9,8 +9,10 @@ Todo
 - [X] Player profile
 - [ ] Resource pre-loading
 - [ ] Zombies are alerted by player movement 20 squares away
+- [ ] Random-length/position symmetric straight walls
 - [ ] Score
 - [ ] High Scores
 
 * SpellSlinger 2D
 - [ ] GL/GLUT/GLEW-based engine
+- [ ] Use continuous updating in the game
