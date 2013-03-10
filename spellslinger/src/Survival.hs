@@ -389,7 +389,7 @@ instance Behaviour State Zombie where
         let Position (xz, yz) = Zombie.getPosition zombie
         let closeEnough = abs (xp - xz) <= 18 && abs (yp - yz) <= 18
         let z = if pmovement /= Nothing && closeEnough
-                then Zombie.setState zombie Zombie.Following
+                then Zombie.alertZombie zombie
                 else zombie
 
         case Zombie.getState z of
@@ -423,7 +423,7 @@ instance Behaviour State Zombie where
             n <- randomR (1, 10 :: Int)
             let cannotMove = posOccupied pos' entities
             z' <- if n == 1 || cannotMove
-                  then Zombie.setState z . Zombie.Roaming <$> randomDirection
+                  then Zombie.roamTowards z <$> randomDirection
                   else return z
             if cannotMove
                 then return z'
