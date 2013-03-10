@@ -16,7 +16,7 @@ module Game.Engine (
         -- * Engine interface
         play, quitGame, getGameState, getsGameState, modifyGameState,
         withAlternateGameState, randomR, mkUid, getGameTick, upon,
-        getResourceDirectory
+        getResourceDirectory, getResource
     ) where
 
 import Control.Applicative ( Applicative(..), (<$>) )
@@ -25,7 +25,9 @@ import Control.Concurrent.STM ( atomically
                               , TChan, newTChanIO, readTChan, writeTChan )
 import Control.Exception ( Exception, assert )
 import Control.Monad ( forever )
+import Data.Dynamic ( Dynamic )
 import Data.Foldable ( foldlM )
+import Data.IntMap ( IntMap )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
@@ -48,6 +50,7 @@ import System.FilePath ( (</>) )
 import System.Random ( Random, StdGen, newStdGen )
 import Text.Printf ( printf )
 import qualified Control.Exception as CE
+import qualified Data.IntMap as IM
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Graphics.UI.SDL as SDL
@@ -126,6 +129,7 @@ data EngineState s = EngineState { getInnerState :: s
                                  , getTick       :: Int
                                  , getQueuedIO   :: [IOAction s]
                                  , getResDir     :: FilePath
+                                 , getRes        :: IntMap Dynamic
                                  }
 
 -- | The events the engine's asynchronous components may send/receive.
@@ -195,8 +199,10 @@ withAlternateGameState getAlternateState setAlternateState innerAction =
                                               , getQueuedIO   = [] -- there's not point in
                                                                    -- passing them down
                                               , getResDir     = getResDir s
+                                              , getRes        = getRes s
                                               } in
                          let (x, as') = runGame innerAction as in
+                         -- FIXME Only change the parts of the state that should change.
                          let s' = EngineState { getInnerState = setAlternateState (getInnerState as')
                                               , getEventChan  = getEventChan s
                                               , getThreads    = getThreads as'
@@ -207,6 +213,7 @@ withAlternateGameState getAlternateState setAlternateState innerAction =
                                               , getQueuedIO   = getQueuedIO s ++
                                                                 mapToInnerState (getQueuedIO as')
                                               , getResDir     = getResDir as'
+                                              , getRes        = getRes as'
                                               } in
                          (x, s')
                      Nothing -> (Nothing, s))
@@ -244,6 +251,10 @@ upon act handler = Game (\s -> ((), s { getQueuedIO = IOAction act handler : get
 -- | Get the directory from where resources can be loaded.
 getResourceDirectory :: Game s FilePath
 getResourceDirectory = Game (\s -> (getResDir s, s))
+
+-- | Get a named pre-loaded resource.
+getResource :: Int -> Game s (Maybe Dynamic)
+getResource name = Game (\s -> (IM.lookup name (getRes s), s))
 
 --------------------------------
 -- Fonts
@@ -329,13 +340,14 @@ instance Exception Shutdown
 
 play :: forall w.
         Int                         -- ^ Logical ticks per second
+     -> (IO (IntMap Dynamic))       -- ^ Resource pre-loader.
      -> (Int -> Int -> w)           -- ^ Take the screen width and height, and return the
                                     -- initial game state
      -> Game w ()                   -- ^ An initialization action.
      -> (w -> Picture)              -- ^ Draw a particular state
      -> (GameEvent -> Game w ())    -- ^ Update the state after a 'GameEvent'
      -> IO ()
-play tps wInit start drawGame onEvent = do
+play tps mkResources wInit start drawGame onEvent = do
     withScreen $ \screenW screenH screen -> do
         putStrLn "SDL initialised"
 
@@ -359,6 +371,9 @@ play tps wInit start drawGame onEvent = do
         -- The random number generator used throughout the game.
         gen <- newStdGen
 
+        -- Pre-load resources
+        resources <- mkResources
+
         let es = EngineState { getInnerState = wInit screenW screenH
                              , getEventChan  = eventCh
                              , getThreads    = S.empty
@@ -368,6 +383,7 @@ play tps wInit start drawGame onEvent = do
                              , getTick       = 0
                              , getQueuedIO   = []
                              , getResDir     = resDir
+                             , getRes        = resources
                              }
         -- Set up the first tick.
         initTime <- getCurrentTime
@@ -430,6 +446,7 @@ play tps wInit start drawGame onEvent = do
     tick :: UTCTime -> EngineState s -> IO (EngineState s)
     tick prevTime es = managedForkIO es $ do
         now <- getCurrentTime
+        -- FIXME The tick wait code is probably wrong.  See the blog post on this.
         let delta = fromRational (toRational (diffUTCTime now prevTime))
             desiredDelay = fromIntegral (1000000 `div` tps)
         threadDelay (floor (min desiredDelay (2.0 * desiredDelay - delta * 1000000.0)))
