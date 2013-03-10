@@ -11,7 +11,10 @@ Todo
    :LOGBOOK:
    CLOCK: [2013-03-10 Sun 02:40]--[2013-03-10 Sun 03:16] =>  0:36
    :END:
-** TODO Zombies are alerted by player movement 20 squares away
+** DONE Zombies are alerted by player movement 20 squares away
+   :LOGBOOK:
+   CLOCK: [2013-03-10 Sun 20:37]--[2013-03-10 Sun 21:14] =>  0:37
+   :END:
 ** TODO Random-length/position symmetric straight walls
 ** TODO Score
 ** TODO High Scores

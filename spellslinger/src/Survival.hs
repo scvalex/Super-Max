@@ -316,8 +316,8 @@ handleTick t = do
     handleTickInRound =
         sequence_ [ processHeldDownKeys
                   , updateTime
-                  , movePlayer
                   , tickEntities
+                  , movePlayer
                   ]
 
     -- Increment the ticker by the elapsed amount of time.
@@ -380,11 +380,27 @@ tickEntity (SomeEntity e) = do
 -- Zombies follow the player.  If a zombie tries to move to an
 -- occupied space, it doesn't move.
 instance Behaviour State Zombie where
-    behave z = do
+    behave zombie = do
         tick <- getGameTick
-        moveZombie tick (Zombie.getState z)
+
+        -- | Zombies follow the player if he moves and is close enough.
+        pmovement <- getPlayerMovement <$> getsGameState getPlayer
+        Position (xp, yp) <- getPlayerPosition <$> getsGameState getPlayer
+        let Position (xz, yz) = Zombie.getPosition zombie
+        let closeEnough = abs (xp - xz) <= 18 && abs (yp - yz) <= 18
+        let z = if pmovement /= Nothing && closeEnough
+                then Zombie.setState zombie Zombie.Following
+                else zombie
+
+        case Zombie.getState z of
+            Zombie.Following | tick `mod` 2 == 0 ->
+                moveZombieFollowing z
+            Zombie.Roaming dir | tick `mod` 4 == 0 ->
+                moveZombieRoaming z dir
+            _ ->
+                return zombie
       where
-        moveZombie tick Zombie.Following | tick `mod` 2 == 0 = do
+        moveZombieFollowing z = do
             let Position (xz, yz) = Zombie.getPosition z
             posp@(Position (xp, yp)) <- getPlayerPosition <$> getsGameState getPlayer
             let pos' = if abs (xp - xz) > abs (yp - yz)
@@ -396,7 +412,8 @@ instance Behaviour State Zombie where
             if cannotMove
                 then return z
                 else return (Zombie.setPosition z pos')
-        moveZombie tick (Zombie.Roaming dir) | tick `mod` 4 == 0 = do
+
+        moveZombieRoaming z dir = do
             let Position (xz, yz) = Zombie.getPosition z
                 (xd, yd) = movementDisplacement dir
                 pos' = Position (xz + xd, yz + yd)
@@ -411,8 +428,6 @@ instance Behaviour State Zombie where
             if cannotMove
                 then return z'
                 else return (Zombie.setPosition z' pos')
-        moveZombie _ _ = do
-            return z
 
 -- Stepping onto the room exit wins you the round.
 instance Behaviour State RoomExit where
