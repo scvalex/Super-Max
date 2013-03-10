@@ -8,8 +8,8 @@ module Entities.Notice (
 import Common ( intRectangle, fromAreaCoordinates, smallText )
 import Control.Applicative ( (<$>) )
 import Data.Monoid ( Monoid(..) )
-import Game.Engine ( Picture(..), Colour(..), TextAlignment(..)
-                   , mkUid )
+import Game.Engine ( Game, Picture(..), Colour(..), TextAlignment(..)
+                   , mkUid, randomR )
 import Game.Entity ( Entity(..), EntityId(..), Position(..) )
 import qualified Data.Set as S
 
@@ -22,22 +22,24 @@ data Notice = Notice
     } deriving ( Eq, Show )
 
 instance Entity Notice where
-    data EntityParameters Notice = StaticNotice
-        { getAreaBounds     :: (Int, Int, Int, Int)
-        , getStaticPosition :: Position
-        , getStaticText     :: String
-        }
+    data EntityParameters Notice = StaticNotice { getAreaBounds     :: (Int, Int, Int, Int)
+                                                , getStaticPosition :: Position
+                                                , getStaticText     :: String
+                                                }
+                                 | RandomNotice { getAreaBounds     :: (Int, Int, Int, Int)
+                                                , getStaticPosition :: Position
+                                                , getPossibleTexts  :: [String]
+                                                }
 
+    init (RandomNotice { getAreaBounds     = areaBounds
+                       , getStaticPosition = pos
+                       , getPossibleTexts  = texts }) = do
+        i <- randomR (0, length texts - 1)
+        mkNotice areaBounds pos (texts !! i)
     init (StaticNotice { getAreaBounds     = areaBounds
                        , getStaticPosition = pos
                        , getStaticText     = text }) = do
-        nid <- EntityId <$> mkUid
-        return (Notice { getNoticeId         = nid
-                       , getNoticePosition   = pos
-                       , getNoticeActive     = False
-                       , getNoticeText       = text
-                       , getNoticeAreaBounds = areaBounds
-                       })
+        mkNotice areaBounds pos text
 
     eid (Notice { getNoticeId = nid }) = nid
 
@@ -66,6 +68,16 @@ instance Entity Notice where
                 ]
 
     tickVisual = id
+
+mkNotice :: (Int, Int, Int, Int) -> Position -> String -> Game s Notice
+mkNotice areaBounds pos text = do
+    nid <- EntityId <$> mkUid
+    return (Notice { getNoticeId         = nid
+                   , getNoticePosition   = pos
+                   , getNoticeActive     = False
+                   , getNoticeText       = text
+                   , getNoticeAreaBounds = areaBounds
+                   })
 
 getPosition :: Notice -> Position
 getPosition (Notice { getNoticePosition = pos }) = pos

@@ -98,9 +98,16 @@ area1 =
     let bounds = (0, 0, 59, 59) in
     let initExit = Entity.init (StaticExit { RoomExit.getAreaBounds = bounds
                                            , getAreaExitPosition = Position (29, 55) }) in
-    let initNotice = Entity.init (StaticNotice { Notice.getAreaBounds = bounds
+    let initNotice = Entity.init (RandomNotice { Notice.getAreaBounds = bounds
                                                , getStaticPosition = Position ( 29, 30 )
-                                               , getStaticText = "ProTip: Run from the green things."
+                                               , getPossibleTexts =
+                                                   [ "ProTip: Run from the green things."
+                                                   , "Green person wants a hug!"
+                                                   , "CUT OFF THEIR LIMBS"
+                                                   , "Dead girls *can* say no."
+                                                   , "Q: What's funnier than a dead baby?"
+                                                   , "A: A dead baby mauling your face."
+                                                   ]
                                                }) in
     let initWalls = Entity.init (BorderWall { InvisibleWall.getAreaBounds = bounds }) in
     Room { getRoomBounds = bounds
