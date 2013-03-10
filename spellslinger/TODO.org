@@ -26,3 +26,6 @@ Todo
 * SpellSlinger 2D
 ** TODO GL/GLUT/GLEW-based engine
 ** TODO Use continuous updating in the game
+
+* Spellsliger: Prologue 1
+** TODO Tutorial area
