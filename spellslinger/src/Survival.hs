@@ -23,7 +23,7 @@ import Entities.Notice ( Notice, EntityParameters(..) )
 import Entities.RoomExit ( RoomExit, EntityParameters(..) )
 import Entities.Zombie ( Zombie )
 import Game.Engine ( GameEvent(..)
-                   , Game, getsGameState, modifyGameState, getGameTick, upon
+                   , Game, getsGameState, modifyGameState, getGameTick, upon, randomR
                    , Picture(..)
                    , TextAlignment(..)
                    , Colour(..), black, greyN
@@ -40,7 +40,7 @@ import qualified Entities.Zombie as Zombie
 import qualified Game.Entity as Entity
 import Spell ( )
 import Text.Printf ( printf )
-import Types ( Direction(..) )
+import Types ( Direction(..), randomDirection )
 
 type Level = Int
 
@@ -356,13 +356,6 @@ movePlayer = do
                     modifyGameState $ \w ->
                         w { getPlayer = p { getPlayerPosition = pos'
                                           , getPlayerMovement = Nothing } }
-  where
-    -- How much does the player move for each movement command.
-    movementDisplacement :: Direction -> (Int, Int)
-    movementDisplacement North = (0, 1)
-    movementDisplacement South = (0, -1)
-    movementDisplacement West  = (-1, 0)
-    movementDisplacement East  = (1, 0)
 
 -- Tick entities according the their own rules.
 tickEntities :: Game State ()
@@ -383,16 +376,15 @@ tickEntity (SomeEntity e) = do
 -- Entity behaviour
 ----------------------
 
+-- FIXME The split between Behaviour and Entity is a bit weird.
 -- Zombies follow the player.  If a zombie tries to move to an
 -- occupied space, it doesn't move.
 instance Behaviour State Zombie where
     behave z = do
         tick <- getGameTick
-        if tick `mod` 2 == 0
-            then moveZombie
-            else return z
+        moveZombie tick (Zombie.getState z)
       where
-        moveZombie = do
+        moveZombie tick Zombie.Following | tick `mod` 2 == 0 = do
             let Position (xz, yz) = Zombie.getPosition z
             posp@(Position (xp, yp)) <- getPlayerPosition <$> getsGameState getPlayer
             let pos' = if abs (xp - xz) > abs (yp - yz)
@@ -400,9 +392,27 @@ instance Behaviour State Zombie where
                        else Position (xz, yz + signum (yp - yz))
             when (pos' == posp) roundLost
             entities <- getsGameState getEntities
-            if not (posOccupied pos' entities)
-                then return (Zombie.setPosition z pos')
-                else return z
+            let cannotMove = posOccupied pos' entities
+            if cannotMove
+                then return z
+                else return (Zombie.setPosition z pos')
+        moveZombie tick (Zombie.Roaming dir) | tick `mod` 4 == 0 = do
+            let Position (xz, yz) = Zombie.getPosition z
+                (xd, yd) = movementDisplacement dir
+                pos' = Position (xz + xd, yz + yd)
+            posp <- getPlayerPosition <$> getsGameState getPlayer
+            when (pos' == posp) roundLost
+            entities <- getsGameState getEntities
+            n <- randomR (1, 10 :: Int)
+            let cannotMove = posOccupied pos' entities
+            z' <- if n == 1 || cannotMove
+                  then Zombie.setState z . Zombie.Roaming <$> randomDirection
+                  else return z
+            if cannotMove
+                then return z'
+                else return (Zombie.setPosition z' pos')
+        moveZombie _ _ = do
+            return z
 
 -- Stepping onto the room exit wins you the round.
 instance Behaviour State RoomExit where
@@ -454,3 +464,10 @@ roundLost =
 posOccupied :: Position -> Map EntityId SomeEntity -> Bool
 posOccupied pos =
     M.foldl (\o (SomeEntity e) -> o || pos `S.member` Entity.occupiedPositions e) False
+
+-- | How much does something move for each direction.
+movementDisplacement :: Direction -> (Int, Int)
+movementDisplacement North = (0, 1)
+movementDisplacement South = (0, -1)
+movementDisplacement West  = (-1, 0)
+movementDisplacement East  = (1, 0)

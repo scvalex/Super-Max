@@ -1,8 +1,8 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
 module Entities.Zombie (
-        Zombie, EntityParameters(..),
-        setPosition, getPosition
+        Zombie, EntityParameters(..), State(..),
+        setPosition, getPosition, getState, setState
     ) where
 
 import Common ( intRectangle, fromAreaCoordinates )
@@ -10,9 +10,15 @@ import Control.Applicative ( (<$>) )
 import Game.Engine ( Picture(..), Colour(..), mkUid, randomR )
 import Game.Entity ( Entity(..), EntityId(..), Position(..) )
 import qualified Data.Set as S
+import Types ( Direction(..), randomDirection )
+
+data State = Roaming Direction
+           | Following
+             deriving ( Eq, Show )
 
 data Zombie = Zombie
     { getZombieId         :: EntityId
+    , getZombieState      :: State
     , getZombiePosition   :: Position
     , getZombieAreaBounds :: (Int, Int, Int, Int)
     , getZombieVisualTint :: Double
@@ -27,7 +33,9 @@ instance Entity Zombie where
         zid <- EntityId <$> mkUid
         xz <- randomR (x1, x2)
         yz <- randomR (y1, y2)
+        dir <- randomDirection
         return (Zombie { getZombieId         = zid
+                       , getZombieState      = Roaming dir
                        , getZombiePosition   = Position (xz, yz)
                        , getZombieAreaBounds = getAreaBounds zp
                        , getZombieVisualTint = pi
@@ -53,3 +61,9 @@ setPosition z pos = z { getZombiePosition = pos }
 
 getPosition :: Zombie -> Position
 getPosition (Zombie { getZombiePosition = pos }) = pos
+
+getState :: Zombie -> State
+getState (Zombie { getZombieState = state }) = state
+
+setState :: Zombie -> State -> Zombie
+setState z state = z { getZombieState = state }
