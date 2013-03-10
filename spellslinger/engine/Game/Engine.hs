@@ -27,7 +27,6 @@ import Control.Exception ( Exception, assert )
 import Control.Monad ( forever )
 import Data.Dynamic ( Dynamic )
 import Data.Foldable ( foldlM )
-import Data.IntMap ( IntMap )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
@@ -50,7 +49,6 @@ import System.FilePath ( (</>) )
 import System.Random ( Random, StdGen, newStdGen )
 import Text.Printf ( printf )
 import qualified Control.Exception as CE
-import qualified Data.IntMap as IM
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Graphics.UI.SDL as SDL
@@ -71,7 +69,7 @@ data Colour = RGBA { colorRed   :: Word8
                    , colorGreen :: Word8
                    , colorBlue  :: Word8
                    , colorAlpha :: Word8
-                   } deriving ( Eq, Read, Show )
+                   } deriving ( Eq, Read, Show, Typeable )
 
 white, black :: Colour
 white = RGBA 255 255 255 255
@@ -129,7 +127,7 @@ data EngineState s = EngineState { getInnerState :: s
                                  , getTick       :: Int
                                  , getQueuedIO   :: [IOAction s]
                                  , getResDir     :: FilePath
-                                 , getRes        :: IntMap Dynamic
+                                 , getRes        :: Map String Dynamic
                                  }
 
 -- | The events the engine's asynchronous components may send/receive.
@@ -253,8 +251,8 @@ getResourceDirectory :: Game s FilePath
 getResourceDirectory = Game (\s -> (getResDir s, s))
 
 -- | Get a named pre-loaded resource.
-getResource :: Int -> Game s (Maybe Dynamic)
-getResource name = Game (\s -> (IM.lookup name (getRes s), s))
+getResource :: String -> Game s (Maybe Dynamic)
+getResource name = Game (\s -> (M.lookup name (getRes s), s))
 
 --------------------------------
 -- Fonts
@@ -339,15 +337,15 @@ data Shutdown = Shutdown
 instance Exception Shutdown
 
 play :: forall w.
-        Int                         -- ^ Logical ticks per second
-     -> (IO (IntMap Dynamic))       -- ^ Resource pre-loader.
-     -> (Int -> Int -> w)           -- ^ Take the screen width and height, and return the
-                                    -- initial game state
-     -> Game w ()                   -- ^ An initialization action.
-     -> (w -> Picture)              -- ^ Draw a particular state
-     -> (GameEvent -> Game w ())    -- ^ Update the state after a 'GameEvent'
+        Int                                   -- ^ Logical ticks per second
+     -> (FilePath -> IO (Map String Dynamic)) -- ^ Resource pre-loader.
+     -> (Int -> Int -> w)                     -- ^ Take the screen width and height, and return the
+                                              -- initial game state
+     -> Game w ()                             -- ^ An initialization action.
+     -> (w -> Picture)                        -- ^ Draw a particular state
+     -> (GameEvent -> Game w ())              -- ^ Update the state after a 'GameEvent'
      -> IO ()
-play tps mkResources wInit start drawGame onEvent = do
+play tps loadResources wInit start drawGame onEvent = do
     withScreen $ \screenW screenH screen -> do
         putStrLn "SDL initialised"
 
@@ -372,7 +370,7 @@ play tps mkResources wInit start drawGame onEvent = do
         gen <- newStdGen
 
         -- Pre-load resources
-        resources <- mkResources
+        resources <- loadResources resDir
 
         let es = EngineState { getInnerState = wInit screenW screenH
                              , getEventChan  = eventCh

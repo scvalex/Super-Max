@@ -1,10 +1,11 @@
 module Main where
 
+import Data.Dynamic ( Dynamic )
+import Data.Map ( Map )
 import Game.Engine ( Game, GameEvent, play, quitGame
                    , modifyGameState, getGameState, withAlternateGameState
                    , Picture(..) )
 import GlobalCommand ( GlobalCommand(..) )
-import qualified Data.IntMap as IM
 import qualified MainMenu as MainMenu
 import qualified Survival as Survival
 
@@ -37,7 +38,7 @@ main = do
 
     play
         tps
-        (return IM.empty)
+        loadResources
         (\screenW screenH -> ((screenW, screenH), MainMenu MainMenu.initState))
         start
         drawState
@@ -48,6 +49,9 @@ start = do
     -- Actually start the MainMenu.
     Nothing <- inMainMenu (MainMenu.start >> return Nothing)
     return ()
+
+loadResources :: FilePath -> IO (Map String Dynamic)
+loadResources resDir = MainMenu.loadResources resDir
 
 ----------------------
 -- Callbacks

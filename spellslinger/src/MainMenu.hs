@@ -1,24 +1,28 @@
 module MainMenu (
-        -- * State
-        State, initState, start,
+        -- * Game interface
+        State, initState, start, loadResources,
 
         -- * Callbacks
         drawState, handleEvent
     ) where
 
+import Control.Applicative ( (<$>) )
 import Data.Char ( digitToInt )
+import Data.Dynamic ( Dynamic, toDyn, fromDynamic )
+import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Game.Engine ( Game, modifyGameState, getGameState, getsGameState
-                   , randomR, upon, getResourceDirectory
+                   , randomR, upon, getResource
                    , Picture(..), TextAlignment(..), Colour(..)
                    , GameEvent(..), Event(..), SDLKey(..), Keysym(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Profile ( Profile(..), loadOrNewProfile, saveProfile )
+import qualified Data.Map as M
 import System.FilePath ( (</>) )
 import Text.Printf ( printf )
 
 ----------------------
--- State
+-- Game interface
 ----------------------
 
 data State = State { getItems            :: [(String, GlobalCommand)]
@@ -39,12 +43,16 @@ initState = State { getItems = [ ("Continue", ToContinue)
 
 start :: Game State ()
 start =
-    getResourceDirectory >>= \resDir ->
-    loadOrNewProfile `upon` \profile ->
-    lookupColourName (resDir </> "rgb.txt") (getProfilePlayerColour profile) `upon` \mcolourName ->
-    modifyGameState (\w -> w { getPlayerProfile    = Just profile
-                             , getPlayerColourName = mcolourName
-                             })
+    loadOrNewProfile `upon` \profile -> do
+        mcolourName <- lookupColourName (getProfilePlayerColour profile)
+        modifyGameState (\w -> w { getPlayerProfile    = Just profile
+                                 , getPlayerColourName = mcolourName
+                                 })
+
+loadResources :: FilePath -> IO (Map String Dynamic)
+loadResources resDir = do
+    colours <- loadColours (resDir </> "rgb.txt")
+    return (M.insert coloursResName (toDyn colours) M.empty)
 
 ----------------------
 -- Callbacks
@@ -98,26 +106,25 @@ handleEvent (InputEvent (KeyDown (Keysym { symKey = key })))
         -- The index can't be wrong, unless we screwed up updating getSelectedItem.
         return (Just (snd (getItems state !! getSelectedItem state)))
 handleEvent (InputEvent (KeyDown (Keysym { symKey = SDLK_r }))) = do
-    resDir <- getResourceDirectory
-    loadColours (resDir </> "rgb.txt") `upon` \cols -> do
-        i <- randomR (0, length cols)
-        let (col, colName) = cols !! i
-        modifyGameState (\(s@(State { getPlayerProfile = mprofile })) ->
-                          case mprofile of
-                              Nothing ->
-                                  s
-                              Just profile ->
-                                  s { getPlayerProfile =
-                                           Just (profile { getProfilePlayerColour = col })
-                                    , getPlayerColourName =
-                                           Just colName })
-        mprofile <- getsGameState getPlayerProfile
-        case mprofile of
-            Nothing ->
-                return ()
-            Just profile ->
-                saveProfile profile `upon` \() ->
-                    return ()
+    cols <- getColours
+    i <- randomR (0, length cols)
+    let (col, colName) = cols !! i
+    modifyGameState (\(s@(State { getPlayerProfile = mprofile })) ->
+                      case mprofile of
+                          Nothing ->
+                              s
+                          Just profile ->
+                              s { getPlayerProfile =
+                                       Just (profile { getProfilePlayerColour = col })
+                                , getPlayerColourName =
+                                       Just colName })
+    mprofile <- getsGameState getPlayerProfile
+    case mprofile of
+        Nothing ->
+            return ()
+        Just profile ->
+            saveProfile profile `upon` \() ->
+            return ()
     return Nothing
 handleEvent _ =
     return Nothing
@@ -126,11 +133,22 @@ handleEvent _ =
 -- Flavour text
 ----------------------
 
-lookupColourName :: FilePath -> Colour -> IO (Maybe String)
-lookupColourName colFile col = do
-    cols <- loadColours colFile
-    return (lookup col cols)
+-- | The name of the colours resource.
+coloursResName :: String
+coloursResName = "MainMenu.colours"
 
+-- | Lookup the name of a 'Colour'.
+lookupColourName :: Colour -> Game State (Maybe String)
+lookupColourName col = lookup col <$> getColours
+
+-- | Retrieve the map of colours from the game state.
+getColours :: Game State [(Colour, String)]
+getColours = do
+    mcols <- getResource coloursResName
+    let Just cols = fromDynamic =<< mcols
+    return cols
+
+-- | Load colours from disk.
 loadColours :: FilePath -> IO [(Colour, String)]
 loadColours colFile = do
     text <- readFile colFile
