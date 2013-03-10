@@ -15,6 +15,10 @@ Todo
    :LOGBOOK:
    CLOCK: [2013-03-10 Sun 20:37]--[2013-03-10 Sun 21:14] =>  0:37
    :END:
+** DONE Zombies alerted animation
+   :LOGBOOK:
+   CLOCK: [2013-03-10 Sun 21:25]--[2013-03-10 Sun 21:55] =>  0:30
+   :END:
 ** TODO Random-length/position symmetric straight walls
 ** TODO Score
 ** TODO High Scores

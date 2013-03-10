@@ -27,7 +27,7 @@ intRectangle x1 y1 w h = FilledRectangle (fromIntegral x1)
 fromAreaCoordinates :: (Int, Int, Int, Int) -> Picture -> Picture
 fromAreaCoordinates (x1, y1, x2, y2) =
     Translate (fromIntegral x1) (fromIntegral y1) .
-    Scale (1.0 / fromIntegral (x2 - x1)) (1.0 / fromIntegral (y2 - y1))
+    Scale (1.0 / fromIntegral (x2 - x1 + 1)) (1.0 / fromIntegral (y2 - y1 + 1))
 
 -- | Text with fixed sizes
 bigText, mediumText, smallText :: TextAlignment -> String -> Picture

@@ -95,7 +95,7 @@ data Player = Player { getPlayerPosition :: Position
 
 area1 :: Area
 area1 =
-    let bounds = (0, 0, 60, 60) in
+    let bounds = (0, 0, 59, 59) in
     let initExit = Entity.init (StaticExit { RoomExit.getAreaBounds = bounds
                                            , getAreaExitPosition = Position (29, 55) }) in
     let initNotice = Entity.init (StaticNotice { Notice.getAreaBounds = bounds
