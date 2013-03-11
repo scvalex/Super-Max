@@ -324,6 +324,7 @@ handleTick t = do
         sequence_ [ processHeldDownKeys
                   , updateTime
                   , tickEntities
+                    -- FIXME Because the player moves *after* entities, it looks like they escaped when they didn't.
                   , movePlayer
                   ]
 

@@ -107,7 +107,7 @@ handleEvent (InputEvent (KeyDown (Keysym { symKey = key })))
         return (Just (snd (getItems state !! getSelectedItem state)))
 handleEvent (InputEvent (KeyDown (Keysym { symKey = SDLK_r }))) = do
     cols <- getColours
-    i <- randomR (0, length cols)
+    i <- randomR (0, length cols - 1)
     let (col, colName) = cols !! i
     modifyGameState (\(s@(State { getPlayerProfile = mprofile })) ->
                       case mprofile of
