@@ -15,6 +15,7 @@ redist: build
 	cp $(BIN) $(REDIST)/spellslinger-x64
 	cp $(shell objdump -p $(REDIST)/spellslinger-x64 | grep NEEDED | grep -i sdl | awk '{ printf "/usr/lib64/%s\n", $$2 }') $(REDIST)/
 	cp ./spellslinger $(REDIST)/
+	cp ./update.sh $(REDIST)/
 	cp -r r/ $(REDIST)/
 	tar -cjvf spellslinger-redist.tar.bz2 $(REDIST)/
 
