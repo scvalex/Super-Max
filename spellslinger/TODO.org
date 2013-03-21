@@ -19,8 +19,9 @@ Todo
    :LOGBOOK:
    CLOCK: [2013-03-10 Sun 21:25]--[2013-03-10 Sun 21:55] =>  0:30
    :END:
-** TODO Random-length/position symmetric straight walls
 ** TODO Score
+   Score is awarded for completed levels.  For each level you get: time spent in level x zombies in level points.
+
 ** TODO High Scores
 
 * SpellSlinger 2D
@@ -29,3 +30,4 @@ Todo
 
 * Spellsliger: Prologue 1
 ** TODO Tutorial area
+** TODO Random-length/position symmetric straight walls
