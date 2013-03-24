@@ -28,8 +28,11 @@ Todo
 
 ** TODO High Scores
 
-* SpellSlinger 2D
+* [0/5] SpellSlinger 2D
 ** TODO GL/GLUT/GLEW-based engine
+** TODO Options menu
+** TODO Inverted Y
+** TODO First Person Mode
 ** TODO Use continuous updating in the game
 
 * Spellsliger: Prologue 1
