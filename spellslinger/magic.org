@@ -1,0 +1,17 @@
+* Sorcery
+  The Sorcerer's Spells (see Smullyan's "Satan, Cantor, and Infinity")
+  are programatic ways of effecting nature.
+
+** Promethean Magic
+** Rock Magic
+** Robotics
+** Displacement Magic
+* Vancian Spells
+  Vancian spells are magics that have fixed, well defined effects, and
+  that have to be learned, acquired, or otherwise prepared.  I.e. a
+  vancian spell is a one-shot spell, and you have to load more shots
+  of it to be able to use it again.
+
+** Death Ray
+** Dvorak's Heresy
+** Colemak Madness
