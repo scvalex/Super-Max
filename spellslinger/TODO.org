@@ -1,7 +1,7 @@
 Todo
 ====
 
-* [9/10] SpellSlinger: Survival
+* [9/10] Spellslinger: Survival
 ** DONE Fullscreen
 ** DONE Flexible NPC (Entity) abstraction
 ** DONE Notices
@@ -28,7 +28,7 @@ Todo
 
 ** TODO High Scores
 
-* [0/5] SpellSlinger 2D
+* [0/5] Spellslinger 2D
 ** TODO GL/GLUT/GLEW-based engine
 ** TODO Options menu
 ** TODO Inverted Y
