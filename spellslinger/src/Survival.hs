@@ -42,14 +42,19 @@ import Spell ( )
 import Text.Printf ( printf )
 import Types ( Direction(..), randomDirection )
 
+-- | The level is just an incrementing integer.
 type Level = Int
+
+-- | The score is just a number.
+type Score = Int
 
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
 -- 'handleTick').
 data State =
     State { getState        :: RoundState
-          , getLevel        :: Maybe Int
+          , getLevel        :: Maybe Level
+          , getScore        :: Score
           , getTime         :: Double
           , getArea         :: Area
           , getPlayer       :: Player
@@ -122,6 +127,7 @@ initState :: State
 initState =
     State { getState        = Loading
           , getLevel        = Nothing
+          , getScore        = 0
           , getTime         = 0.0
           , getArea         = area1
           , getHeldDownKeys = S.empty
@@ -132,15 +138,16 @@ initState =
           , getPlayerColour = RGBA 255 140 0 255
           }
 
-start :: Maybe Level -> Game State ()
+start :: Maybe (Level, Score) -> Game State ()
 start Nothing =
     loadOrNewProfile `upon` \profile -> do
         modifyGameState (\w -> w { getPlayerColour = getProfilePlayerColour profile })
         readAppFile "lastLevel" `upon` \mtext -> do
             loadLevel (maybe 1 read mtext)
-start (Just lvl) =
+start (Just (lvl, score)) =
     loadOrNewProfile `upon` \profile -> do
-        modifyGameState (\w -> w { getPlayerColour = getProfilePlayerColour profile })
+        modifyGameState (\w -> w { getPlayerColour = getProfilePlayerColour profile
+                                 , getScore        = score })
         loadLevel lvl
 
 loadLevel :: Level -> Game State ()
@@ -219,15 +226,20 @@ drawState w =
 
     -- The HUD is overlayed on the game.
     hud = mconcat [ survivalTime
+                  , score
                   , currentLevel
                   ]
 
-    -- Survival time in top-left corner
+    -- Survival time in top-left corner.
     survivalTime = Translate 0.04 0.94 $
                    bigText LeftAligned (formatSeconds (getTime w))
 
-    -- Current level in the top-left corner
-    currentLevel = Translate 0.04 0.91 $
+    -- Current score in the top-left corner.
+    score = Translate 0.04 0.91 $
+            mediumText LeftAligned (printf "Score: %d" (getScore w))
+
+    -- Current level in the top-left corner.
+    currentLevel = Translate 0.04 0.88 $
                    mediumText LeftAligned (printf "Level: %s" (maybe "?" show (getLevel w)))
 
     -- Draw the picture of a person.
