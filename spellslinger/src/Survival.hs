@@ -143,7 +143,9 @@ start Nothing =
     loadOrNewProfile `upon` \profile -> do
         modifyGameState (\w -> w { getPlayerColour = getProfilePlayerColour profile })
         readAppFile "lastLevel" `upon` \mtext -> do
-            loadLevel (maybe 1 read mtext)
+            let (lvl, score) = maybe (1, 0) read mtext
+            modifyGameState (\w -> w { getScore = score })
+            loadLevel lvl
 start (Just (lvl, score)) =
     loadOrNewProfile `upon` \profile -> do
         modifyGameState (\w -> w { getPlayerColour = getProfilePlayerColour profile
@@ -484,7 +486,10 @@ formatSeconds t = let secs = floor t :: Int
 roundWon :: Game State ()
 roundWon = do
     Just lvl <- getsGameState getLevel
-    writeAppFile "lastLevel" (show (lvl + 1))
+    let scoreIncrement = 2 ^ lvl
+    modifyGameState (\w -> w { getScore = getScore w + scoreIncrement })
+    score <- getsGameState getScore
+    writeAppFile "lastLevel" (show (lvl + 1, score))
         `upon` (\_ -> return ())
     modifyGameState (\w -> w { getState = PostRound { getConclusion     = "You win"
                                                     , getFurtherOptions = Continue } })

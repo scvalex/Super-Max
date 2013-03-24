@@ -1,7 +1,7 @@
 Todo
 ====
 
-* SpellSlinger: Survival
+* [9/10] SpellSlinger: Survival
 ** DONE Fullscreen
 ** DONE Flexible NPC (Entity) abstraction
 ** DONE Notices
@@ -19,8 +19,12 @@ Todo
    :LOGBOOK:
    CLOCK: [2013-03-10 Sun 21:25]--[2013-03-10 Sun 21:55] =>  0:30
    :END:
-** TODO Score
-   Score is awarded for completed levels.  For each level you get: time spent in level x zombies in level points.
+** DONE Score
+   :LOGBOOK:
+   CLOCK: [2013-03-24 Sun 19:00]--[2013-03-24 Sun 19:21] =>  0:21
+   :END:
+   Score is awarded for completed levels.  For each level you get:
+   time spent in level x zombies in level points.
 
 ** TODO High Scores
 
