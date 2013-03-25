@@ -44,7 +44,7 @@ def init_db():
             db.execute("CREATE TABLE scores ( name TEXT, colour TEXT, score INT ) ")
             db.commit()
 
-def main():
+def setup():
     init_db()
 
     # Setup logging.
@@ -56,8 +56,10 @@ def main():
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
 
+def main():
     app.logger.info("spellslinger-highscores starting")
     app.run(debug=False)
 
+setup()
 if __name__ == "__main__":
     main()
