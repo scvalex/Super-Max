@@ -28,6 +28,7 @@ Todo
 
 ** TODO High Scores
    :LOGBOOK:
+   CLOCK: [2013-03-26 Tue 22:05]
    CLOCK: [2013-03-25 Mon 21:00]--[2013-03-25 Mon 21:57] =>  0:57
    :END:
 
