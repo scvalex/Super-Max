@@ -34,6 +34,7 @@ data State = State { getItems            :: [(String, GlobalCommand)]
 initState :: State
 initState = State { getItems = [ ("Continue", ToContinue)
                                , ("New Game", ToNewGame)
+                               , ("High Scores", ToHighScores)
                                , ("Quit", ToQuit)
                                ]
                   , getSelectedItem     = 0

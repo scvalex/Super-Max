@@ -1,9 +1,13 @@
 module Types (
-        Direction(..), randomDirection
+        Direction(..), randomDirection,
+        Score
     ) where
 
 import Control.Applicative ( (<$>) )
 import Game.Engine ( Game, randomR )
+
+-- | The score is just a number.
+type Score = Int
 
 data Direction = North | West | South | East
                deriving ( Enum, Eq, Show )

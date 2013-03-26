@@ -40,13 +40,10 @@ import qualified Entities.Zombie as Zombie
 import qualified Game.Entity as Entity
 import Spell ( )
 import Text.Printf ( printf )
-import Types ( Direction(..), randomDirection )
+import Types ( Score, Direction(..), randomDirection )
 
 -- | The level is just an incrementing integer.
 type Level = Int
-
--- | The score is just a number.
-type Score = Int
 
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see

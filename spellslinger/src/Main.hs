@@ -8,6 +8,7 @@ import Game.Engine ( Game, GameEvent, play, quitGame
 import GlobalCommand ( GlobalCommand(..) )
 import qualified MainMenu as MainMenu
 import qualified Survival as Survival
+import qualified HighScores as HighScores
 
 type NpcId = Int
 
@@ -17,6 +18,7 @@ type FullState = ((Int, Int), GameState)
 
 data GameState = MainMenu MainMenu.State
                | Survival Survival.State
+               | HighScores HighScores.State
 
 ----------------------
 -- Constants
@@ -65,15 +67,17 @@ drawState ((screenW, screenH), gs) =
     Scale (fromIntegral dimMin) (fromIntegral dimMin) $
     -- Now, draw the scene
     case gs of
-        MainMenu state -> MainMenu.drawState state
-        Survival state -> Survival.drawState state
+        MainMenu state   -> MainMenu.drawState state
+        Survival state   -> Survival.drawState state
+        HighScores state -> HighScores.drawState state
 
 handleEvent :: GameEvent -> Game FullState ()
 handleEvent ev = do
     (_, gs) <- getGameState
     mcommand <- case gs of
-        MainMenu _ -> inMainMenu (MainMenu.handleEvent ev)
-        Survival _ -> inSurvival (Survival.handleEvent ev)
+        MainMenu _   -> inMainMenu (MainMenu.handleEvent ev)
+        Survival _   -> inSurvival (Survival.handleEvent ev)
+        HighScores _ -> inHighScores (HighScores.handleEvent ev)
     handleGlobalCommand mcommand
   where
     handleGlobalCommand :: Maybe GlobalCommand -> Game FullState ()
@@ -93,6 +97,11 @@ handleEvent ev = do
         (dims, _) <- getGameState
         modifyGameState (\_ -> (dims, MainMenu MainMenu.initState))
         Nothing <- inMainMenu (MainMenu.start >> return Nothing)
+        return ()
+    handleGlobalCommand (Just ToHighScores) = do
+        (dims, _) <- getGameState
+        modifyGameState (\_ -> (dims, HighScores HighScores.initState))
+        Nothing <- inHighScores (HighScores.start >> return Nothing)
         return ()
     handleGlobalCommand (Just ToQuit) =
         quitGame
@@ -121,4 +130,15 @@ inMainMenu act = do
               (_, MainMenu menuState) -> Just menuState
               _                       -> Nothing)
         (\state' -> (dims, MainMenu state'))
+        act
+
+-- | Lift an action in the 'MainMenu' sub-state to one in the 'FullState'.
+inHighScores :: Game HighScores.State (Maybe a) -> Game FullState (Maybe a)
+inHighScores act = do
+    (dims, _) <- getGameState
+    withAlternateGameState
+        (\state -> case state of
+              (_, HighScores hsState) -> Just hsState
+              _                       -> Nothing)
+        (\state' -> (dims, HighScores state'))
         act
