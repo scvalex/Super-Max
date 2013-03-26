@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module HighScores (
         -- * Game interface
         State, initState, start,
@@ -7,13 +9,17 @@ module HighScores (
     ) where
 
 import Control.Applicative ( (<$>) )
+import Data.Aeson ( FromJSON, decode )
+import Data.ByteString.Lazy.Char8 ( pack )
 import Data.Dynamic ( fromDynamic )
 import Data.Monoid ( Monoid(..) )
 import Game.Engine ( Game, modifyGameState, getGameState, getsGameState
                    , upon, getResource
                    , Picture(..), TextAlignment(..), Colour(..)
                    , GameEvent(..), Event(..), Keysym(..), SDLKey(..) )
+import GHC.Generics ( Generic )
 import GlobalCommand ( GlobalCommand(..) )
+import Network.HTTP ( simpleHTTP, getRequest, getResponseBody )
 import Text.Printf ( printf )
 import Types ( Score )
 
@@ -21,7 +27,12 @@ import Types ( Score )
 -- Game interface
 ----------------------
 
-type ScoreEntry = (String, String, Score)
+data ScoreEntry = ScoreEntry { name :: String
+                             , colour :: String
+                             , score :: Score
+                             } deriving ( Generic )
+
+instance FromJSON ScoreEntry
 
 data State = State { getScores :: [ScoreEntry]
                    }
@@ -48,10 +59,10 @@ drawState state =
       map drawScore (zip [0 :: Int ..] (getScores state))
     ]
   where
-    drawScore (i, (name, colour, score)) =
+    drawScore (i, entry) =
         Translate 0.5 (0.5 - (fromIntegral i) * 0.1) $
-        Text 50 CenterAligned $
-        printf "%s, the %s %20d" name colour score
+        Text 40 CenterAligned $
+        printf "%d. %s, the %s %30d" i (name entry) (colour entry) (score entry)
 
 handleEvent :: GameEvent -> Game State (Maybe GlobalCommand)
 handleEvent (InputEvent (KeyUp (Keysym { symKey = SDLK_ESCAPE }))) = do
@@ -64,7 +75,14 @@ handleEvent _ =
 ----------------------
 
 fetchScores :: IO [ScoreEntry]
-fetchScores = return []
+fetchScores = do
+    text <- getResponseBody =<<
+            Network.HTTP.simpleHTTP (getRequest "http://abstractbinary.org/spellslinger/scores")
+    case decode (pack text) of
+        Nothing ->
+            return []
+        Just entries -> do
+            return entries
 
 ----------------------
 -- Colours
