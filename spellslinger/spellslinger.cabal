@@ -32,7 +32,8 @@ Library
 
 Executable spellslinger
   Build-depends:        base >= 4 && < 5, aeson, bytestring, containers,
-                        directory, filepath, HTTP, spellslinger, unix
+                        directory, filepath, HTTP, network,
+                        spellslinger, unix
   Ghc-options:          -Wall -threaded
   Hs-Source-Dirs:       src/
   Extensions:           ScopedTypeVariables, OverloadedStrings

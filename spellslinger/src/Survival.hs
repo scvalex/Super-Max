@@ -26,7 +26,7 @@ import Game.Engine ( GameEvent(..)
                    , Game, getsGameState, modifyGameState, getGameTick, upon, randomR
                    , Picture(..)
                    , TextAlignment(..)
-                   , Colour(..), black, greyN
+                   , Colour(..), black, greyN, colourToHexString
                    , Event(..), SDLKey(..), Keysym(..) )
 import Game.Entity ( Entity, Behaviour(..), EntityId(..), Position(..) )
 import GlobalCommand ( GlobalCommand(..) )
@@ -38,6 +38,8 @@ import qualified Entities.Notice as Notice
 import qualified Entities.RoomExit as RoomExit
 import qualified Entities.Zombie as Zombie
 import qualified Game.Entity as Entity
+import Network.HTTP ( Request, RequestMethod(..), mkRequest, simpleHTTP )
+import Network.URI ( parseURI )
 import Spell ( )
 import Text.Printf ( printf )
 import Types ( Score, Direction(..), randomDirection )
@@ -485,11 +487,25 @@ roundWon = do
     Just lvl <- getsGameState getLevel
     let scoreIncrement = 2 ^ lvl
     modifyGameState (\w -> w { getScore = getScore w + scoreIncrement })
+    newScore <- getsGameState getScore
+    submitScore newScore `upon` \() -> return ()
     score <- getsGameState getScore
     writeAppFile "lastLevel" (show (lvl + 1, score))
         `upon` (\_ -> return ())
     modifyGameState (\w -> w { getState = PostRound { getConclusion     = "You win"
                                                     , getFurtherOptions = Continue } })
+  where
+    submitScore score = do
+        profile <- loadOrNewProfile
+        let stringUri = printf "http://abstractbinary.org/spellslinger/add-score/%s/%s/%d"
+                               (getProfilePlayerName profile)
+                               (tail (colourToHexString (getProfilePlayerColour profile)))
+                               score
+        putStrLn stringUri
+        let Just uri = parseURI stringUri
+            req = mkRequest PUT uri :: Request String
+        _ <- Network.HTTP.simpleHTTP req
+        return ()
 
 -- | Switch the state to post-round loss.
 roundLost :: Game State ()
