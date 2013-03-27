@@ -1,7 +1,7 @@
 Todo
 ====
 
-* [9/10] Spellslinger: Survival
+* [10/10] Spellslinger: Survival
 ** DONE Fullscreen
 ** DONE Flexible NPC (Entity) abstraction
 ** DONE Notices
@@ -26,14 +26,15 @@ Todo
    Score is awarded for completed levels.  For each level you get:
    time spent in level x zombies in level points.
 
-** TODO High Scores
+** DONE High Scores
    :LOGBOOK:
-   CLOCK: [2013-03-27 Wed 14:34]
+   CLOCK: [2013-03-27 Wed 14:34]--[2013-03-27 Wed 15:21] =>  0:47
    CLOCK: [2013-03-26 Tue 22:05]--[2013-03-26 Tue 22:47] =>  0:42
    CLOCK: [2013-03-25 Mon 21:00]--[2013-03-25 Mon 21:57] =>  0:57
    :END:
 
 * [0/5] Spellslinger 2D
+** TODO Abstract out engine interface
 ** TODO GL/GLUT/GLEW-based engine
 ** TODO Options menu
 ** TODO Inverted Y
@@ -41,5 +42,6 @@ Todo
 ** TODO Use continuous updating in the game
 
 * Spellsliger: Prologue 1
+** TODO Dev console
 ** TODO Tutorial area
 ** TODO Random-length/position symmetric straight walls
