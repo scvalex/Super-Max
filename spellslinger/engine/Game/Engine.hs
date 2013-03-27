@@ -8,7 +8,7 @@ module Game.Engine (
         -- * Pictures
         Picture(..),
         TextAlignment(..),
-        Colour(..), white, black, greyN,
+        Colour(..), white, black, greyN, colourToHexString,
 
         -- * SDL events (re-export)
         Event(..), SDLKey(..), Keysym(..),
@@ -65,10 +65,10 @@ deriving instance Ord Keysym
 -- Colours
 --------------------------------
 
-data Colour = RGBA { colorRed   :: Word8
-                   , colorGreen :: Word8
-                   , colorBlue  :: Word8
-                   , colorAlpha :: Word8
+data Colour = RGBA { colourRed   :: Word8
+                   , colourGreen :: Word8
+                   , colourBlue  :: Word8
+                   , colourAlpha :: Word8
                    } deriving ( Eq, Read, Show, Typeable )
 
 white, black :: Colour
@@ -83,6 +83,14 @@ greyN prop = RGBA sat sat sat 255
 -- | Convert a 'Colour' to an SDL 'SDL.Color'.  Drops the alpha component.
 colourToSdlColor :: Colour -> SDL.Color
 colourToSdlColor (RGBA r g b _) = SDL.Color r g b
+
+-- | Convert a 'Colour' to a string like @#00ff00ff@.
+colourToHexString :: Colour -> String
+colourToHexString col = printf "#%02x%02x%02x%02x"
+                               (colourRed col)
+                               (colourGreen col)
+                               (colourBlue col)
+                               (colourAlpha col)
 
 --------------------------------
 -- Pictures
@@ -267,7 +275,7 @@ type Fonts = Map Int TTF.Font
 draw :: Surface -> Fonts -> Mat3 -> Colour -> Picture -> IO ()
 draw surface _ proj col (FilledRectangle x y w h) = do
     let pf = surfaceGetPixelFormat surface
-    p <- mapRGBA pf (colorRed col) (colorGreen col) (colorBlue col) (colorAlpha col)
+    p <- mapRGBA pf (colourRed col) (colourGreen col) (colourBlue col) (colourAlpha col)
     let (x1, y1) = projectXY proj x y
         (x2, y2) = projectXY proj (x + w) (y + h)
         (w', h') = (abs (x2 - x1), abs (y2 - y1))
