@@ -71,9 +71,14 @@ drawState state =
     ]
   where
     drawScore (i, entry) =
-        Translate 0.5 (0.5 - (fromIntegral i) * 0.1) $
-        Text 40 CenterAligned $
-        printf "%d. %s, the %s %30d" i (name entry) (colour entry) (score entry)
+        Translate 0.5 (0.5 - (fromIntegral i) * 0.05) $
+        mconcat [ Translate (-0.3) 0.0 $
+                  Text 40 LeftAligned $
+                  printf "%d. %s, the %s" i (name entry) (colour entry)
+                , Translate 0.3 0.0 $
+                  Text 40 RightAligned $
+                  printf "%d" (score entry)
+                ]
 
 handleEvent :: GameEvent -> Game State (Maybe GlobalCommand)
 handleEvent (InputEvent (KeyUp (Keysym { symKey = SDLK_ESCAPE }))) = do
