@@ -501,8 +501,7 @@ roundWon = do
                                (getProfilePlayerName profile)
                                (tail (colourToHexString (getProfilePlayerColour profile)))
                                score
-        putStrLn stringUri
-        let Just uri = parseURI stringUri
+            Just uri = parseURI stringUri
             req = mkRequest PUT uri :: Request String
         _ <- Network.HTTP.simpleHTTP req
         return ()
