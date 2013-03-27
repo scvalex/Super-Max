@@ -8,7 +8,8 @@ module Game.Engine (
         -- * Pictures
         Picture(..),
         TextAlignment(..),
-        Colour(..), white, black, greyN, colourToHexString,
+        Colour(..), white, black, greyN,
+        colourToHexString, colourFromHexString,
 
         -- * SDL events (re-export)
         Event(..), SDLKey(..), Keysym(..),
@@ -25,6 +26,7 @@ import Control.Concurrent.STM ( atomically
                               , TChan, newTChanIO, readTChan, writeTChan )
 import Control.Exception ( Exception, assert )
 import Control.Monad ( forever )
+import Data.Char ( digitToInt )
 import Data.Dynamic ( Dynamic )
 import Data.Foldable ( foldlM )
 import Data.Map ( Map )
@@ -91,6 +93,16 @@ colourToHexString col = printf "#%02x%02x%02x%02x"
                                (colourGreen col)
                                (colourBlue col)
                                (colourAlpha col)
+
+colourFromHexString :: String -> Maybe Colour
+colourFromHexString ('#':r1:r2:g1:g2:b1:b2:_) =
+    let r = digitToInt r1 * 16 + digitToInt r2
+        g = digitToInt g1 * 16 + digitToInt g2
+        b = digitToInt b1 * 16 + digitToInt b2 in
+    Just (RGBA (fromIntegral r) (fromIntegral g) (fromIntegral b) 255)
+colourFromHexString col =
+    Nothing
+
 
 --------------------------------
 -- Pictures

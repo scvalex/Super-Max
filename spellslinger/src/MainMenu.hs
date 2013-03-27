@@ -7,13 +7,14 @@ module MainMenu (
     ) where
 
 import Control.Applicative ( (<$>) )
-import Data.Char ( digitToInt )
 import Data.Dynamic ( Dynamic, toDyn, fromDynamic )
 import Data.Map ( Map )
+import Data.Maybe ( fromJust )
 import Data.Monoid ( Monoid(..) )
 import Game.Engine ( Game, modifyGameState, getGameState, getsGameState
                    , randomR, upon, getResource
-                   , Picture(..), TextAlignment(..), Colour(..)
+                   , Picture(..), TextAlignment(..)
+                   , Colour(..), colourFromHexString
                    , GameEvent(..), Event(..), SDLKey(..), Keysym(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Profile ( Profile(..), loadOrNewProfile, saveProfile )
@@ -158,13 +159,4 @@ loadColours colFile = do
     processLine :: String -> (Colour, String)
     processLine line =
         let (name, (_:col)) = break (=='\t') line in
-        (parseColour col, name)
-
-    parseColour :: String -> Colour
-    parseColour ('#':r1:r2:g1:g2:b1:b2:_) =
-        let r = digitToInt r1 * 16 + digitToInt r2
-            g = digitToInt g1 * 16 + digitToInt g2
-            b = digitToInt b1 * 16 + digitToInt b2 in
-        RGBA (fromIntegral r) (fromIntegral g) (fromIntegral b) 255
-    parseColour col =
-        error ("unparsable colour: " ++ col)
+        (fromJust (colourFromHexString col), name)
