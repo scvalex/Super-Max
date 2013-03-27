@@ -9,13 +9,16 @@ module HighScores (
     ) where
 
 import Control.Applicative ( (<$>) )
+import Control.Monad ( forM )
 import Data.Aeson ( FromJSON, decode )
 import Data.ByteString.Lazy.Char8 ( pack )
 import Data.Dynamic ( fromDynamic )
+import Data.Maybe ( fromJust )
 import Data.Monoid ( Monoid(..) )
-import Game.Engine ( Game, modifyGameState, getGameState, getsGameState
+import Game.Engine ( Game, modifyGameState
                    , upon, getResource
-                   , Picture(..), TextAlignment(..), Colour(..)
+                   , Picture(..), TextAlignment(..)
+                   , Colour(..), colourFromHexString
                    , GameEvent(..), Event(..), Keysym(..), SDLKey(..) )
 import GHC.Generics ( Generic )
 import GlobalCommand ( GlobalCommand(..) )
@@ -43,8 +46,16 @@ initState = State { getScores = []
 
 start :: Game State ()
 start =
-    fetchScores `upon` \scores ->
-    modifyGameState (\w -> w { getScores = scores })
+    fetchScores `upon` \scores -> do
+        scores' <- replaceColourNames scores
+        modifyGameState (\w -> w { getScores = scores' })
+  where
+    replaceColourNames scores = do
+        forM scores $ \entry -> do
+            mcolName <- lookupColourName (fromJust (colourFromHexString ('#' : colour entry)))
+            return $ case mcolName of
+                Nothing      -> entry
+                Just colName -> entry { colour = colName }
 
 ----------------------
 -- Callbacks
@@ -88,6 +99,7 @@ fetchScores = do
 -- Colours
 ----------------------
 
+-- FIXME Colours handling is duplicated in MainMenu and HighScores.
 -- | The name of the colours resource.
 coloursResName :: String
 coloursResName = "MainMenu.colours"
