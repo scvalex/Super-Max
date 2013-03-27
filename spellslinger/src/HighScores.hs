@@ -71,7 +71,7 @@ drawState state =
     ]
   where
     drawScore (i, entry) =
-        Translate 0.5 (0.5 - (fromIntegral i) * 0.05) $
+        Translate 0.5 (0.65 - (fromIntegral i) * 0.05) $
         mconcat [ Translate (-0.3) 0.0 $
                   Text 40 LeftAligned $
                   printf "%d. %s, the %s" i (name entry) (colour entry)
