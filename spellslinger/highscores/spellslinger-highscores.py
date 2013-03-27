@@ -23,7 +23,7 @@ def addScore(name, colour, score):
 @app.route("/spellslinger/scores")
 def scores():
     with sqlite3.connect(DB_NAME) as db:
-        vs = db.execute("SELECT name, colour, score "
+        vs = db.execute("SELECT DISTINCT name, colour, score "
                         "FROM scores "
                         "ORDER BY score DESC LIMIT 10").fetchall()
         ss = []
