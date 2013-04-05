@@ -464,7 +464,7 @@ play tps loadResources wInit start drawGame onEvent = do
     tick :: UTCTime -> EngineState s -> IO (EngineState s)
     tick prevTime es = managedForkIO es $ do
         now <- getCurrentTime
-        -- FIXME The tick wait code is probably wrong.  See the blog post on this.
+        -- FIXME Use this instead: http://fabiensanglard.net/timer_and_framerate/index.php
         let delta = fromRational (toRational (diffUTCTime now prevTime))
             desiredDelay = fromIntegral (1000000 `div` tps)
         threadDelay (floor (min desiredDelay (2.0 * desiredDelay - delta * 1000000.0)))
