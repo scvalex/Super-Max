@@ -41,7 +41,8 @@ Todo
 ** TODO First Person Mode
 ** TODO Use continuous updating in the game
 
-* Spellsliger: Prologue 1
+* Spellsliger: Arena
 ** TODO Dev console
 ** TODO Tutorial area
-** TODO Random-length/position symmetric straight walls
+** TODO Geometric arenas
+** TODO Promethean Magic
