@@ -1,3 +1,5 @@
+Mark these as DONE (C-c C-t) when development *starts*.
+
 * Game Ideas
 ** TODO Number Fight
    Two players face off.  They play one of several "number duels",
@@ -9,6 +11,8 @@
    Basically, first person Mortal Kombat, but we use the webcam to
    show the player's real face.
 ** TODO First Person Snake
+   It's like snake, but it has an over-the-shoulder view.  So, it's a
+   bit like GLtron, but you have to eat in order to grow your tail.
 ** TODO Pentix
    It's like Tetris, but the shapes have five squares.
 ** TODO The Sniper Knifers
@@ -18,7 +22,7 @@
    to cool down.  So, you have to get into position, commit to firing,
    aim, and hit something.  Obviously, its instagib.  There's also
    secondary fire, which is a melee knife.  Also instagib.
-** TODO Spellslinger
+** DONE Spellslinger
    A game about programming magic.
 ** TODO Uber Hans
    It's not Super Mario because the protagonist is German and it takes
