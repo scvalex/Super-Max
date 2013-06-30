@@ -34,6 +34,7 @@ Todo
    :END:
 
 * [0/5] Spellslinger 2D
+** TODO Distinguish between deterministic and non-deterministic games
 ** TODO Abstract out engine interface
 ** TODO GL/GLUT/GLEW-based engine
 ** TODO Options menu

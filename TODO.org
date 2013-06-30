@@ -1,0 +1,25 @@
+* Game Ideas
+** TODO Number Fight
+   Two players face off.  They play one of several "number duels",
+   where players alternately pick numbers with certain properties
+   (primes, squares, etc.).  They player must pick higher numbers than
+   their opponents.  When a player picks a number *without* the
+   property, it's a foul; first player with three fouls is out.
+** TODO Boxing Simulator
+   Basically, first person Mortal Kombat, but we use the webcam to
+   show the player's real face.
+** TODO First Person Snake
+** TODO Pentix
+   It's like Tetris, but the shapes have five squares.
+** TODO The Sniper Knifers
+   Platformer arena for multiple players, all snipers.  The sniper
+   rifles are a bit unusual: you press the mouse button, it starts
+   charging, then, after 2s if fires automatically, then it takes 4s
+   to cool down.  So, you have to get into position, commit to firing,
+   aim, and hit something.  Obviously, its instagib.  There's also
+   secondary fire, which is a melee knife.  Also instagib.
+** TODO Spellslinger
+   A game about programming magic.
+** TODO Uber Hans
+   It's not Super Mario because the protagonist is German and it takes
+   place in a Grimm's Fairy Tails world.
