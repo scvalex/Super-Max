@@ -22,7 +22,7 @@ import Entities.InvisibleWall ( InvisibleWall, EntityParameters(..) )
 import Entities.Notice ( Notice, EntityParameters(..) )
 import Entities.RoomExit ( RoomExit, EntityParameters(..) )
 import Entities.Zombie ( Zombie )
-import Game.Engine ( GameEvent(..)
+import Game.Engine ( InputEvent(..)
                    , Game, getsGameState, modifyGameState, getGameTick, upon, randomR
                    , Picture(..)
                    , TextAlignment(..)
@@ -251,7 +251,7 @@ drawState w =
     fromRoomCoordinates :: Picture -> Picture
     fromRoomCoordinates = fromAreaCoordinates (getRoomBounds (getArea w))
 
-handleInput :: GameEvent -> Game State (Maybe GlobalCommand)
+handleInput :: InputEvent -> Game State (Maybe GlobalCommand)
 handleInput (InputEvent ev) = handleGlobalKey ev $ do
     state <- getsGameState getState
     case state of

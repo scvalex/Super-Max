@@ -3,7 +3,7 @@
 
 module Game.Engine (
         -- * The Game
-        Game, GameEvent(..),
+        Game, InputEvent(..),
 
         -- * Pictures
         Picture(..),
@@ -151,11 +151,11 @@ data EngineState s = EngineState { getInnerState :: s
                                  }
 
 -- | The events the engine's asynchronous components may send/receive.
-data EngineEvent s = GameEvent GameEvent
+data EngineEvent s = GameInput InputEvent
                    | GameAction (Game s ())
 
--- | The events a game may receive.
-data GameEvent = InputEvent Event
+-- | The input events a game may receive.
+data InputEvent = InputEvent Event
 
 -- | Psych!  It's (almost) a state monad!
 newtype Game s a = Game { runGame :: EngineState s -> (a, EngineState s) }
@@ -361,7 +361,7 @@ play :: forall w.
                                               -- initial game state
      -> Game w ()                             -- ^ An initialization action.
      -> (w -> Picture)                        -- ^ Draw a particular state
-     -> (GameEvent -> Game w ())              -- ^ Update the state after a 'GameEvent'
+     -> (InputEvent -> Game w ())             -- ^ Update the state after an 'InputEvent'
      -> (Float -> Game w ())                  -- ^ Update the state after a tick
      -> IO ()
 play tps loadResources wInit start drawGame onInput onTick = do
@@ -471,7 +471,7 @@ play tps loadResources wInit start drawGame onInput onTick = do
                 Just event -> do
                     -- Notify game of event.
                     let ((), es2) = case event of
-                            GameEvent gevent -> runGame (onInput gevent) es1
+                            GameInput gevent -> runGame (onInput gevent) es1
                             GameAction gact  -> runGame gact es1
                     return es2
 
@@ -489,7 +489,7 @@ play tps loadResources wInit start drawGame onInput onTick = do
     forwardEvents :: EngineState s -> IO (EngineState s)
     forwardEvents es = managedForkIO es $ forever $ do
         event <- waitEvent
-        atomically (writeTChan (getEventChan es) (GameEvent (InputEvent event)))
+        atomically (writeTChan (getEventChan es) (GameInput (InputEvent event)))
 
     -- | Fork a thread and keep track of its id.
     managedForkIO :: EngineState s -> IO () -> IO (EngineState s)

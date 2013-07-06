@@ -2,7 +2,7 @@ module Main where
 
 import Data.Dynamic ( Dynamic )
 import Data.Map ( Map )
-import Game.Engine ( Game, GameEvent, play, quitGame
+import Game.Engine ( Game, InputEvent, play, quitGame
                    , modifyGameState, getGameState, withAlternateGameState
                    , Picture(..) )
 import GlobalCommand ( GlobalCommand(..) )
@@ -72,7 +72,7 @@ drawState ((screenW, screenH), gs) =
         Survival state   -> Survival.drawState state
         HighScores state -> HighScores.drawState state
 
-handleInput :: GameEvent -> Game FullState ()
+handleInput :: InputEvent -> Game FullState ()
 handleInput ev = do
     (_, gs) <- getGameState
     mcommand <- case gs of

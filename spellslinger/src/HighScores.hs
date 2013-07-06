@@ -19,7 +19,7 @@ import Game.Engine ( Game, modifyGameState
                    , upon, getResource
                    , Picture(..), TextAlignment(..)
                    , Colour(..), colourFromHexString
-                   , GameEvent(..), Event(..), Keysym(..), SDLKey(..) )
+                   , InputEvent(..), Event(..), Keysym(..), SDLKey(..) )
 import GHC.Generics ( Generic )
 import GlobalCommand ( GlobalCommand(..) )
 import Network.HTTP ( simpleHTTP, getRequest, getResponseBody )
@@ -80,7 +80,7 @@ drawState state =
                   printf "%d" (score entry)
                 ]
 
-handleInput :: GameEvent -> Game State (Maybe GlobalCommand)
+handleInput :: InputEvent -> Game State (Maybe GlobalCommand)
 handleInput (InputEvent (KeyUp (Keysym { symKey = SDLK_ESCAPE }))) = do
     return (Just ToMainMenu)
 handleInput _ =

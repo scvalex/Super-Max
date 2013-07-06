@@ -15,7 +15,7 @@ import Game.Engine ( Game, modifyGameState, getGameState, getsGameState
                    , randomR, upon, getResource
                    , Picture(..), TextAlignment(..)
                    , Colour(..), colourFromHexString
-                   , GameEvent(..), Event(..), SDLKey(..), Keysym(..) )
+                   , InputEvent(..), Event(..), SDLKey(..), Keysym(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Profile ( Profile(..), loadOrNewProfile, saveProfile )
 import qualified Data.Map as M
@@ -92,7 +92,7 @@ drawState state =
                           Text 60 CenterAligned headline
                         ]
 
-handleInput :: GameEvent -> Game State (Maybe GlobalCommand)
+handleInput :: InputEvent -> Game State (Maybe GlobalCommand)
 handleInput (InputEvent (KeyDown (Keysym { symKey = SDLK_ESCAPE }))) = do
     return (Just ToQuit)
 handleInput (InputEvent (KeyDown (Keysym { symKey = SDLK_UP }))) = do
