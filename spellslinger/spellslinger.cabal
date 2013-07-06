@@ -36,7 +36,7 @@ Library
   Extensions:           ScopedTypeVariables, OverloadedStrings
   Exposed-modules:      Game.Engine,
                         Game.Entity,
-                        Game.Event
+                        Game.Input
 
 Executable spellslinger
   Build-depends:        aeson,

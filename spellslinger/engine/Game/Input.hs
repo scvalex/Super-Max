@@ -1,4 +1,4 @@
-module Game.Event (
+module Game.Input (
         InputEvent(..),
 
         -- * SDL events (re-export)

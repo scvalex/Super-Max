@@ -3,7 +3,7 @@
 
 module Game.Engine (
         -- * Sub-modules
-        module Game.Event,
+        module Game.Input,
 
         -- * The Game
         Game,
@@ -58,7 +58,7 @@ import qualified Graphics.UI.SDL.TTF as TTF
 import qualified System.Random as R
 
 -- Re-exported modules
-import Game.Event
+import Game.Input
 
 --------------------------------
 -- Missing instances
