@@ -2,17 +2,17 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Game.Engine (
+        -- * Sub-modules
+        module Game.Event,
+
         -- * The Game
-        Game, InputEvent(..),
+        Game,
 
         -- * Pictures
         Picture(..),
         TextAlignment(..),
         Colour(..), white, black, greyN,
         colourToHexString, colourFromHexString,
-
-        -- * SDL events (re-export)
-        Event(..), SDLKey(..), Keysym(..),
 
         -- * Engine interface
         play, quitGame, getGameState, getsGameState, modifyGameState,
@@ -43,7 +43,7 @@ import Graphics.UI.SDL ( InitFlag(..), withInit
                        , getVideoInfo, videoInfoWidth, videoInfoHeight
                        , Rect(..), mapRGBA
                        , surfaceGetPixelFormat, fillRect
-                       , Event(..), SDLKey(..), Keysym(..), waitEvent
+                       , waitEvent
                        , blitSurface
                        , Rect(..), getClipRect )
 import System.Environment ( getEnv )
@@ -56,6 +56,9 @@ import qualified Data.Set as S
 import qualified Graphics.UI.SDL as SDL
 import qualified Graphics.UI.SDL.TTF as TTF
 import qualified System.Random as R
+
+-- Re-exported modules
+import Game.Event
 
 --------------------------------
 -- Missing instances
@@ -153,9 +156,6 @@ data EngineState s = EngineState { getInnerState :: s
 -- | The events the engine's asynchronous components may send/receive.
 data EngineEvent s = GameInput InputEvent
                    | GameAction (Game s ())
-
--- | The input events a game may receive.
-data InputEvent = InputEvent Event
 
 -- | Psych!  It's (almost) a state monad!
 newtype Game s a = Game { runGame :: EngineState s -> (a, EngineState s) }
