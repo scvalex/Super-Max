@@ -36,10 +36,11 @@ Todo
 * [0/5] Spellslinger 2D
 ** TODO Distinguish between deterministic and non-deterministic games
 ** TODO Abstract out engine interface
+   :LOGBOOK:
+   CLOCK: [2013-07-06 Sat 10:10]--[2013-07-06 Sat 10:47] =>  0:37
+   :END:
 ** TODO GL/GLUT/GLEW-based engine
 ** TODO Options menu
-** TODO Inverted Y
-** TODO First Person Mode
 ** TODO Use continuous updating in the game
 
 * Spellsliger: Arena

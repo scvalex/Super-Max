@@ -21,9 +21,9 @@ module Game.Engine (
     ) where
 
 import Control.Applicative ( Applicative(..), (<$>) )
-import Control.Concurrent ( threadDelay, forkIO, ThreadId )
+import Control.Concurrent ( forkIO, ThreadId )
 import Control.Concurrent.STM ( atomically
-                              , TChan, newTChanIO, readTChan, writeTChan )
+                              , TChan, newTChanIO, tryReadTChan, writeTChan )
 import Control.Exception ( Exception, assert )
 import Control.Monad ( forever )
 import Data.Char ( digitToInt )
@@ -32,7 +32,7 @@ import Data.Foldable ( foldlM )
 import Data.Map ( Map )
 import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
-import Data.Time.Clock ( UTCTime, getCurrentTime, diffUTCTime )
+import Data.Time.Clock ( UTCTime, getCurrentTime, addUTCTime )
 import Data.Traversable ( forM )
 import Data.Typeable ( Typeable )
 import Data.Word ( Word8 )
@@ -100,7 +100,7 @@ colourFromHexString ('#':r1:r2:g1:g2:b1:b2:_) =
         g = digitToInt g1 * 16 + digitToInt g2
         b = digitToInt b1 * 16 + digitToInt b2 in
     Just (RGBA (fromIntegral r) (fromIntegral g) (fromIntegral b) 255)
-colourFromHexString col =
+colourFromHexString _col =
     Nothing
 
 
@@ -155,9 +155,7 @@ data EngineEvent s = GameEvent GameEvent
                    | GameAction (Game s ())
 
 -- | The events a game may receive.
-data GameEvent = Tick (UTCTime, Double) -- ^ A logical tick with the current time and the
-                                        -- number of seconds since the last tick.
-               | InputEvent Event       -- ^ An input (mouse, keyboard, etc.) event
+data GameEvent = InputEvent Event
 
 -- | Psych!  It's (almost) a state monad!
 newtype Game s a = Game { runGame :: EngineState s -> (a, EngineState s) }
@@ -364,8 +362,9 @@ play :: forall w.
      -> Game w ()                             -- ^ An initialization action.
      -> (w -> Picture)                        -- ^ Draw a particular state
      -> (GameEvent -> Game w ())              -- ^ Update the state after a 'GameEvent'
+     -> (Float -> Game w ())                  -- ^ Update the state after a tick
      -> IO ()
-play tps loadResources wInit start drawGame onEvent = do
+play tps loadResources wInit start drawGame onInput onTick = do
     withScreen $ \screenW screenH screen -> do
         putStrLn "SDL initialised"
 
@@ -403,53 +402,78 @@ play tps loadResources wInit start drawGame onEvent = do
                              , getResDir     = resDir
                              , getRes        = resources
                              }
-        -- Set up the first tick.
-        initTime <- getCurrentTime
-        es' <- tick initTime es
 
         -- Forward SDL event.
-        es'' <- forwardEvents es'
+        es' <- forwardEvents es
 
         -- Start the game
-        let ((), es''') = runGame start es''
+        let ((), es'') = runGame start es'
 
-        playLoop screen screenW screenH fonts es'''
+        fixedSliceLoop (1.0 / fromIntegral tps) screen screenW screenH fonts es''
   where
-    playLoop :: Surface -> Int -> Int -> Fonts -> EngineState w -> IO ()
-    playLoop screen screenW screenH fonts es = do
-        -- Block for next event.
-        event <- atomically (readTChan (getEventChan es))
+    -- | A fixed slice loop.  See this article for details:
+    -- http://fabiensanglard.net/timer_and_framerate/index.php
+    fixedSliceLoop :: Float          -- ^ Slice in s
+                   -> Surface        -- ^ Screen surface
+                   -> Int            -- ^ Screen width
+                   -> Int            -- ^ Screen height
+                   -> Fonts          -- ^ Fonts map
+                   -> EngineState w  -- ^ Game state
+                   -> IO ()
+    fixedSliceLoop slice screen screenW screenH fonts es0 = do
+        now <- getCurrentTime
+        fixedSliceLoop' now es0
+      where
+        fixedSliceLoop' simulationTime1 es1 = do
+            now <- getCurrentTime
+            (simulationTime2, es2) <- updateUntilSimulationInTheFuture now simulationTime1 es1
 
-        -- Notify game of event.
-        let ((), es') = case event of
-                GameEvent gevent -> runGame (onEvent gevent) es
-                GameAction gact  -> runGame gact es
+            -- Draw the current state.
+            draw screen fonts idmtx black $
+                FilledRectangle 0 0 (fromIntegral screenW) (fromIntegral screenH)
+            draw screen fonts idmtx white $
+                -- The origin is in the bottom right corner
+                Translate 0.0 (fromIntegral screenH) $
+                Scale 1.0 (-1.0) $
+                (drawGame (getInnerState es2))
+            SDL.flip screen
 
-        if isTerminating es'
-            then do
-                shutdown es'
-            else do
-                -- Draw the current state.
-                draw screen fonts idmtx black $
-                    FilledRectangle 0 0 (fromIntegral screenW) (fromIntegral screenH)
-                draw screen fonts idmtx white $
-                    -- The origin is in the bottom right corner
-                    Translate 0.0 (fromIntegral screenH) $
-                    Scale 1.0 (-1.0) $
-                    (drawGame (getInnerState es'))
-                SDL.flip screen
+            -- Start queued IO actions
+            es3 <- startQueuedIO es2
 
-                -- Start queued IO actions
-                es'' <- startQueuedIO es'
+            if isTerminating es3
+                then shutdown es3
+                else fixedSliceLoop' simulationTime2 es3
 
-                -- Set up the next tick.
-                es''' <- case event of
-                    GameEvent (Tick (prevTime, _)) ->
-                        tick prevTime (es'' { getTick = getTick es'' + 1 })
-                    _ ->
-                        return es''
+        updateUntilSimulationInTheFuture :: UTCTime
+                                         -> UTCTime
+                                         -> EngineState w
+                                         -> IO (UTCTime, EngineState w)
+        updateUntilSimulationInTheFuture now simulationTime1 es1 = do
+            if simulationTime1 < now
+                then do
+                    es2 <- processEvents es1
+                    let ((), es3) = runGame (onTick slice) es2  -- Fixed slice
+                    let simulationTime2 = addUTCTime (fromRational (toRational slice))
+                                                     simulationTime1
+                    return (simulationTime2, es3)
+                else do
+                    return (simulationTime1, es1)
 
-                playLoop screen screenW screenH fonts es'''
+        processEvents :: EngineState w -> IO (EngineState w)
+        processEvents es1 = do
+            -- Get next event, if any
+            mevent <- atomically $ tryReadTChan (getEventChan es1)
+
+            case mevent of
+                Nothing -> do
+                    return es1
+                Just event -> do
+                    -- Notify game of event.
+                    let ((), es2) = case event of
+                            GameEvent gevent -> runGame (onInput gevent) es1
+                            GameAction gact  -> runGame gact es1
+                    return es2
 
     startQueuedIO :: EngineState w -> IO (EngineState w)
     startQueuedIO (es@EngineState { getQueuedIO = ioacts }) = do
@@ -460,15 +484,6 @@ play tps loadResources wInit start drawGame onEvent = do
             managedForkIO es0 $ do
                 x <- act
                 atomically (writeTChan (getEventChan es0) (GameAction (handler x)))
-
-    tick :: UTCTime -> EngineState s -> IO (EngineState s)
-    tick prevTime es = managedForkIO es $ do
-        now <- getCurrentTime
-        -- FIXME Use this instead: http://fabiensanglard.net/timer_and_framerate/index.php
-        let delta = fromRational (toRational (diffUTCTime now prevTime))
-            desiredDelay = fromIntegral (1000000 `div` tps)
-        threadDelay (floor (min desiredDelay (2.0 * desiredDelay - delta * 1000000.0)))
-        atomically (writeTChan (getEventChan es) (GameEvent (Tick (now, delta))))
 
     -- | Wait for SDL event and forward them to the event channel.
     forwardEvents :: EngineState s -> IO (EngineState s)

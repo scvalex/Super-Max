@@ -5,7 +5,7 @@ module HighScores (
         State, initState, start,
 
         -- * Callbacks
-        drawState, handleEvent
+        drawState, handleInput, handleTick
     ) where
 
 import Control.Applicative ( (<$>) )
@@ -80,11 +80,14 @@ drawState state =
                   printf "%d" (score entry)
                 ]
 
-handleEvent :: GameEvent -> Game State (Maybe GlobalCommand)
-handleEvent (InputEvent (KeyUp (Keysym { symKey = SDLK_ESCAPE }))) = do
+handleInput :: GameEvent -> Game State (Maybe GlobalCommand)
+handleInput (InputEvent (KeyUp (Keysym { symKey = SDLK_ESCAPE }))) = do
     return (Just ToMainMenu)
-handleEvent _ =
+handleInput _ =
     return Nothing
+
+handleTick :: Float -> Game State (Maybe GlobalCommand)
+handleTick _ = return Nothing
 
 ----------------------
 -- Score fetching

@@ -3,7 +3,7 @@ module MainMenu (
         State, initState, start, loadResources,
 
         -- * Callbacks
-        drawState, handleEvent
+        drawState, handleInput, handleTick
     ) where
 
 import Control.Applicative ( (<$>) )
@@ -92,22 +92,22 @@ drawState state =
                           Text 60 CenterAligned headline
                         ]
 
-handleEvent :: GameEvent -> Game State (Maybe GlobalCommand)
-handleEvent (InputEvent (KeyDown (Keysym { symKey = SDLK_ESCAPE }))) = do
+handleInput :: GameEvent -> Game State (Maybe GlobalCommand)
+handleInput (InputEvent (KeyDown (Keysym { symKey = SDLK_ESCAPE }))) = do
     return (Just ToQuit)
-handleEvent (InputEvent (KeyDown (Keysym { symKey = SDLK_UP }))) = do
+handleInput (InputEvent (KeyDown (Keysym { symKey = SDLK_UP }))) = do
     modifyGameState (\s -> s { getSelectedItem = max 0 (getSelectedItem s - 1) })
     return Nothing
-handleEvent (InputEvent (KeyDown (Keysym { symKey = SDLK_DOWN }))) = do
+handleInput (InputEvent (KeyDown (Keysym { symKey = SDLK_DOWN }))) = do
     modifyGameState (\s -> s { getSelectedItem = min (length (getItems s) - 1)
                                                      (getSelectedItem s + 1) })
     return Nothing
-handleEvent (InputEvent (KeyDown (Keysym { symKey = key })))
+handleInput (InputEvent (KeyDown (Keysym { symKey = key })))
     | key `elem` [SDLK_SPACE, SDLK_RETURN] = do
         state <- getGameState
         -- The index can't be wrong, unless we screwed up updating getSelectedItem.
         return (Just (snd (getItems state !! getSelectedItem state)))
-handleEvent (InputEvent (KeyDown (Keysym { symKey = SDLK_r }))) = do
+handleInput (InputEvent (KeyDown (Keysym { symKey = SDLK_r }))) = do
     cols <- getColours
     i <- randomR (0, length cols - 1)
     let (col, colName) = cols !! i
@@ -128,8 +128,11 @@ handleEvent (InputEvent (KeyDown (Keysym { symKey = SDLK_r }))) = do
             saveProfile profile `upon` \() ->
             return ()
     return Nothing
-handleEvent _ =
+handleInput _ =
     return Nothing
+
+handleTick :: Float -> Game State (Maybe GlobalCommand)
+handleTick _ = return Nothing
 
 ----------------------
 -- Flavour text

@@ -6,7 +6,7 @@ module Survival (
         State, initState, start,
 
         -- * Callbacks
-        drawState, handleEvent
+        drawState, handleInput, handleTick
     ) where
 
 import Common ( intRectangle, fromAreaCoordinates
@@ -54,7 +54,7 @@ data State =
     State { getState        :: RoundState
           , getLevel        :: Maybe Level
           , getScore        :: Score
-          , getTime         :: Double
+          , getTime         :: Float
           , getArea         :: Area
           , getPlayer       :: Player
           , getHeldDownKeys :: Set Keysym -- ^ We get key up and key down events, but we
@@ -251,15 +251,8 @@ drawState w =
     fromRoomCoordinates :: Picture -> Picture
     fromRoomCoordinates = fromAreaCoordinates (getRoomBounds (getArea w))
 
-handleEvent :: GameEvent -> Game State (Maybe GlobalCommand)
-handleEvent (InputEvent ev) =
-    handleInputEvent ev
-handleEvent (Tick (_, t)) = do
-    handleTick t
-    return Nothing
-
-handleInputEvent :: Event -> Game State (Maybe GlobalCommand)
-handleInputEvent ev = handleGlobalKey ev $ do
+handleInput :: GameEvent -> Game State (Maybe GlobalCommand)
+handleInput (InputEvent ev) = handleGlobalKey ev $ do
     state <- getsGameState getState
     case state of
         Loading ->
@@ -321,16 +314,16 @@ processKey key = do
         _ ->
             return ()
 
-handleTick :: Double -> Game State ()
-handleTick t = do
+handleTick :: Float -> Game State (Maybe GlobalCommand)
+handleTick tDelta = do
     state <- getsGameState getState
     case state of
         -- We enumerate all the cases here so that, when we add a new one, we don't forget
         -- about this.
-        Loading      -> return ()
-        PreRound {}  -> return ()
-        InRound      -> handleTickInRound
-        PostRound {} -> return ()
+        Loading      -> return Nothing
+        PreRound {}  -> return Nothing
+        InRound      -> handleTickInRound >> return Nothing
+        PostRound {} -> return Nothing
   where
     handleTickInRound :: Game State ()
     handleTickInRound =
@@ -344,7 +337,7 @@ handleTick t = do
     -- Increment the ticker by the elapsed amount of time.
     updateTime :: Game State ()
     updateTime = do
-        modifyGameState (\w -> w { getTime = getTime w + t })
+        modifyGameState (\w -> w { getTime = getTime w + tDelta })
 
     -- Some keys were held down, so we didn't see them "happen" this turn.  Simulate key
     -- presses for all keys that are currently being held down.
@@ -474,7 +467,7 @@ instance Behaviour State InvisibleWall where
 -- Helpers
 ----------------------
 
-formatSeconds :: Double -> String
+formatSeconds :: Float -> String
 formatSeconds t = let secs = floor t :: Int
                       mins = secs `div` 60 in
                   printf "%02d:%02d.%d"

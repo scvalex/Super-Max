@@ -25,7 +25,7 @@ data GameState = MainMenu MainMenu.State
 ----------------------
 
 tps :: Int
-tps = 10
+tps = 8
 
 ----------------------
 -- Main
@@ -44,7 +44,8 @@ main = do
         (\screenW screenH -> ((screenW, screenH), MainMenu MainMenu.initState))
         start
         drawState
-        handleEvent
+        handleInput
+        handleTick
 
 start :: Game FullState ()
 start = do
@@ -71,40 +72,49 @@ drawState ((screenW, screenH), gs) =
         Survival state   -> Survival.drawState state
         HighScores state -> HighScores.drawState state
 
-handleEvent :: GameEvent -> Game FullState ()
-handleEvent ev = do
+handleInput :: GameEvent -> Game FullState ()
+handleInput ev = do
     (_, gs) <- getGameState
     mcommand <- case gs of
-        MainMenu _   -> inMainMenu (MainMenu.handleEvent ev)
-        Survival _   -> inSurvival (Survival.handleEvent ev)
-        HighScores _ -> inHighScores (HighScores.handleEvent ev)
+        MainMenu _   -> inMainMenu (MainMenu.handleInput ev)
+        Survival _   -> inSurvival (Survival.handleInput ev)
+        HighScores _ -> inHighScores (HighScores.handleInput ev)
     handleGlobalCommand mcommand
-  where
-    handleGlobalCommand :: Maybe GlobalCommand -> Game FullState ()
-    handleGlobalCommand Nothing =
-        return ()
-    handleGlobalCommand (Just ToContinue) = do
-        (dims, _) <- getGameState
-        modifyGameState (\_ -> (dims, Survival Survival.initState))
-        Nothing <- inSurvival (Survival.start Nothing >> return Nothing)
-        return ()
-    handleGlobalCommand (Just ToNewGame) = do
-        (dims, _) <- getGameState
-        modifyGameState (\_ -> (dims, Survival Survival.initState))
-        Nothing <- inSurvival (Survival.start (Just (1, 0)) >> return Nothing)
-        return ()
-    handleGlobalCommand (Just ToMainMenu) = do
-        (dims, _) <- getGameState
-        modifyGameState (\_ -> (dims, MainMenu MainMenu.initState))
-        Nothing <- inMainMenu (MainMenu.start >> return Nothing)
-        return ()
-    handleGlobalCommand (Just ToHighScores) = do
-        (dims, _) <- getGameState
-        modifyGameState (\_ -> (dims, HighScores HighScores.initState))
-        Nothing <- inHighScores (HighScores.start >> return Nothing)
-        return ()
-    handleGlobalCommand (Just ToQuit) =
-        quitGame
+
+handleTick :: Float -> Game FullState ()
+handleTick tDelta = do
+    (_, gs) <- getGameState
+    mcommand <- case gs of
+        MainMenu _   -> inMainMenu (MainMenu.handleTick tDelta)
+        Survival _   -> inSurvival (Survival.handleTick tDelta)
+        HighScores _ -> inHighScores (HighScores.handleTick tDelta)
+    handleGlobalCommand mcommand
+
+handleGlobalCommand :: Maybe GlobalCommand -> Game FullState ()
+handleGlobalCommand Nothing =
+    return ()
+handleGlobalCommand (Just ToContinue) = do
+    (dims, _) <- getGameState
+    modifyGameState (\_ -> (dims, Survival Survival.initState))
+    Nothing <- inSurvival (Survival.start Nothing >> return Nothing)
+    return ()
+handleGlobalCommand (Just ToNewGame) = do
+    (dims, _) <- getGameState
+    modifyGameState (\_ -> (dims, Survival Survival.initState))
+    Nothing <- inSurvival (Survival.start (Just (1, 0)) >> return Nothing)
+    return ()
+handleGlobalCommand (Just ToMainMenu) = do
+    (dims, _) <- getGameState
+    modifyGameState (\_ -> (dims, MainMenu MainMenu.initState))
+    Nothing <- inMainMenu (MainMenu.start >> return Nothing)
+    return ()
+handleGlobalCommand (Just ToHighScores) = do
+    (dims, _) <- getGameState
+    modifyGameState (\_ -> (dims, HighScores HighScores.initState))
+    Nothing <- inHighScores (HighScores.start >> return Nothing)
+    return ()
+handleGlobalCommand (Just ToQuit) =
+    quitGame
 
 ----------------------
 -- Sub-state manipulations
