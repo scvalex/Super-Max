@@ -27,7 +27,7 @@ import Game.Engine ( InputEvent(..)
                    , Picture(..)
                    , TextAlignment(..)
                    , Colour(..), black, greyN, colourToHexString
-                   , Event(..), SDLKey(..), Keysym(..) )
+                   , InputEvent(..), KeyEvent(..), Key(..) )
 import Game.Entity ( Entity, Behaviour(..), EntityId(..), Position(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Profile ( Profile(..), loadOrNewProfile )
@@ -57,12 +57,12 @@ data State =
           , getTime         :: Float
           , getArea         :: Area
           , getPlayer       :: Player
-          , getHeldDownKeys :: Set Keysym -- ^ We get key up and key down events, but we
-                                          -- need to handle holding down a key ourselves.
-                                          -- We keep track of which keys are being held
-                                          -- down at any time.  When we update the world,
-                                          -- we process those keys as well as all the keys
-                                          -- that were pressed and released.
+          , getHeldDownKeys :: Set Key -- ^ We get key up and key down events, but we need
+                                       -- to handle holding down a key ourselves.  We keep
+                                       -- track of which keys are being held down at any
+                                       -- time.  When we update the world, we process
+                                       -- those keys as well as all the keys that were
+                                       -- pressed and released.
           , getEntities     :: Map EntityId SomeEntity
           , getPlayerColour :: Colour
           }
@@ -259,7 +259,7 @@ handleInput (InputEvent ev) = handleGlobalKey ev $ do
             return ()
         PreRound {}  -> do
             case ev of
-                KeyUp (Keysym { symKey = SDLK_SPACE }) -> do
+                KeyRelease KeySpace -> do
                     modifyGameState (\w' -> w' { getState = InRound })
                 _ -> do
                     handleInRoundEvent
@@ -267,7 +267,7 @@ handleInput (InputEvent ev) = handleGlobalKey ev $ do
             handleInRoundEvent
         PostRound { getFurtherOptions = opts } -> do
             case ev of
-                KeyUp (Keysym { symKey = SDLK_SPACE })-> do
+                KeyRelease KeySpace -> do
                     case opts of
                         Continue -> do
                             Just lvl <- getsGameState getLevel
@@ -283,33 +283,31 @@ handleInput (InputEvent ev) = handleGlobalKey ev $ do
     handleInRoundEvent = do
         keys <- getsGameState getHeldDownKeys
         case ev of
-            KeyDown key -> do
+            KeyPress key -> do
                 modifyGameState (\w -> w { getHeldDownKeys = S.insert key keys })
                 processKey key
-            KeyUp key -> do
+            KeyRelease key -> do
                 modifyGameState (\w -> w { getHeldDownKeys = S.delete key keys })
-            _ -> do
-                return ()
 
     -- Handle keys that work regardless of gamestate
-    handleGlobalKey :: Event -> Game State (Maybe GlobalCommand) -> Game State (Maybe GlobalCommand)
-    handleGlobalKey (KeyUp (Keysym {symKey = SDLK_ESCAPE})) _ = do
+    handleGlobalKey :: KeyEvent -> Game State (Maybe GlobalCommand) -> Game State (Maybe GlobalCommand)
+    handleGlobalKey (KeyRelease KeyEsc) _ = do
         return (Just ToMainMenu)
     handleGlobalKey _ fallback = do
         fallback
 
 -- | A key is pressed -- update the world accordingly.
-processKey :: Keysym -> Game State ()
+processKey :: Key -> Game State ()
 processKey key = do
     p <- getsGameState getPlayer
     case key of
-        Keysym { symKey = SDLK_LEFT } ->
+        KeyLeft ->
             modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just West } })
-        Keysym { symKey = SDLK_RIGHT } ->
+        KeyRight ->
             modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just East } })
-        Keysym { symKey = SDLK_DOWN } ->
+        KeyDown ->
             modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just South } })
-        Keysym { symKey = SDLK_UP } ->
+        KeyUp ->
             modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just North } })
         _ ->
             return ()

@@ -15,7 +15,7 @@ import Game.Engine ( Game, modifyGameState, getGameState, getsGameState
                    , randomR, upon, getResource
                    , Picture(..), TextAlignment(..)
                    , Colour(..), colourFromHexString
-                   , InputEvent(..), Event(..), SDLKey(..), Keysym(..) )
+                   , InputEvent(..), KeyEvent(..), Key(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Profile ( Profile(..), loadOrNewProfile, saveProfile )
 import qualified Data.Map as M
@@ -93,21 +93,21 @@ drawState state =
                         ]
 
 handleInput :: InputEvent -> Game State (Maybe GlobalCommand)
-handleInput (InputEvent (KeyDown (Keysym { symKey = SDLK_ESCAPE }))) = do
+handleInput (InputEvent (KeyPress KeyEsc)) = do
     return (Just ToQuit)
-handleInput (InputEvent (KeyDown (Keysym { symKey = SDLK_UP }))) = do
+handleInput (InputEvent (KeyPress KeyUp)) = do
     modifyGameState (\s -> s { getSelectedItem = max 0 (getSelectedItem s - 1) })
     return Nothing
-handleInput (InputEvent (KeyDown (Keysym { symKey = SDLK_DOWN }))) = do
+handleInput (InputEvent (KeyPress KeyDown)) = do
     modifyGameState (\s -> s { getSelectedItem = min (length (getItems s) - 1)
                                                      (getSelectedItem s + 1) })
     return Nothing
-handleInput (InputEvent (KeyDown (Keysym { symKey = key })))
-    | key `elem` [SDLK_SPACE, SDLK_RETURN] = do
+handleInput (InputEvent (KeyPress key))
+    | key `elem` [KeySpace, KeyEnter] = do
         state <- getGameState
         -- The index can't be wrong, unless we screwed up updating getSelectedItem.
         return (Just (snd (getItems state !! getSelectedItem state)))
-handleInput (InputEvent (KeyDown (Keysym { symKey = SDLK_r }))) = do
+handleInput (InputEvent (KeyPress (CharKey 'r'))) = do
     cols <- getColours
     i <- randomR (0, length cols - 1)
     let (col, colName) = cols !! i

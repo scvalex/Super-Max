@@ -19,7 +19,7 @@ import Game.Engine ( Game, modifyGameState
                    , upon, getResource
                    , Picture(..), TextAlignment(..)
                    , Colour(..), colourFromHexString
-                   , InputEvent(..), Event(..), Keysym(..), SDLKey(..) )
+                   , InputEvent(..), KeyEvent(..), Key(..) )
 import GHC.Generics ( Generic )
 import GlobalCommand ( GlobalCommand(..) )
 import Network.HTTP ( simpleHTTP, getRequest, getResponseBody )
@@ -81,10 +81,8 @@ drawState state =
                 ]
 
 handleInput :: InputEvent -> Game State (Maybe GlobalCommand)
-handleInput (InputEvent (KeyUp (Keysym { symKey = SDLK_ESCAPE }))) = do
-    return (Just ToMainMenu)
-handleInput _ =
-    return Nothing
+handleInput (InputEvent (KeyRelease KeyEsc)) = return (Just ToMainMenu)
+handleInput _                                = return Nothing
 
 handleTick :: Float -> Game State (Maybe GlobalCommand)
 handleTick _ = return Nothing

@@ -1,5 +1,4 @@
 {-# LANGUAGE DeriveDataTypeable, StandaloneDeriving, ExistentialQuantification #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Game.Engine (
         -- * Sub-modules
@@ -59,12 +58,6 @@ import qualified System.Random as R
 
 -- Re-exported modules
 import Game.Input
-
---------------------------------
--- Missing instances
---------------------------------
-
-deriving instance Ord Keysym
 
 --------------------------------
 -- Colours
@@ -183,6 +176,7 @@ getGameState = Game (\s -> (getInnerState s, s))
 getsGameState :: (s -> a) -> Game s a
 getsGameState getField = Game (\s -> (getField (getInnerState s), s))
 
+--FIXME The game state should be identified by a counter incremented by modifyGameState.
 -- | Pass the current game state through the given function.
 modifyGameState :: (s -> s) -> Game s ()
 modifyGameState f = Game (\s -> ((), s { getInnerState = f (getInnerState s) }))
@@ -411,6 +405,8 @@ play tps loadResources wInit start drawGame onInput onTick = do
 
         fixedSliceLoop (1.0 / fromIntegral tps) screen screenW screenH fonts es''
   where
+    -- FIXME Non-deterministic games should just run at max speed.
+
     -- | A fixed slice loop.  See this article for details:
     -- http://fabiensanglard.net/timer_and_framerate/index.php
     fixedSliceLoop :: Float          -- ^ Slice in s
@@ -483,13 +479,15 @@ play tps loadResources wInit start drawGame onInput onTick = do
         startIOAction es0 (IOAction act handler) =
             managedForkIO es0 $ do
                 x <- act
-                atomically (writeTChan (getEventChan es0) (GameAction (handler x)))
+                atomically $ writeTChan (getEventChan es0) (GameAction (handler x))
 
     -- | Wait for SDL event and forward them to the event channel.
     forwardEvents :: EngineState s -> IO (EngineState s)
     forwardEvents es = managedForkIO es $ forever $ do
-        event <- waitEvent
-        atomically (writeTChan (getEventChan es) (GameInput (InputEvent event)))
+        sdlEvent <- waitEvent
+        case fromSdlEvent sdlEvent of
+            Nothing    -> return ()
+            Just event -> atomically $ writeTChan (getEventChan es) (GameInput event)
 
     -- | Fork a thread and keep track of its id.
     managedForkIO :: EngineState s -> IO () -> IO (EngineState s)
