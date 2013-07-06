@@ -22,9 +22,15 @@ Source-repository head
   Location:             https://github.com/scvalex/super-max.git
 
 Library
-  Build-depends:        base >= 4 && < 5, containers, filepath,
-                        SDL, SDL-ttf, random,
-                        stm, time, vect
+  Build-depends:        base >= 4 && < 5,
+                        containers,
+                        filepath,
+                        random,
+                        SDL,
+                        SDL-ttf,
+                        stm,
+                        time,
+                        vect
   Ghc-options:          -Wall
   Hs-Source-Dirs:       engine/
   Extensions:           ScopedTypeVariables, OverloadedStrings
@@ -33,9 +39,16 @@ Library
                         Game.Event
 
 Executable spellslinger
-  Build-depends:        base >= 4 && < 5, aeson, bytestring, containers,
-                        directory, filepath, HTTP, network,
-                        spellslinger, unix
+  Build-depends:        aeson,
+                        base >= 4 && < 5,
+                        bytestring,
+                        containers,
+                        directory,
+                        filepath,
+                        HTTP,
+                        network,
+                        spellslinger,
+                        unix
   Ghc-options:          -Wall -threaded
   Hs-Source-Dirs:       src/
   Extensions:           ScopedTypeVariables, OverloadedStrings
