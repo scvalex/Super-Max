@@ -3,6 +3,8 @@
 module Game.Engine (
         -- * Sub-modules
         module Game.Input,
+        module Game.Engine.GL,
+        module Game.Engine.GL.Drawing,
 
         -- * The Game
         Game,
@@ -58,6 +60,9 @@ import qualified System.Random as R
 
 -- Re-exported modules
 import Game.Input
+-- FIXME Get rid of the hiding.
+import Game.Engine.GL hiding ( draw )
+import Game.Engine.GL.Drawing
 
 --------------------------------
 -- Colours

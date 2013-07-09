@@ -37,6 +37,7 @@ Todo
 ** TODO Distinguish between deterministic and non-deterministic games
 ** TODO Abstract out engine interface
    :LOGBOOK:
+   CLOCK: [2013-07-09 Tue 21:53]--[2013-07-09 Tue 22:10] =>  0:17
    CLOCK: [2013-07-06 Sat 11:08]--[2013-07-06 Sat 11:46] =>  0:38
    CLOCK: [2013-07-06 Sat 11:06]--[2013-07-06 Sat 11:08] =>  0:02
    CLOCK: [2013-07-06 Sat 10:56]--[2013-07-06 Sat 11:00] =>  0:04
@@ -48,6 +49,7 @@ Todo
 ** TODO Options menu
 ** TODO Use continuous updating in the game
 
+** TODO Over the shoulder view
 ** Misc
    :LOGBOOK:
    CLOCK: [2013-07-06 Sat 11:00]--[2013-07-06 Sat 11:01] =>  0:01

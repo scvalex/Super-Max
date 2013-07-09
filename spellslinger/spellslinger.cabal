@@ -35,6 +35,8 @@ Library
   Hs-Source-Dirs:       engine/
   Extensions:           ScopedTypeVariables, OverloadedStrings
   Exposed-modules:      Game.Engine,
+                        Game.Engine.GL,
+                        Game.Engine.GL.Drawing,
                         Game.Entity,
                         Game.Input
 
