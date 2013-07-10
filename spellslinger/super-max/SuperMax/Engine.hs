@@ -104,7 +104,6 @@ colourFromHexString ('#':r1:r2:g1:g2:b1:b2:_) =
 colourFromHexString _col =
     Nothing
 
-
 --------------------------------
 -- Pictures
 --------------------------------
