@@ -27,8 +27,8 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Graphics.UI.GLFW as GLFW
 import qualified System.Random as R
-import SuperMax.GL.Drawing ( Drawing(..), Drawable(..) )
-import SuperMax.GL.Utils ( initRendering, checkError )
+import SuperMax.GL.Drawing ( Drawing(..) )
+import SuperMax.GL.Utils ( initRendering, checkError, makeShaderProgram )
 import SuperMax.Input ( InputEvent, fromGlfwKeyEvent )
 import System.Environment ( getEnv )
 import System.FilePath ( (</>) )
@@ -178,8 +178,8 @@ getResource name = Game (\s -> (M.lookup name (getRes s), s))
 -- Drawing
 --------------------------------
 
-draw :: Drawing -> IO ()
-draw _drawing =
+draw :: Map String Program -> Drawing -> IO ()
+draw _programs _drawing =
     return ()
 
 --------------------------------
@@ -195,6 +195,8 @@ instance Exception Shutdown
 play :: forall w.
         String                                -- ^ Window title
      -> Int                                   -- ^ Logical ticks per second
+     -> Map String (FilePath, FilePath)       -- ^ Shader program and associated vertex
+                                              -- and fragment shader paths
      -> (FilePath -> IO (Map String Dynamic)) -- ^ Resource pre-loader.
      -> (Int -> Int -> w)                     -- ^ Take the screen width and height, and
                                               -- return the initial game state
@@ -203,7 +205,7 @@ play :: forall w.
      -> (InputEvent -> Game w ())             -- ^ Update the state after an 'InputEvent'
      -> (Float -> Game w ())                  -- ^ Update the state after a tick
      -> IO ()
-play title tps loadResources wInit start drawGame onInput onTick = do
+play title tps programPaths loadResources wInit start drawGame onInput onTick = do
     glfwInitialization "GLFW.initialize" GLFW.initialize
 
     -- Setup window
@@ -232,18 +234,27 @@ play title tps loadResources wInit start drawGame onInput onTick = do
 
     putStrLn "GL initialised"
 
-    -- Load resources
+    -- FIXME Also look for resources in cabal data dir.
+
+    -- Resources path
     spellslingerDir <- CE.handle (\(_ :: CE.SomeException) -> return Nothing) $
                        Just <$> getEnv "SPELLSLINGER_DIR"
     let resDir = maybe "r" (</> "r") spellslingerDir
     _ <- printf "Loading resources from %s\n" resDir
 
+    -- Load shaders
+    programs <- makeShaderPrograms resDir programPaths
+
     -- FIXME Let the game specify which fonts to load
 
+    -- Load Fonts
     -- We don't bother freeing the fonts.
     -- fonts <- M.fromList <$> forM [10..80] (\size -> do
     --     font <- TTF.openFont (resDir </> "Ubuntu-C.ttf") size
     --     return (size, font))
+
+    -- Load game resources
+    resources <- loadResources resDir
 
     putStrLn "Resources loaded"
 
@@ -252,9 +263,6 @@ play title tps loadResources wInit start drawGame onInput onTick = do
 
     -- The random number generator used throughout the game.
     gen <- newStdGen
-
-    -- Pre-load resources
-    resources <- loadResources resDir
 
     (screenW, screenH) <- GLFW.getWindowDimensions
 
@@ -278,7 +286,7 @@ play title tps loadResources wInit start drawGame onInput onTick = do
     -- Start the game
     let ((), es') = runGame start es
 
-    fixedSliceLoop (1.0 / fromIntegral tps) es'
+    fixedSliceLoop (1.0 / fromIntegral tps) programs es'
   where
     -- | Callback for key events.  Convert them to our uniform representation and write
     -- them to the event channel.
@@ -300,10 +308,11 @@ play title tps loadResources wInit start drawGame onInput onTick = do
 
     -- | A fixed slice loop.  See this article for details:
     -- http://fabiensanglard.net/timer_and_framerate/index.php
-    fixedSliceLoop :: Float          -- ^ Slice in s
-                   -> EngineState w  -- ^ Game state
+    fixedSliceLoop :: Float              -- ^ Slice in s
+                   -> Map String Program -- ^ Program name => Shader Program
+                   -> EngineState w      -- ^ Game state
                    -> IO ()
-    fixedSliceLoop slice es0 = do
+    fixedSliceLoop slice programs es0 = do
         now <- getCurrentTime
         fixedSliceLoop' now es0
       where
@@ -314,6 +323,8 @@ play title tps loadResources wInit start drawGame onInput onTick = do
             -- Draw the current state.
             renderWorld (drawGame (engineInnerState es2))
 
+            -- FIXME Support interpolating drawings between updates.
+
             -- Start queued IO actions
             es3 <- startQueuedIO es2
 
@@ -323,7 +334,7 @@ play title tps loadResources wInit start drawGame onInput onTick = do
 
         renderWorld drawing = do
             clear [ ColorBuffer, DepthBuffer ]
-            draw drawing
+            draw programs drawing
             GLFW.swapBuffers
             checkError "renderWorld"
 
@@ -394,3 +405,13 @@ play title tps loadResources wInit start drawGame onInput onTick = do
         putStrLn "Shutdown"
         _ <- forM (S.toList (getThreads es)) (\tid -> CE.throwTo tid Shutdown)
         terminateGame
+
+    -- | Compile the given shaders into programs.
+    makeShaderPrograms :: FilePath -> Map String (FilePath, FilePath) -> IO (Map String Program)
+    makeShaderPrograms resDir programPaths = do
+        M.fromList <$> forM (M.toList programPaths)
+                            (\(name, (vertexShaderPath, fragmentShaderPath)) -> do
+                                  let vertexShaderPath' = resDir </> vertexShaderPath
+                                      fragmentShaderPath' = resDir </> fragmentShaderPath
+                                  program <- makeShaderProgram vertexShaderPath' fragmentShaderPath'
+                                  return (name, program))

@@ -1,15 +1,17 @@
 {-# LANGUAGE ExistentialQuantification #-}
 
 module SuperMax.GL.Drawing (
-        Drawing(..), Drawable(..)
+        Drawing(..), SomeDrawable(..), Drawable(..)
     ) where
 
-data Drawing = forall a. (Drawable a)
-             => Drawing { drawingScale       :: (Float, Float)
-                        , drawingTranslation :: (Float, Float)
-                        , drawingEntities    :: [a]
-                        }
+data SomeDrawable = forall a. (Drawable a) => SomeDrawable a
+
+data Drawing = Drawing { drawingScale       :: (Float, Float)
+                       , drawingTranslation :: (Float, Float)
+                       , drawingEntities    :: [SomeDrawable]
+                       }
 
 class Drawable a where
-    drawableVertices :: a -> [Float]
-    drawableUVs      :: a -> [Float]
+    drawableVertices    :: a -> [Float]
+    drawableUVs         :: a -> [Float]
+    drawableProgramName :: a -> String
