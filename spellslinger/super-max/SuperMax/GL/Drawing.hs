@@ -10,6 +10,7 @@ data SomeDrawable = forall a. (Drawable a) => SomeDrawable a
 
 data Drawing = Drawing { drawingViewMatrix :: Mat4
                        , drawingDrawables  :: [SomeDrawable]
+                       , drawingHudText    :: [(String, Float, Float, Float, String)]
                        }
 
 class Drawable a where

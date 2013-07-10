@@ -19,7 +19,7 @@ import Data.Function ( on )
 import Data.List ( groupBy )
 import Data.Map ( Map )
 import Data.Set ( Set )
-import Data.Vect.Float ( Mat4(..), Vec4(..), (.*.) )
+import Data.Vect.Float ( Mat4(..), Vec4(..), (.*.), idmtx )
 import Data.Time ( UTCTime, getCurrentTime, addUTCTime )
 import Data.Typeable ( Typeable )
 import Foreign.C.String ( withCString )
@@ -37,7 +37,7 @@ import qualified Graphics.UI.GLFW as GLFW
 import qualified System.Random as R
 import SuperMax.GL.Drawing ( Drawing(..), SomeDrawable(..), Drawable(..) )
 import SuperMax.GL.Utils ( initRendering, checkError, makeShaderProgram
-                         , GLFont, loadFontFromImage )
+                         , GLFont, loadFontFromImage, writeText2D )
 import SuperMax.Input ( InputEvent, fromGlfwKeyEvent )
 import System.Environment ( getEnv )
 import System.FilePath ( (</>) )
@@ -189,7 +189,7 @@ getResource name = Game (\s -> (M.lookup name (getRes s), s))
 --------------------------------
 
 draw :: Map String Program -> Map String GLFont -> Drawing -> IO ()
-draw programs _fonts drawing = do
+draw programs fonts drawing = do
     -- FIXME Don't generate objects in the drawing function.
 
     -- Setup a VBO with the drawing
@@ -241,6 +241,11 @@ draw programs _fonts drawing = do
 
     -- Cleanup
     deleteObjectNames [vertexBuffer]
+
+    -- Draw HUD text
+    forM_ (drawingHudText drawing) $ \(name, x, y, size, text) -> do
+        let font = maybe (error (printf "no such font %s" name)) id (M.lookup name fonts)
+        writeText2D font text x y size idmtx
   where
     -- | Group drawables that use the same program together.
     drawablesByProgram :: [(String, [SomeDrawable])]
