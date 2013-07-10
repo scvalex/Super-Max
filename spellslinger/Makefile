@@ -36,7 +36,7 @@ doc: build
 
 p:
 	permamake.sh $(shell find src/ -name '*.hs') \
-                     $(shell find engine/ -name '*.hs') \
+                     $(shell find super-max/ -name '*.hs') \
 	             *.cabal \
 	             Makefile
 

@@ -1,6 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 
-module Game.Engine.GL.Drawing (
+module SuperMax.GL.Drawing (
         Drawing(..), Drawable(..)
     ) where
 

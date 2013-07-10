@@ -1,4 +1,4 @@
-module Game.Input (
+module SuperMax.Input (
         InputEvent(..), KeyEvent(..), Key(..),
 
         -- * SDL events

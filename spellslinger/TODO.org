@@ -45,6 +45,9 @@ Todo
    CLOCK: [2013-07-06 Sat 10:10]--[2013-07-06 Sat 10:47] =>  0:37
    :END:
 ** TODO GL/GLUT/GLEW-based engine
+   :LOGBOOK:
+   CLOCK: [2013-07-10 Wed 12:43]
+   :END:
 ** TODO Retire SDL engine
 ** TODO Options menu
 ** TODO Use continuous updating in the game
