@@ -1,6 +1,9 @@
 {-# LANGUAGE DeriveDataTypeable, ExistentialQuantification #-}
 
 module SuperMax.GL (
+        -- * The Game
+        Game,
+
         -- * Engine interface
         play, quitGame, getGameState, getsGameState, modifyGameState,
         withAlternateGameState, randomR, mkUid, getGameTick, upon,
@@ -35,6 +38,7 @@ import qualified Data.Set as S
 import qualified Graphics.Rendering.OpenGL.Raw as Raw
 import qualified Graphics.UI.GLFW as GLFW
 import qualified System.Random as R
+import SuperMax.Colour ( toRGBTuple )
 import SuperMax.GL.Drawing ( Drawing(..), SomeDrawable(..), Drawable(..) )
 import SuperMax.GL.Utils ( initRendering, checkError, makeShaderProgram
                          , GLFont, loadFontFromImage, writeText2D )
@@ -210,7 +214,8 @@ draw programs fonts drawing = do
         forM_ drawables $ \drawable -> do
             -- Transfer vertices and colours to OpenGL
             let drawingData = concatMap (\(x, y, z) -> [x, y, z])
-                                        (drawableVertices drawable ++ drawableColours drawable)
+                                        (drawableVertices drawable ++
+                                         map toRGBTuple (drawableColours drawable))
             withArrayLen drawingData $ \len drawingDataPtr ->
                 bufferData ArrayBuffer $= ( fromIntegral (len * sizeOfFloat)
                                           , drawingDataPtr

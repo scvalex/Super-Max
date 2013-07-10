@@ -39,9 +39,10 @@ Library
   Hs-Source-Dirs:       super-max/
   Extensions:           ScopedTypeVariables, OverloadedStrings
   Exposed-modules:      SuperMax,
+                        SuperMax.Colour,
+                        SuperMax.Entity,
                         SuperMax.GL,
                         SuperMax.GL.Drawing,
-                        SuperMax.Entity,
                         SuperMax.Input
 
 -- Executable spellslinger
