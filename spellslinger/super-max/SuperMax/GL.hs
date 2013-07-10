@@ -12,22 +12,30 @@ import Control.Concurrent ( ThreadId, forkIO )
 import Control.Concurrent.STM ( atomically
                               , TChan, newTChanIO, writeTChan, tryReadTChan )
 import Control.Exception ( Exception )
-import Control.Monad ( when, forM )
+import Control.Monad ( when, forM, forM_ )
 import Data.Dynamic ( Dynamic )
 import Data.Foldable ( foldlM )
+import Data.Function ( on )
+import Data.List ( groupBy )
 import Data.Map ( Map )
 import Data.Set ( Set )
+import Data.Vect.Float ( Mat4(..), Vec4(..), (.*.) )
 import Data.Time ( UTCTime, getCurrentTime, addUTCTime )
 import Data.Typeable ( Typeable )
+import Foreign.C.String ( withCString )
+import Foreign.Marshal.Safe ( with, withArrayLen )
+import Foreign.Ptr ( Ptr, nullPtr, plusPtr )
+import Foreign.Storable ( Storable(..) )
 import Graphics.Rendering.OpenGL hiding ( normalize )
 import Graphics.Rendering.OpenGL.GL.Capability ( EnableCap(..), makeCapability )
 import Graphics.Rendering.OpenGL.GL.Shaders.Program ( Program(..) )
 import qualified Control.Exception as CE
 import qualified Data.Map as M
 import qualified Data.Set as S
+import qualified Graphics.Rendering.OpenGL.Raw as Raw
 import qualified Graphics.UI.GLFW as GLFW
 import qualified System.Random as R
-import SuperMax.GL.Drawing ( Drawing(..) )
+import SuperMax.GL.Drawing ( Drawing(..), SomeDrawable(..), Drawable(..) )
 import SuperMax.GL.Utils ( initRendering, checkError, makeShaderProgram
                          , GLFont, loadFontFromImage )
 import SuperMax.Input ( InputEvent, fromGlfwKeyEvent )
@@ -36,6 +44,7 @@ import System.FilePath ( (</>) )
 import System.Random ( Random, StdGen, newStdGen )
 import System.Exit ( exitWith, ExitCode(..) )
 import Text.Printf ( printf )
+import Unsafe.Coerce ( unsafeCoerce )
 
 --------------------------------
 -- Game/Engine interface
@@ -180,8 +189,85 @@ getResource name = Game (\s -> (M.lookup name (getRes s), s))
 --------------------------------
 
 draw :: Map String Program -> Map String GLFont -> Drawing -> IO ()
-draw _programs _fonts _drawing =
-    return ()
+draw programs _fonts drawing = do
+    -- FIXME Don't generate objects in the drawing function.
+
+    -- Setup a VBO with the drawing
+    [vertexBuffer] <- genObjectNames 1
+    bindBuffer ArrayBuffer $= Just vertexBuffer
+
+    -- Create VP matrix
+    (width, height) <- GLFW.getWindowDimensions
+    let projection = matPerspective (pi / 3) (fromIntegral width / fromIntegral height)
+        view = drawingViewMatrix drawing
+        vp = projection .*. view
+
+    forM_ drawablesByProgram $ \(name, drawables) -> do
+        -- Set shader program
+        let program = maybe (error (printf "no such program %s" name)) id (M.lookup name programs)
+        currentProgram $= Just program
+
+        forM_ drawables $ \drawable -> do
+            -- Transfer vertices and colours to OpenGL
+            let drawingData = concatMap (\(x, y, z) -> [x, y, z])
+                                        (drawableVertices drawable ++ drawableColours drawable)
+            withArrayLen drawingData $ \len drawingDataPtr ->
+                bufferData ArrayBuffer $= ( fromIntegral (len * sizeOfFloat)
+                                          , drawingDataPtr
+                                          , StaticDraw )
+
+            -- Transfer MVP to OpenGL
+            mvpId <- withCString "MVP" $ Raw.glGetUniformLocation (programID program)
+            let mvp = vp .*. drawableModelMatrix drawable
+            with mvp $ Raw.glUniformMatrix4fv mvpId 1 0 . unsafeCoerce
+
+            -- Perform drawing
+            vertexArrayId <- get (attribLocation program "vertexPosition")
+            colourArrayId <- get (attribLocation program "vertexColour")
+
+            vertexAttribArray vertexArrayId $= Enabled
+            vertexAttribArray colourArrayId $= Enabled
+
+            bindBuffer ArrayBuffer $= Just vertexBuffer
+            vertexAttribPointer vertexArrayId $=
+                (ToFloat, VertexArrayDescriptor 3 Float (fromIntegral (sizeOfFloat * 6)) nullPtr)
+            vertexAttribPointer colourArrayId $=
+                (ToFloat, VertexArrayDescriptor 3 Float (fromIntegral (sizeOfFloat * 6)) (makeOffset (3 * sizeOfFloat)))
+
+            drawArrays Triangles 0 (fromIntegral (length drawingData `div` 2))
+
+            vertexAttribArray colourArrayId $= Disabled
+            vertexAttribArray vertexArrayId $= Disabled
+
+    -- Cleanup
+    deleteObjectNames [vertexBuffer]
+  where
+    -- | Group drawables that use the same program together.
+    drawablesByProgram :: [(String, [SomeDrawable])]
+    drawablesByProgram =
+        let ds = drawingDrawables drawing
+            dgs = groupBy ((==) `on` drawableProgramName) ds
+        in map (\dg@(d:_) -> (drawableProgramName d, dg)) dgs
+
+    sizeOfFloat :: Int
+    sizeOfFloat = sizeOf (undefined :: GLfloat)
+
+    makeOffset :: Int -> Ptr GLchar
+    makeOffset = plusPtr (nullPtr :: Ptr GLchar) . fromIntegral
+
+    -- | Make a perspective projection matrix: the visible cube is (-1, -1, -1) to (1, 1,
+    -- 1), and objects with lesser z indices are hidden behind those with greater z
+    -- indices (the opposite of OpenGL).  Note that we don't take zNear and zFar into
+    -- account.
+    --
+    -- https://unspecified.wordpress.com/2012/06/21/calculating-the-gluperspective-matrix-and-other-opengl-matrix-maths/
+    matPerspective :: Float -> Float -> Mat4
+    matPerspective fovy aspect =
+        let f = 1.0 / tan (fovy / 2.0)
+        in Mat4 (Vec4 (f / aspect) 0.0 0.0 0.0)
+                (Vec4 0.0 f 0.0 0.0)
+                (Vec4 0.0 0.0 (-1.0) 0.0)
+                (Vec4 0.0 0.0 0.0 1.0)
 
 --------------------------------
 -- The Engine loop

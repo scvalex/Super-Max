@@ -175,6 +175,8 @@ data GLFont = GLFont
     , mvpId             :: GLint
     }
 
+-- FIXME Load images from TTF files (consider SDL-ttf).
+
 -- | Load the font from the given image.  The image should be square, its dimensions
 -- should be a power of 2, and the letters should be placed in a 16x16 table with no
 -- borders in ASCII order.
