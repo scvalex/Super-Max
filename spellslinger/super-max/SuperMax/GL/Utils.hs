@@ -2,7 +2,7 @@ module SuperMax.GL.Utils (
         -- * Basic
         initRendering, checkError,
 
-        -- *
+        -- * Shaders and textures
         makeShaderProgram,
         loadTexture,
 
@@ -178,14 +178,17 @@ data GLFont = GLFont
 -- | Load the font from the given image.  The image should be square, its dimensions
 -- should be a power of 2, and the letters should be placed in a 16x16 table with no
 -- borders in ASCII order.
-loadFontFromImage :: FilePath -> IO GLFont
-loadFontFromImage path = do
+loadFontFromImage :: FilePath   -- ^ Path to the font image.
+                  -> FilePath   -- ^ Path to the text vertex shader.
+                  -> FilePath   -- ^ Path to the text fragment shader.
+                  -> IO GLFont
+loadFontFromImage path vertexShaderPath fragmentShaderPath = do
     fontTexture_ <- loadTexture path
 
     [textVertexBuffer_] <- genObjectNames 1
     [textUVBuffer_] <- genObjectNames 1
 
-    textProgram_ <- makeShaderProgram "textVertex.glsl" "textFragment.glsl"
+    textProgram_ <- makeShaderProgram vertexShaderPath fragmentShaderPath
 
     samplerId_ <- withCString "textureSampler" $ \idS ->
         Raw.glGetUniformLocation (programID textProgram_) idS

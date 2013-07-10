@@ -5,6 +5,9 @@ module Spell (
 
 import Types ( Direction(..) )
 
+-- FIXME Spells should have limited power.  They start off with a given power when they're
+-- cast, and decrease in power whenever they have an effect.
+
 -- | A spell is just a string of words of power.  Although all strings of words of power
 -- are spells, most are uninteresting.
 type Spell = [Word]

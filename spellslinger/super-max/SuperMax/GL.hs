@@ -28,7 +28,8 @@ import qualified Data.Set as S
 import qualified Graphics.UI.GLFW as GLFW
 import qualified System.Random as R
 import SuperMax.GL.Drawing ( Drawing(..) )
-import SuperMax.GL.Utils ( initRendering, checkError, makeShaderProgram )
+import SuperMax.GL.Utils ( initRendering, checkError, makeShaderProgram
+                         , GLFont, loadFontFromImage )
 import SuperMax.Input ( InputEvent, fromGlfwKeyEvent )
 import System.Environment ( getEnv )
 import System.FilePath ( (</>) )
@@ -178,8 +179,8 @@ getResource name = Game (\s -> (M.lookup name (getRes s), s))
 -- Drawing
 --------------------------------
 
-draw :: Map String Program -> Drawing -> IO ()
-draw _programs _drawing =
+draw :: Map String Program -> Map String GLFont -> Drawing -> IO ()
+draw _programs _fonts _drawing =
     return ()
 
 --------------------------------
@@ -197,6 +198,7 @@ play :: forall w.
      -> Int                                   -- ^ Logical ticks per second
      -> Map String (FilePath, FilePath)       -- ^ Shader program and associated vertex
                                               -- and fragment shader paths
+     -> Map String FilePath                   -- ^ Fonts
      -> (FilePath -> IO (Map String Dynamic)) -- ^ Resource pre-loader.
      -> (Int -> Int -> w)                     -- ^ Take the screen width and height, and
                                               -- return the initial game state
@@ -205,7 +207,7 @@ play :: forall w.
      -> (InputEvent -> Game w ())             -- ^ Update the state after an 'InputEvent'
      -> (Float -> Game w ())                  -- ^ Update the state after a tick
      -> IO ()
-play title tps programPaths loadResources wInit start drawGame onInput onTick = do
+play title tps programPaths fontPaths loadResources wInit start drawGame onInput onTick = do
     glfwInitialization "GLFW.initialize" GLFW.initialize
 
     -- Setup window
@@ -243,12 +245,12 @@ play title tps programPaths loadResources wInit start drawGame onInput onTick = 
     _ <- printf "Loading resources from %s\n" resDir
 
     -- Load shaders
-    programs <- makeShaderPrograms resDir programPaths
+    programs <- makeShaderPrograms resDir
 
-    -- FIXME Let the game specify which fonts to load
+    -- Load fonts
 
-    -- Load Fonts
-    -- We don't bother freeing the fonts.
+    fonts <- loadFonts resDir
+
     -- fonts <- M.fromList <$> forM [10..80] (\size -> do
     --     font <- TTF.openFont (resDir </> "Ubuntu-C.ttf") size
     --     return (size, font))
@@ -286,7 +288,7 @@ play title tps programPaths loadResources wInit start drawGame onInput onTick = 
     -- Start the game
     let ((), es') = runGame start es
 
-    fixedSliceLoop (1.0 / fromIntegral tps) programs es'
+    fixedSliceLoop (1.0 / fromIntegral tps) programs fonts es'
   where
     -- | Callback for key events.  Convert them to our uniform representation and write
     -- them to the event channel.
@@ -310,9 +312,10 @@ play title tps programPaths loadResources wInit start drawGame onInput onTick = 
     -- http://fabiensanglard.net/timer_and_framerate/index.php
     fixedSliceLoop :: Float              -- ^ Slice in s
                    -> Map String Program -- ^ Program name => Shader Program
+                   -> Map String GLFont  -- ^ Font name => Font
                    -> EngineState w      -- ^ Game state
                    -> IO ()
-    fixedSliceLoop slice programs es0 = do
+    fixedSliceLoop slice programs fonts es0 = do
         now <- getCurrentTime
         fixedSliceLoop' now es0
       where
@@ -334,7 +337,7 @@ play title tps programPaths loadResources wInit start drawGame onInput onTick = 
 
         renderWorld drawing = do
             clear [ ColorBuffer, DepthBuffer ]
-            draw programs drawing
+            draw programs fonts drawing
             GLFW.swapBuffers
             checkError "renderWorld"
 
@@ -407,11 +410,21 @@ play title tps programPaths loadResources wInit start drawGame onInput onTick = 
         terminateGame
 
     -- | Compile the given shaders into programs.
-    makeShaderPrograms :: FilePath -> Map String (FilePath, FilePath) -> IO (Map String Program)
-    makeShaderPrograms resDir programPaths = do
+    makeShaderPrograms :: FilePath -> IO (Map String Program)
+    makeShaderPrograms resDir = do
         M.fromList <$> forM (M.toList programPaths)
                             (\(name, (vertexShaderPath, fragmentShaderPath)) -> do
                                   let vertexShaderPath' = resDir </> vertexShaderPath
                                       fragmentShaderPath' = resDir </> fragmentShaderPath
                                   program <- makeShaderProgram vertexShaderPath' fragmentShaderPath'
                                   return (name, program))
+
+    loadFonts :: FilePath -> IO (Map String GLFont)
+    loadFonts resDir = do
+        M.fromList <$> forM (M.toList fontPaths)
+                            (\(name, fontPath) -> do
+                                  let fontPath' = resDir </> fontPath
+                                      vertexShaderPath = resDir </> "textVertex.glsl"
+                                      fragmentShaderPath = resDir </> "textFragment.glsl"
+                                  font <- loadFontFromImage fontPath' vertexShaderPath fragmentShaderPath
+                                  return (name, font))
