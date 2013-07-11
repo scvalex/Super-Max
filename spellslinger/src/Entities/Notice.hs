@@ -10,8 +10,8 @@ import Control.Applicative ( (<$>) )
 import Data.Monoid ( Monoid(..) )
 import qualified Data.Set as S
 import SuperMax ( Game, Picture(..), Colour(..), TextAlignment(..)
-                , mkUid, randomR )
-import SuperMax.Entity ( Entity(..), EntityId(..), Position(..) )
+                , mkUid, randomR
+                , Entity(..), EntityId(..), Position(..) )
 
 data Notice = Notice
     { getNoticeId         :: EntityId

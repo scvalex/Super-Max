@@ -5,11 +5,11 @@ module Entities.InvisibleWall (
     ) where
 
 import Control.Applicative ( (<$>) )
-import Data.Monoid ( mempty )
 import Data.Set ( Set )
+import Data.Vect.Float ( idmtx )
 import qualified Data.Set as S
-import SuperMax ( mkUid )
-import SuperMax.Entity ( Entity(..), EntityId(..), Position(..) )
+import SuperMax ( Drawable(..), mkUid
+                , Entity(..), EntityId(..), Position(..) )
 
 data InvisibleWall = InvisibleWall
     { getIWId           :: EntityId
@@ -37,6 +37,9 @@ instance Entity InvisibleWall where
     occupiedPositions (InvisibleWall { getIWOccupiedPoss = occupiedPoss }) =
         occupiedPoss
 
-    draw _ = mempty
-
     tickVisual = id
+
+instance Drawable InvisibleWall where
+    drawableVertices _    = []
+    drawableProgramName _ = "default"
+    drawableModelMatrix _ = idmtx

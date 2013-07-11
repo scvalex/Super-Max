@@ -9,8 +9,8 @@ import Control.Applicative ( (<$>) )
 import Data.Monoid ( mconcat )
 import qualified Data.Set as S
 import SuperMax ( Picture(..), Colour(..), TextAlignment(..)
-                , mkUid )
-import SuperMax.Entity ( Entity(..), EntityId(..), Position(..) )
+                , mkUid
+                , Entity(..), EntityId(..), Position(..) )
 
 data RoomExit = RE
     { getREId         :: EntityId

@@ -55,7 +55,8 @@ Executable spellslinger
                         HTTP,
                         network,
                         spellslinger,
-                        unix
+                        unix,
+                        vect
   Ghc-options:          -Wall -threaded
   Hs-Source-Dirs:       src/
   Extensions:           ScopedTypeVariables, OverloadedStrings

@@ -9,8 +9,8 @@ import Common ( intRectangle, fromAreaCoordinates )
 import Control.Applicative ( (<$>) )
 import Data.Monoid ( Monoid(..) )
 import qualified Data.Set as S
-import SuperMax ( Picture(..), Colour(..), mkUid, randomR )
-import SuperMax.Entity ( Entity(..), EntityId(..), Position(..) )
+import SuperMax ( Picture(..), Colour(..), mkUid, randomR
+                , Entity(..), EntityId(..), Position(..) )
 import Types ( Direction(..), randomDirection )
 
 data State = Roaming Direction
