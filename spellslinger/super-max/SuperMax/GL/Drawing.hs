@@ -2,7 +2,8 @@
 
 module SuperMax.GL.Drawing (
         Drawing(..), SomeDrawable(..), Drawable(..),
-        Vertex(..), serializeVertex
+        Vertex(..), serializeVertex,
+        Text(..)
     ) where
 
 import Data.Vect.Float ( Mat4(..), idmtx )
@@ -12,7 +13,7 @@ data SomeDrawable = forall a. (Drawable a) => SomeDrawable a
 
 data Drawing = Drawing { drawingViewMatrix :: Mat4
                        , drawingDrawables  :: [SomeDrawable]
-                       , drawingHudText    :: [(String, Float, Float, Float, String)]
+                       , drawingHudText    :: [Text]
                        }
 
 class Drawable a where
@@ -40,3 +41,10 @@ serializeVertex v =
     let (x, y, z) = vertexPosition v
         (r, g, b) = toRGBTuple (vertexColour v)
     in [x, y, z, r, g, b]
+
+data Text = Text
+    { textFontName :: String
+    , textPosition :: (Float, Float)
+    , textSize     :: Float
+    , textText     :: String
+    } deriving ( Eq, Show )

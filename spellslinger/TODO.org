@@ -60,6 +60,9 @@ Todo
    CLOCK: [2013-07-11 Thu 00:13]--[2013-07-11 Thu 00:29] =>  0:16
    :END:
 ** TODO Port game to GL engine
+   :LOGBOOK:
+   CLOCK: [2013-07-11 Thu 17:28]--[2013-07-11 Thu 17:52] =>  0:24
+   :END:
 ** TODO Distinguish between deterministic and non-deterministic games
 ** TODO Font-based text rendering
 ** TODO Text alignment

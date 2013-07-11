@@ -39,7 +39,8 @@ import qualified Graphics.Rendering.OpenGL.Raw as Raw
 import qualified Graphics.UI.GLFW as GLFW
 import qualified System.Random as R
 import SuperMax.GL.Drawing ( Drawing(..), SomeDrawable(..), Drawable(..)
-                           , serializeVertex )
+                           , serializeVertex
+                           , Text(..) )
 import SuperMax.GL.Utils ( initRendering, checkError, makeShaderProgram
                          , GLFont, loadFontFromImage, writeText2D )
 import SuperMax.Input ( InputEvent, fromGlfwKeyEvent )
@@ -246,9 +247,11 @@ draw programs fonts drawing = do
     deleteObjectNames [vertexBuffer]
 
     -- Draw HUD text
-    forM_ (drawingHudText drawing) $ \(name, x, y, size, text) -> do
-        let font = maybe (error (printf "no such font %s" name)) id (M.lookup name fonts)
-        writeText2D font text x y size idmtx
+    forM_ (drawingHudText drawing) $ \text -> do
+        let name = textFontName text
+            font = maybe (error (printf "no such font %s" name)) id (M.lookup name fonts)
+            (x, y) = textPosition text
+        writeText2D font (textText text) x y (textSize text) idmtx
   where
     -- | Group drawables that use the same program together.
     drawablesByProgram :: [(String, [SomeDrawable])]
