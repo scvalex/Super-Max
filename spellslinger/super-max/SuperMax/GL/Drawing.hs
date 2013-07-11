@@ -17,7 +17,8 @@ data Drawing = Drawing { drawingViewMatrix :: Mat4
                        }
 
 class Drawable a where
-    drawableVertices    :: a -> [Vertex]
+    drawableVertices :: a -> [Vertex]
+    drawableVertices _ = []
 
     drawableProgramName :: a -> String
     drawableProgramName _ = "default"

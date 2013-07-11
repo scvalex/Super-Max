@@ -6,7 +6,6 @@ module Entities.InvisibleWall (
 
 import Control.Applicative ( (<$>) )
 import Data.Set ( Set )
-import Data.Vect.Float ( idmtx )
 import qualified Data.Set as S
 import SuperMax ( Drawable(..), mkUid
                 , Entity(..), EntityId(..), Position(..) )
@@ -39,5 +38,4 @@ instance Entity InvisibleWall where
 
     tickVisual = id
 
-instance Drawable InvisibleWall where
-    drawableVertices _    = []
+instance Drawable InvisibleWall
