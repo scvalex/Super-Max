@@ -13,12 +13,14 @@ data SomeDrawable = forall a. (Drawable a) => SomeDrawable a
 
 data Drawing = Drawing { drawingViewMatrix :: Mat4
                        , drawingDrawables  :: [SomeDrawable]
-                       , drawingHudText    :: [Text]
                        }
 
 class Drawable a where
     drawableVertices :: a -> [Vertex]
     drawableVertices _ = []
+
+    drawableHudTexts :: a -> [Text]
+    drawableHudTexts _ = []
 
     drawableProgramName :: a -> String
     drawableProgramName _ = "default"
@@ -28,6 +30,7 @@ class Drawable a where
 
 instance Drawable SomeDrawable where
     drawableVertices (SomeDrawable d)    = drawableVertices d
+    drawableHudTexts (SomeDrawable d)    = drawableHudTexts d
     drawableProgramName (SomeDrawable d) = drawableProgramName d
     drawableModelMatrix (SomeDrawable d) = drawableModelMatrix d
 

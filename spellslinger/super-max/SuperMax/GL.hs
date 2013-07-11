@@ -247,11 +247,12 @@ draw programs fonts drawing = do
     deleteObjectNames [vertexBuffer]
 
     -- Draw HUD text
-    forM_ (drawingHudText drawing) $ \text -> do
-        let name = textFontName text
-            font = maybe (error (printf "no such font %s" name)) id (M.lookup name fonts)
-            (x, y) = textPosition text
-        writeText2D font (textText text) x y (textSize text) idmtx
+    forM_ (drawingDrawables drawing) $ \drawable -> do
+        forM_ (drawableHudTexts drawable) $ \text -> do
+            let name = textFontName text
+                font = maybe (error (printf "no such font %s" name)) id (M.lookup name fonts)
+                (x, y) = textPosition text
+            writeText2D font (textText text) x y (textSize text) idmtx
   where
     -- | Group drawables that use the same program together.
     drawablesByProgram :: [(String, [SomeDrawable])]
