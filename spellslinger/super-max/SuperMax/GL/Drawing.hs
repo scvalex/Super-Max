@@ -16,8 +16,7 @@ data Drawing = Drawing { drawingViewMatrix :: Mat4
                        }
 
 class Drawable a where
-    drawableVertices    :: a -> [(Float, Float, Float)]
-    drawableColours     :: a -> [Colour]
+    drawableVertices    :: a -> [Vertex]
     drawableProgramName :: a -> String
 
     drawableModelMatrix :: a -> Mat4
@@ -25,6 +24,19 @@ class Drawable a where
 
 instance Drawable SomeDrawable where
     drawableVertices (SomeDrawable d)    = drawableVertices d
-    drawableColours (SomeDrawable d)     = drawableColours d
     drawableProgramName (SomeDrawable d) = drawableProgramName d
     drawableModelMatrix (SomeDrawable d) = drawableModelMatrix d
+
+data Vertex = ColourVertex
+    { vertexPosition :: (Float, Float, Float)
+    , vertexColour :: Colour
+    } deriving ( Eq, Show )
+
+-- FIXME Vertex should have a Storable instance.
+
+-- | Convert a 'Vertex' into a list of 'Float's that can be sent to OpenGL.
+serializeVertex :: Vertex -> [Float]
+serializeVertex v =
+    let (x, y, z) = vertexPosition v
+        (r, g, b) = toRGBTuple (vertexColour v)
+    in [x, y, z, r, g, b]

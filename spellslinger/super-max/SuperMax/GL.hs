@@ -213,9 +213,7 @@ draw programs fonts drawing = do
 
         forM_ drawables $ \drawable -> do
             -- Transfer vertices and colours to OpenGL
-            let drawingData = concatMap (\(x, y, z) -> [x, y, z])
-                                        (drawableVertices drawable ++
-                                         map toRGBTuple (drawableColours drawable))
+            let drawingData = concatMap serializeVertex (drawableVertices drawable)
             withArrayLen drawingData $ \len drawingDataPtr ->
                 bufferData ArrayBuffer $= ( fromIntegral (len * sizeOfFloat)
                                           , drawingDataPtr
