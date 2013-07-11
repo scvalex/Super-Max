@@ -36,7 +36,7 @@ Todo
    CLOCK: [2013-03-25 Mon 21:00]--[2013-03-25 Mon 21:57] =>  0:57
    :END:
 
-* [3/11] Spellslinger 2D
+* [3/14] Spellslinger 2D
 ** DONE Abstract out engine interface
    :LOGBOOK:
    CLOCK: [2013-07-09 Tue 21:53]--[2013-07-09 Tue 22:10] =>  0:17
@@ -61,20 +61,28 @@ Todo
    :END:
 ** TODO Port game to GL engine
    :LOGBOOK:
+   CLOCK: [2013-07-11 Thu 18:05]--[2013-07-11 Thu 18:18] =>  0:13
    CLOCK: [2013-07-11 Thu 17:28]--[2013-07-11 Thu 17:52] =>  0:24
    :END:
 ** TODO Distinguish between deterministic and non-deterministic games
 ** TODO Font-based text rendering
 ** TODO Text alignment
 ** TODO Model support
+** TODO Zombie and player models
+** TODO Zombie emoticon faces
+** TODO Player emoticon face in HUD
+** TODO Over the shoulder view
 ** TODO Options menu
 ** TODO Use continuous updating in the game
 
-** TODO Over the shoulder view
 ** Misc
    :LOGBOOK:
    CLOCK: [2013-07-06 Sat 11:00]--[2013-07-06 Sat 11:01] =>  0:01
    :END:
+* [0/3] Spellslinger: The Musical
+** TODO Sound effects
+** TODO Music
+** TODO Sync music beats to graphical tremmors
 * Spellsliger: Arena
 ** TODO Dev console
 ** TODO Tutorial area

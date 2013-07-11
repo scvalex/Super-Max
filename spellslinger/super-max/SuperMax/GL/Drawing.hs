@@ -18,7 +18,9 @@ data Drawing = Drawing { drawingViewMatrix :: Mat4
 
 class Drawable a where
     drawableVertices    :: a -> [Vertex]
+
     drawableProgramName :: a -> String
+    drawableProgramName _ = "default"
 
     drawableModelMatrix :: a -> Mat4
     drawableModelMatrix _ = idmtx

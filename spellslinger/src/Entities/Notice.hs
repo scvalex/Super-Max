@@ -9,7 +9,7 @@ import Common ( intRectangle, fromAreaCoordinates, smallText )
 import Control.Applicative ( (<$>) )
 import Data.Monoid ( Monoid(..) )
 import qualified Data.Set as S
-import SuperMax ( Game, Picture(..), Colour(..), TextAlignment(..)
+import SuperMax ( Game, Drawable(..), Colour(..)
                 , mkUid, randomR
                 , Entity(..), EntityId(..), Position(..) )
 
@@ -46,28 +46,28 @@ instance Entity Notice where
     occupiedPositions (Notice { getNoticePosition = pos }) =
         S.singleton pos
 
-    draw (Notice { getNoticePosition   = Position (xn, yn)
-                 , getNoticeAreaBounds = bounds
-                 , getNoticeActive     = active
-                 , getNoticeText       = text }) =
-        fromAreaCoordinates bounds $
+    tickVisual = id
+
+instance Drawable Notice where
+    drawableVertices (Notice { getNoticePosition   = Position (xn, yn)
+                             , getNoticeAreaBounds = bounds
+                             , getNoticeActive     = active
+                             , getNoticeText       = text }) =
         Translate (fromIntegral xn) (fromIntegral yn) $
         let colour = if active
-                     then Colour (RGBA 220 220 255 255)
-                     else Colour (RGBA 160 160 255 255) in
+                     then Colour (RGB 0.9 0.9 1.0)
+                     else Colour (RGB 0.6 0.6 1.0) in
         let msg = if active
                   then Translate 0.5 1 $
-                       smallText CenterAligned text
+                       smallText text
                   else mempty in
         -- FIXME Add some sort of palette, informally or explicitly.
-        mconcat [ Colour (RGBA 50 50 160 255) $
+        mconcat [ Colour (RGB 0.2 0.2 0.6) $
                   intRectangle 0 0 1 1
                 , colour $
                   FilledRectangle 0.2 0.1 0.7 0.7
                 , msg
                 ]
-
-    tickVisual = id
 
 mkNotice :: (Int, Int, Int, Int) -> Position -> String -> Game s Notice
 mkNotice areaBounds pos text = do

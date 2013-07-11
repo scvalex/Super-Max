@@ -17,6 +17,8 @@ data State = Roaming Direction
            | Following
              deriving ( Eq, Show )
 
+-- FIXME Zombies should have emoticons drawn on their faces.
+
 data Zombie = Zombie
     { getZombieId         :: EntityId
     , getZombieState      :: State

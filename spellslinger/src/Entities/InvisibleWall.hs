@@ -41,5 +41,3 @@ instance Entity InvisibleWall where
 
 instance Drawable InvisibleWall where
     drawableVertices _    = []
-    drawableProgramName _ = "default"
-    drawableModelMatrix _ = idmtx
