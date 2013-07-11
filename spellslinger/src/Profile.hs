@@ -5,7 +5,7 @@ module Profile (
 import Common ( writeAppFile, readAppFile )
 import Control.Applicative ( (<$>) )
 import Data.Maybe ( listToMaybe )
-import Game.Engine ( Colour(..) )
+import SuperMax ( Colour(..) )
 import System.Posix.User ( getLoginName )
 
 data Profile = Profile { getProfilePlayerName   :: String

@@ -9,9 +9,9 @@ module Common (
     ) where
 
 import Control.Applicative ( (<$>) )
-import Game.Engine ( Picture(..), TextAlignment )
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy.Char8 as BL
+import SuperMax ( Picture(..), TextAlignment )
 import System.FilePath ( (</>) )
 import System.Directory ( getAppUserDataDirectory, createDirectoryIfMissing
                         , doesFileExist )

@@ -8,10 +8,10 @@ module Entities.Notice (
 import Common ( intRectangle, fromAreaCoordinates, smallText )
 import Control.Applicative ( (<$>) )
 import Data.Monoid ( Monoid(..) )
-import Game.Engine ( Game, Picture(..), Colour(..), TextAlignment(..)
-                   , mkUid, randomR )
-import Game.Entity ( Entity(..), EntityId(..), Position(..) )
 import qualified Data.Set as S
+import SuperMax ( Game, Picture(..), Colour(..), TextAlignment(..)
+                , mkUid, randomR )
+import SuperMax.Entity ( Entity(..), EntityId(..), Position(..) )
 
 data Notice = Notice
     { getNoticeId         :: EntityId

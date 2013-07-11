@@ -4,7 +4,7 @@ module Types (
     ) where
 
 import Control.Applicative ( (<$>) )
-import Game.Engine ( Game, randomR )
+import SuperMax ( Game, randomR )
 
 -- | The score is just a number.
 type Score = Int

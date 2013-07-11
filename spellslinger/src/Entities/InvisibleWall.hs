@@ -7,9 +7,9 @@ module Entities.InvisibleWall (
 import Control.Applicative ( (<$>) )
 import Data.Monoid ( mempty )
 import Data.Set ( Set )
-import Game.Engine ( mkUid )
-import Game.Entity ( Entity(..), EntityId(..), Position(..) )
 import qualified Data.Set as S
+import SuperMax ( mkUid )
+import SuperMax.Entity ( Entity(..), EntityId(..), Position(..) )
 
 data InvisibleWall = InvisibleWall
     { getIWId           :: EntityId

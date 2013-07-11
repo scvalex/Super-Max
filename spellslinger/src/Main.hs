@@ -2,13 +2,13 @@ module Main where
 
 import Data.Dynamic ( Dynamic )
 import Data.Map ( Map )
-import Game.Engine ( Game, InputEvent, play, quitGame
-                   , modifyGameState, getGameState, withAlternateGameState
-                   , Picture(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import qualified MainMenu as MainMenu
 import qualified Survival as Survival
 import qualified HighScores as HighScores
+import SuperMax ( Game, InputEvent, play, quitGame
+                , modifyGameState, getGameState, withAlternateGameState
+                , Picture(..) )
 
 type NpcId = Int
 

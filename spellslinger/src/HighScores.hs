@@ -15,14 +15,14 @@ import Data.ByteString.Lazy.Char8 ( pack )
 import Data.Dynamic ( fromDynamic )
 import Data.Maybe ( fromJust )
 import Data.Monoid ( Monoid(..) )
-import Game.Engine ( Game, modifyGameState
-                   , upon, getResource
-                   , Picture(..), TextAlignment(..)
-                   , Colour(..), colourFromHexString
-                   , InputEvent(..), KeyEvent(..), Key(..) )
 import GHC.Generics ( Generic )
 import GlobalCommand ( GlobalCommand(..) )
 import Network.HTTP ( simpleHTTP, getRequest, getResponseBody )
+import SuperMax ( Game, modifyGameState
+                , upon, getResource
+                , Picture(..), TextAlignment(..)
+                , Colour(..), colourFromHexString
+                , InputEvent(..), KeyEvent(..), Key(..) )
 import Text.Printf ( printf )
 import Types ( Score )
 

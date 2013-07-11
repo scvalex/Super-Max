@@ -7,10 +7,10 @@ module Entities.RoomExit (
 import Common ( intRectangle, fromAreaCoordinates, smallText )
 import Control.Applicative ( (<$>) )
 import Data.Monoid ( mconcat )
-import Game.Engine ( Picture(..), Colour(..), TextAlignment(..)
-                   , mkUid )
-import Game.Entity ( Entity(..), EntityId(..), Position(..) )
 import qualified Data.Set as S
+import SuperMax ( Picture(..), Colour(..), TextAlignment(..)
+                , mkUid )
+import SuperMax.Entity ( Entity(..), EntityId(..), Position(..) )
 
 data RoomExit = RE
     { getREId         :: EntityId

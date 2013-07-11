@@ -11,14 +11,14 @@ import Data.Dynamic ( Dynamic, toDyn, fromDynamic )
 import Data.Map ( Map )
 import Data.Maybe ( fromJust )
 import Data.Monoid ( Monoid(..) )
-import Game.Engine ( Game, modifyGameState, getGameState, getsGameState
-                   , randomR, upon, getResource
-                   , Picture(..), TextAlignment(..)
-                   , Colour(..), colourFromHexString
-                   , InputEvent(..), KeyEvent(..), Key(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Profile ( Profile(..), loadOrNewProfile, saveProfile )
 import qualified Data.Map as M
+import SuperMax ( Game, modifyGameState, getGameState, getsGameState
+                , randomR, upon, getResource
+                , Picture(..), TextAlignment(..)
+                , Colour(..), colourFromHexString
+                , InputEvent(..), KeyEvent(..), Key(..) )
 import System.FilePath ( (</>) )
 import Text.Printf ( printf )
 

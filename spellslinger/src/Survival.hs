@@ -22,13 +22,6 @@ import Entities.InvisibleWall ( InvisibleWall, EntityParameters(..) )
 import Entities.Notice ( Notice, EntityParameters(..) )
 import Entities.RoomExit ( RoomExit, EntityParameters(..) )
 import Entities.Zombie ( Zombie )
-import Game.Engine ( InputEvent(..)
-                   , Game, getsGameState, modifyGameState, getGameTick, upon, randomR
-                   , Picture(..)
-                   , TextAlignment(..)
-                   , Colour(..), black, greyN, colourToHexString
-                   , InputEvent(..), KeyEvent(..), Key(..) )
-import Game.Entity ( Entity, Behaviour(..), EntityId(..), Position(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Profile ( Profile(..), loadOrNewProfile )
 import qualified Data.Map as M
@@ -37,7 +30,14 @@ import qualified Entities.InvisibleWall as InvisibleWall
 import qualified Entities.Notice as Notice
 import qualified Entities.RoomExit as RoomExit
 import qualified Entities.Zombie as Zombie
-import qualified Game.Entity as Entity
+import qualified SuperMax.Entity as Entity
+import SuperMax ( InputEvent(..)
+                , Game, getsGameState, modifyGameState, getGameTick, upon, randomR
+                , Picture(..)
+                , TextAlignment(..)
+                , Colour(..), black, greyN, colourToHexString
+                , InputEvent(..), KeyEvent(..), Key(..) )
+import SuperMax.Entity ( Entity, Behaviour(..), EntityId(..), Position(..) )
 import Network.HTTP ( Request, RequestMethod(..), mkRequest, simpleHTTP )
 import Network.URI ( parseURI )
 import Spell ( )

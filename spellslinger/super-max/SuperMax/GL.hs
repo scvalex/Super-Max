@@ -38,8 +38,8 @@ import qualified Data.Set as S
 import qualified Graphics.Rendering.OpenGL.Raw as Raw
 import qualified Graphics.UI.GLFW as GLFW
 import qualified System.Random as R
-import SuperMax.Colour ( toRGBTuple )
-import SuperMax.GL.Drawing ( Drawing(..), SomeDrawable(..), Drawable(..) )
+import SuperMax.GL.Drawing ( Drawing(..), SomeDrawable(..), Drawable(..)
+                           , serializeVertex )
 import SuperMax.GL.Utils ( initRendering, checkError, makeShaderProgram
                          , GLFont, loadFontFromImage, writeText2D )
 import SuperMax.Input ( InputEvent, fromGlfwKeyEvent )

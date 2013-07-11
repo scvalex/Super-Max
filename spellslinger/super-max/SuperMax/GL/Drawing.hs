@@ -1,11 +1,12 @@
 {-# LANGUAGE ExistentialQuantification #-}
 
 module SuperMax.GL.Drawing (
-        Drawing(..), SomeDrawable(..), Drawable(..)
+        Drawing(..), SomeDrawable(..), Drawable(..),
+        Vertex(..), serializeVertex
     ) where
 
 import Data.Vect.Float ( Mat4(..), idmtx )
-import SuperMax.Colour ( Colour )
+import SuperMax.Colour ( Colour, toRGBTuple )
 
 data SomeDrawable = forall a. (Drawable a) => SomeDrawable a
 

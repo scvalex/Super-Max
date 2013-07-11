@@ -8,9 +8,9 @@ module Entities.Zombie (
 import Common ( intRectangle, fromAreaCoordinates )
 import Control.Applicative ( (<$>) )
 import Data.Monoid ( Monoid(..) )
-import Game.Engine ( Picture(..), Colour(..), mkUid, randomR )
-import Game.Entity ( Entity(..), EntityId(..), Position(..) )
 import qualified Data.Set as S
+import SuperMax ( Picture(..), Colour(..), mkUid, randomR )
+import SuperMax.Entity ( Entity(..), EntityId(..), Position(..) )
 import Types ( Direction(..), randomDirection )
 
 data State = Roaming Direction
