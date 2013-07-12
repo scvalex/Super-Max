@@ -69,6 +69,9 @@ instance Drawable Notice where
                 , msg
                 ]
 
+    drawableHudTexts (Notice {}) =
+        []
+
 mkNotice :: (Int, Int, Int, Int) -> Position -> String -> Game s Notice
 mkNotice areaBounds pos text = do
     nid <- EntityId <$> mkUid
