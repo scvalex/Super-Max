@@ -1,5 +1,6 @@
 module Main where
 
+import Data.Default ( def )
 import Data.Dynamic ( Dynamic )
 import Data.Map ( Map )
 import GlobalCommand ( GlobalCommand(..) )
@@ -8,7 +9,7 @@ import qualified Survival as Survival
 import qualified HighScores as HighScores
 import SuperMax ( Game, InputEvent, play, quitGame
                 , modifyGameState, getGameState, withAlternateGameState
-                , Picture(..) )
+                , Drawing(..) )
 
 type NpcId = Int
 
@@ -60,17 +61,17 @@ loadResources resDir = MainMenu.loadResources resDir
 -- Callbacks
 ----------------------
 
-drawState :: FullState -> Picture
-drawState ((screenW, screenH), gs) =
-    -- We draw on a (x = 0.0 -- 1.0, y = 0.0 -- 1.0) sized canvas.
-    let dimMin = min screenW screenH in
-    Translate (fromIntegral (screenW - dimMin) / 2.0) (fromIntegral (screenH - dimMin) / 2.0) $
-    Scale (fromIntegral dimMin) (fromIntegral dimMin) $
-    -- Now, draw the scene
-    case gs of
-        MainMenu state   -> MainMenu.drawState state
-        Survival state   -> Survival.drawState state
-        HighScores state -> HighScores.drawState state
+drawState :: FullState -> Drawing
+drawState ((_screenW, _screenH), _gs) = def
+    -- -- We draw on a (x = 0.0 -- 1.0, y = 0.0 -- 1.0) sized canvas.
+    -- let dimMin = min screenW screenH in
+    -- Translate (fromIntegral (screenW - dimMin) / 2.0) (fromIntegral (screenH - dimMin) / 2.0) $
+    -- Scale (fromIntegral dimMin) (fromIntegral dimMin) $
+    -- -- Now, draw the scene
+    -- case gs of
+    --     MainMenu state   -> MainMenu.drawState state
+    --     Survival state   -> Survival.drawState state
+    --     HighScores state -> HighScores.drawState state
 
 handleInput :: InputEvent -> Game FullState ()
 handleInput ev = do

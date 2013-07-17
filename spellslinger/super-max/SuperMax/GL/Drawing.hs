@@ -6,6 +6,7 @@ module SuperMax.GL.Drawing (
         Text(..)
     ) where
 
+import Data.Default ( Default(..) )
 import Data.Vect.Float ( Mat4(..), idmtx )
 import SuperMax.Colour ( Colour, toRGBTuple )
 
@@ -14,6 +15,11 @@ data SomeDrawable = forall a. (Drawable a) => SomeDrawable a
 data Drawing = Drawing { drawingViewMatrix :: Mat4
                        , drawingDrawables  :: [SomeDrawable]
                        }
+
+instance Default Drawing where
+    def = Drawing { drawingViewMatrix = idmtx
+                  , drawingDrawables  = []
+                  }
 
 class Drawable a where
     drawableVertices :: a -> [Vertex]

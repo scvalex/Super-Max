@@ -9,14 +9,12 @@ module Survival (
         drawState, handleInput, handleTick
     ) where
 
-import Common ( intRectangle, fromAreaCoordinates
-              , bigText, mediumText
-              , writeAppFile, readAppFile )
+import Common ( writeAppFile, readAppFile )
 import Control.Applicative ( (<$>) )
 import Control.Monad ( when )
+import Data.Default ( def )
 import Data.Foldable ( foldlM )
 import Data.Map ( Map )
-import Data.Monoid ( Monoid(..) )
 import Data.Set ( Set )
 import Entities.InvisibleWall ( InvisibleWall, EntityParameters(..) )
 import Entities.Notice ( Notice, EntityParameters(..) )
@@ -33,9 +31,8 @@ import qualified Entities.Zombie as Zombie
 import qualified SuperMax.Entity as Entity
 import SuperMax ( InputEvent(..)
                 , Game, getsGameState, modifyGameState, getGameTick, upon, randomR
-                , Picture(..)
-                , TextAlignment(..)
-                , Colour(..), black, greyN, colourToHexString
+                , Drawing(..)
+                , Colour(..), toHexString
                 , InputEvent(..), KeyEvent(..), Key(..)
                 , Entity, Behaviour(..), EntityId(..), Position(..) )
 import Network.HTTP ( Request, RequestMethod(..), mkRequest, simpleHTTP )
@@ -134,7 +131,7 @@ initState =
           , getPlayer       = Player { getPlayerPosition = getRoomStart area1
                                      , getPlayerMovement = Nothing
                                      }
-          , getPlayerColour = RGBA 255 140 0 255
+          , getPlayerColour = RGB 1.0 0.55 0.0
           }
 
 start :: Maybe (Level, Score) -> Game State ()
@@ -175,81 +172,81 @@ loadLevel lvl = do
                                      }
           })
 
-drawState :: State -> Picture
-drawState w =
-    mconcat [ wireframe
-            , player
-            , entities
-            , hud
-            , prePostMessage
-            ]
-  where
-    -- The wireframe in the background.
-    wireframe = mappend (Colour (greyN 0.1) $
-                         FilledRectangle 0.0 0.0 1.0 1.0) $
-                Colour black $
-                mconcat $ [ FilledRectangle (i + 0.001) (j + 0.001) 0.099 0.099
-                          | i <- [0.0, 0.1 .. 0.9]
-                          , j <- [0.0, 0.1 .. 0.9]
-                          ]
+drawState :: State -> Drawing
+drawState _w = def
+  --   mconcat [ wireframe
+  --           , player
+  --           , entities
+  --           , hud
+  --           , prePostMessage
+  --           ]
+  -- where
+  --   -- The wireframe in the background.
+  --   wireframe = mappend (Colour (greyN 0.1) $
+  --                        FilledRectangle 0.0 0.0 1.0 1.0) $
+  --               Colour black $
+  --               mconcat $ [ FilledRectangle (i + 0.001) (j + 0.001) 0.099 0.099
+  --                         | i <- [0.0, 0.1 .. 0.9]
+  --                         , j <- [0.0, 0.1 .. 0.9]
+  --                         ]
 
-    -- A message shown at the beginning and at the end.
-    prePostMessage =
-        case getState w of
-            Loading ->
-                Translate 0.5 0.45 $ bigText CenterAligned "Loading..."
-            pg@(PreRound {}) ->
-                mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getObjective pg)
-                        , Translate 0.5 0.40 $ mediumText CenterAligned "<press space to start>"
-                        ]
-            InRound {} ->
-                mempty
-            pg@(PostRound { getFurtherOptions = opts }) ->
-                mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getConclusion pg)
-                        , Translate 0.5 0.40 $ mediumText CenterAligned $
-                          case opts of
-                              Continue -> "<press space for next level>"
-                              Restart  -> "<press space to try again>"
-                        ]
+  --   -- A message shown at the beginning and at the end.
+  --   prePostMessage =
+  --       case getState w of
+  --           Loading ->
+  --               Translate 0.5 0.45 $ bigText CenterAligned "Loading..."
+  --           pg@(PreRound {}) ->
+  --               mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getObjective pg)
+  --                       , Translate 0.5 0.40 $ mediumText CenterAligned "<press space to start>"
+  --                       ]
+  --           InRound {} ->
+  --               mempty
+  --           pg@(PostRound { getFurtherOptions = opts }) ->
+  --               mconcat [ Translate 0.5 0.45 $ bigText CenterAligned (getConclusion pg)
+  --                       , Translate 0.5 0.40 $ mediumText CenterAligned $
+  --                         case opts of
+  --                             Continue -> "<press space for next level>"
+  --                             Restart  -> "<press space to try again>"
+  --                       ]
 
-    -- FIXME The order of entities is not well-defined (zombies can be hidden by the room exit).
-    -- All the non-player entities.
-    entities =
-        mconcat $
-        map (\(SomeEntity e) -> Entity.draw e) (M.elems (getEntities w))
+  --   -- FIXME The order of entities is not well-defined (zombies can be hidden by the room exit).
+  --   -- All the non-player entities.
+  --   entities =
+  --       mconcat $
+  --       map (\(SomeEntity e) -> Entity.draw e) (M.elems (getEntities w))
 
-    -- The player.
-    player =
-        fromRoomCoordinates $
-        let pos = getPlayerPosition (getPlayer w) in
-        Colour (getPlayerColour w) $
-        personPicture pos
+  --   -- The player.
+  --   player =
+  --       fromRoomCoordinates $
+  --       let pos = getPlayerPosition (getPlayer w) in
+  --       Colour (getPlayerColour w) $
+  --       personPicture pos
 
-    -- The HUD is overlayed on the game.
-    hud = mconcat [ survivalTime
-                  , score
-                  , currentLevel
-                  ]
+  --   -- The HUD is overlayed on the game.
+  --   hud = mconcat [ survivalTime
+  --                 , score
+  --                 , currentLevel
+  --                 ]
 
-    -- Survival time in top-left corner.
-    survivalTime = Translate 0.04 0.94 $
-                   bigText LeftAligned (formatSeconds (getTime w))
+  --   -- Survival time in top-left corner.
+  --   survivalTime = Translate 0.04 0.94 $
+  --                  bigText LeftAligned (formatSeconds (getTime w))
 
-    -- Current score in the top-left corner.
-    score = Translate 0.04 0.91 $
-            mediumText LeftAligned (printf "Score: %d" (getScore w))
+  --   -- Current score in the top-left corner.
+  --   score = Translate 0.04 0.91 $
+  --           mediumText LeftAligned (printf "Score: %d" (getScore w))
 
-    -- Current level in the top-left corner.
-    currentLevel = Translate 0.04 0.88 $
-                   mediumText LeftAligned (printf "Level: %s" (maybe "?" show (getLevel w)))
+  --   -- Current level in the top-left corner.
+  --   currentLevel = Translate 0.04 0.88 $
+  --                  mediumText LeftAligned (printf "Level: %s" (maybe "?" show (getLevel w)))
 
-    -- Draw the picture of a person.
-    personPicture (Position (xp, yp)) =
-        intRectangle xp yp 1 1
+  --   -- Draw the picture of a person.
+  --   personPicture (Position (xp, yp)) =
+  --       intRectangle xp yp 1 1
 
-    -- Convert a picture in room coordinates to one in drawing coordinates.
-    fromRoomCoordinates :: Picture -> Picture
-    fromRoomCoordinates = fromAreaCoordinates (getRoomBounds (getArea w))
+  --   -- Convert a picture in room coordinates to one in drawing coordinates.
+  --   fromRoomCoordinates :: Picture -> Picture
+  --   fromRoomCoordinates = fromAreaCoordinates (getRoomBounds (getArea w))
 
 handleInput :: InputEvent -> Game State (Maybe GlobalCommand)
 handleInput (InputEvent ev) = handleGlobalKey ev $ do
@@ -490,7 +487,7 @@ roundWon = do
         profile <- loadOrNewProfile
         let stringUri = printf "http://abstractbinary.org/spellslinger/add-score/%s/%s/%d"
                                (getProfilePlayerName profile)
-                               (tail (colourToHexString (getProfilePlayerColour profile)))
+                               (tail (toHexString (getProfilePlayerColour profile)))
                                score
             Just uri = parseURI stringUri
             req = mkRequest PUT uri :: Request String

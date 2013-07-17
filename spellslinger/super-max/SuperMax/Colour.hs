@@ -1,16 +1,19 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+
 module SuperMax.Colour (
         Colour(..), white, black, greyN,
         toHexString, fromHexString, toRGBTuple
     ) where
 
 import Data.Char ( digitToInt )
+import Data.Typeable ( Typeable )
 import Text.Printf ( printf )
 
 data Colour = RGB
     { colourRed   :: Float
     , colourGreen :: Float
     , colourBlue  :: Float
-    } deriving ( Eq, Read, Show )
+    } deriving ( Eq, Read, Show, Typeable )
 
 white, black :: Colour
 white = RGB 1.0 1.0 1.0

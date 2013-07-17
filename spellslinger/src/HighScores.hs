@@ -12,18 +12,17 @@ import Control.Applicative ( (<$>) )
 import Control.Monad ( forM )
 import Data.Aeson ( FromJSON, decode )
 import Data.ByteString.Lazy.Char8 ( pack )
+import Data.Default ( def )
 import Data.Dynamic ( fromDynamic )
 import Data.Maybe ( fromJust )
-import Data.Monoid ( Monoid(..) )
 import GHC.Generics ( Generic )
 import GlobalCommand ( GlobalCommand(..) )
 import Network.HTTP ( simpleHTTP, getRequest, getResponseBody )
 import SuperMax ( Game, modifyGameState
                 , upon, getResource
-                , Picture(..), TextAlignment(..)
-                , Colour(..), colourFromHexString
+                , Drawing(..)
+                , Colour(..), fromHexString
                 , InputEvent(..), KeyEvent(..), Key(..) )
-import Text.Printf ( printf )
 import Types ( Score )
 
 ----------------------
@@ -52,7 +51,7 @@ start =
   where
     replaceColourNames scores = do
         forM scores $ \entry -> do
-            mcolName <- lookupColourName (fromJust (colourFromHexString ('#' : colour entry)))
+            mcolName <- lookupColourName (fromJust (fromHexString ('#' : colour entry)))
             return $ case mcolName of
                 Nothing      -> entry
                 Just colName -> entry { colour = colName }
@@ -61,24 +60,24 @@ start =
 -- Callbacks
 ----------------------
 
-drawState :: State -> Picture
-drawState state =
-    mconcat $
-    [ Translate 0.5 0.80 $ Text 80 CenterAligned "Spellslinger"
-    , Translate 0.5 0.74 $ Text 40 CenterAligned "High Scores"
-    , mconcat $
-      map drawScore (zip [0 :: Int ..] (getScores state))
-    ]
-  where
-    drawScore (i, entry) =
-        Translate 0.5 (0.65 - (fromIntegral i) * 0.05) $
-        mconcat [ Translate (-0.3) 0.0 $
-                  Text 40 LeftAligned $
-                  printf "%d. %s, the %s" i (name entry) (colour entry)
-                , Translate 0.3 0.0 $
-                  Text 40 RightAligned $
-                  printf "%d" (score entry)
-                ]
+drawState :: State -> Drawing
+drawState _state = def
+  --   mconcat $
+  --   [ Translate 0.5 0.80 $ Text 80 CenterAligned "Spellslinger"
+  --   , Translate 0.5 0.74 $ Text 40 CenterAligned "High Scores"
+  --   , mconcat $
+  --     map drawScore (zip [0 :: Int ..] (getScores state))
+  --   ]
+  -- where
+  --   drawScore (i, entry) =
+  --       Translate 0.5 (0.65 - (fromIntegral i) * 0.05) $
+  --       mconcat [ Translate (-0.3) 0.0 $
+  --                 Text 40 LeftAligned $
+  --                 printf "%d. %s, the %s" i (name entry) (colour entry)
+  --               , Translate 0.3 0.0 $
+  --                 Text 40 RightAligned $
+  --                 printf "%d" (score entry)
+  --               ]
 
 handleInput :: InputEvent -> Game State (Maybe GlobalCommand)
 handleInput (InputEvent (KeyRelease KeyEsc)) = return (Just ToMainMenu)

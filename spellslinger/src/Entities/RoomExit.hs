@@ -4,11 +4,9 @@ module Entities.RoomExit (
         RoomExit, EntityParameters(..), contains
     ) where
 
-import Common ( intRectangle, fromAreaCoordinates, smallText )
 import Control.Applicative ( (<$>) )
-import Data.Monoid ( mconcat )
 import qualified Data.Set as S
-import SuperMax ( Picture(..), Colour(..), TextAlignment(..)
+import SuperMax ( Drawable(..)
                 , mkUid
                 , Entity(..), EntityId(..), Position(..) )
 
@@ -37,20 +35,25 @@ instance Entity RoomExit where
     occupiedPositions _ =
         S.empty -- You can walk over the room exit.
 
-    draw (RE { getREPosition   = Position (xe, ye)
-             , getREAreaBounds = bounds }) =
-        fromAreaCoordinates bounds $
-        Translate (fromIntegral xe) (fromIntegral ye) $
-        mconcat [ Colour (RGBA 255 215 0 255) $
-                  intRectangle 0 0 2 2
-                , Colour (RGBA 0 0 0 255) $
-                  -- FIXME Why are the proportions fsckup up here?
-                  FilledRectangle 0.2 0.2 1.7 1.5
-                , Translate 1 2 $
-                  smallText CenterAligned "Exit"
-                ]
-
     tickVisual = id
+
+instance Drawable RoomExit where
+    drawableVertices (RE { getREPosition   = Position (_xe, _ye)
+                         , getREAreaBounds = _bounds }) =
+        -- fromAreaCoordinates bounds $
+        -- Translate (fromIntegral xe) (fromIntegral ye) $
+        -- mconcat [ Colour (RGBA 255 215 0 255) $
+        --           intRectangle 0 0 2 2
+        --         , Colour (RGBA 0 0 0 255) $
+        --           -- FIXME Why are the proportions fsckup up here?
+        --           FilledRectangle 0.2 0.2 1.7 1.5
+        --         , Translate 1 2 $
+        --           smallText CenterAligned "Exit"
+        --         ]
+        []
+
+    drawableHudTexts (RE {}) =
+        []
 
 contains :: RoomExit -> Position -> Bool
 contains (RE { getREPosition = Position (xe, ye) }) pos =

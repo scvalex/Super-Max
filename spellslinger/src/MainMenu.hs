@@ -7,20 +7,19 @@ module MainMenu (
     ) where
 
 import Control.Applicative ( (<$>) )
+import Data.Default ( def )
 import Data.Dynamic ( Dynamic, toDyn, fromDynamic )
 import Data.Map ( Map )
 import Data.Maybe ( fromJust )
-import Data.Monoid ( Monoid(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import Profile ( Profile(..), loadOrNewProfile, saveProfile )
 import qualified Data.Map as M
 import SuperMax ( Game, modifyGameState, getGameState, getsGameState
                 , randomR, upon, getResource
-                , Picture(..), TextAlignment(..)
-                , Colour(..), colourFromHexString
+                , Drawing(..)
+                , Colour(..), fromHexString
                 , InputEvent(..), KeyEvent(..), Key(..) )
 import System.FilePath ( (</>) )
-import Text.Printf ( printf )
 
 ----------------------
 -- Game interface
@@ -60,37 +59,37 @@ loadResources resDir = do
 -- Callbacks
 ----------------------
 
-drawState :: State -> Picture
-drawState state =
-    mconcat $
-    [ Translate 0.5 0.80 $ Text 80 CenterAligned "Spellslinger"
-    , featuring
-    , mconcat $
-      map drawMenuItem (zip [0 :: Int ..] (map fst (getItems state)))
-    ]
-  where
-    drawMenuItem (i, text) = Translate 0.5 (0.5 - (fromIntegral i) * 0.1) $
-                             Text 50 CenterAligned $
-                             if i == getSelectedItem state
-                             then "- " ++ text ++ " -"
-                             else text
+drawState :: State -> Drawing
+drawState state = def
+  --   mconcat $
+  --   [ Translate 0.5 0.80 $ Text 80 CenterAligned "Spellslinger"
+  --   , featuring
+  --   , mconcat $
+  --     map drawMenuItem (zip [0 :: Int ..] (map fst (getItems state)))
+  --   ]
+  -- where
+  --   drawMenuItem (i, text) = Translate 0.5 (0.5 - (fromIntegral i) * 0.1) $
+  --                            Text 50 CenterAligned $
+  --                            if i == getSelectedItem state
+  --                            then "- " ++ text ++ " -"
+  --                            else text
 
-    featuring =
-        case getPlayerProfile state of
-            Nothing ->
-                mempty
-            Just profile ->
-                let name = getProfilePlayerName profile
-                    headline =
-                        case getPlayerColourName state of
-                            Nothing -> name
-                            Just colName -> printf "%s, the %s wizard" name colName
-                in
-                Translate 0.5 0.74 $
-                mconcat [ Text 40 CenterAligned "featuring"
-                        , Translate 0 (-0.08) $
-                          Text 60 CenterAligned headline
-                        ]
+  --   featuring =
+  --       case getPlayerProfile state of
+  --           Nothing ->
+  --               mempty
+  --           Just profile ->
+  --               let name = getProfilePlayerName profile
+  --                   headline =
+  --                       case getPlayerColourName state of
+  --                           Nothing -> name
+  --                           Just colName -> printf "%s, the %s wizard" name colName
+  --               in
+  --               Translate 0.5 0.74 $
+  --               mconcat [ Text 40 CenterAligned "featuring"
+  --                       , Translate 0 (-0.08) $
+  --                         Text 60 CenterAligned headline
+  --                       ]
 
 handleInput :: InputEvent -> Game State (Maybe GlobalCommand)
 handleInput (InputEvent (KeyPress KeyEsc)) = do
@@ -162,4 +161,4 @@ loadColours colFile = do
     processLine :: String -> (Colour, String)
     processLine line =
         let (name, (_:col)) = break (=='\t') line in
-        (fromJust (colourFromHexString col), name)
+        (fromJust (fromHexString col), name)

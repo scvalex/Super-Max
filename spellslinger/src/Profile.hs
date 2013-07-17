@@ -28,7 +28,7 @@ loadOrNewProfile = do
     newProfile = do
         username <- getLoginName
         return (Profile { getProfilePlayerName   = username
-                        , getProfilePlayerColour = RGBA 191 144 5 255
+                        , getProfilePlayerColour = RGB 0.75 0.56 0.02
                         })
 
 -- | Save the user profile to disk.

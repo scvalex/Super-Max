@@ -5,11 +5,9 @@ module Entities.Zombie (
         setPosition, getPosition, getState, alertZombie, roamTowards
     ) where
 
-import Common ( intRectangle, fromAreaCoordinates )
 import Control.Applicative ( (<$>) )
-import Data.Monoid ( Monoid(..) )
 import qualified Data.Set as S
-import SuperMax ( Picture(..), Colour(..), mkUid, randomR
+import SuperMax ( Drawable(..), mkUid, randomR
                 , Entity(..), EntityId(..), Position(..) )
 import Types ( Direction(..), randomDirection )
 
@@ -51,32 +49,6 @@ instance Entity Zombie where
     occupiedPositions (Zombie { getZombiePosition = pos }) =
         S.singleton pos
 
-    draw (Zombie { getZombiePosition   = Position (xz, yz)
-                 , getZombieAreaBounds = bounds
-                 , getZombieVisualTint = tint
-                 , getZombieAlerted    = malerted }) =
-        let col = Colour (RGBA 0 (180 + floor (75.0 * sin tint)) 0 255) in
-        fromAreaCoordinates bounds $
-        mconcat [ case malerted of
-                       Nothing ->
-                           mempty
-                       Just n ->
-                           let s = fromIntegral n * 0.1 in
-                           mconcat [ col $
-                                     FilledRectangle (fromIntegral xz - (s + 0.2))
-                                                     (fromIntegral yz - (s + 0.2))
-                                                     (1.0 + 2.0 * s + 0.4)
-                                                     (1.0 + 2.0 * s + 0.4)
-                                   , Colour (RGBA 0 0 0 255) $
-                                     FilledRectangle (fromIntegral xz - s)
-                                                     (fromIntegral yz - s)
-                                                     (1.0 + 2.0 * s)
-                                                     (1.0 + 2.0 * s)
-                                   ]
-                , col $
-                  intRectangle xz yz 1 1
-                ]
-
     tickVisual z@(Zombie { getZombieVisualTint = tint
                          , getZombieAlerted    = malerted }) =
         z { getZombieVisualTint = tint + pi / 16
@@ -85,6 +57,37 @@ instance Entity Zombie where
                                     Just 0  -> Nothing
                                     Just n  -> Just (n - 1)
           }
+
+instance Drawable Zombie where
+    drawableVertices (Zombie { getZombiePosition   = Position (_xz, _yz)
+                             , getZombieAreaBounds = _bounds
+                             , getZombieVisualTint = _tint
+                             , getZombieAlerted    = _malerted }) =
+        -- let col = Colour (RGBA 0 (180 + floor (75.0 * sin tint)) 0 255) in
+        -- fromAreaCoordinates bounds $
+        -- mconcat [ case malerted of
+        --                Nothing ->
+        --                    mempty
+        --                Just n ->
+        --                    let s = fromIntegral n * 0.1 in
+        --                    mconcat [ col $
+        --                              FilledRectangle (fromIntegral xz - (s + 0.2))
+        --                                              (fromIntegral yz - (s + 0.2))
+        --                                              (1.0 + 2.0 * s + 0.4)
+        --                                              (1.0 + 2.0 * s + 0.4)
+        --                            , Colour (RGBA 0 0 0 255) $
+        --                              FilledRectangle (fromIntegral xz - s)
+        --                                              (fromIntegral yz - s)
+        --                                              (1.0 + 2.0 * s)
+        --                                              (1.0 + 2.0 * s)
+        --                            ]
+        --         , col $
+        --           intRectangle xz yz 1 1
+        --         ]
+        []
+
+    drawableHudTexts (Zombie {}) =
+        []
 
 setPosition :: Zombie -> Position -> Zombie
 setPosition z pos = z { getZombiePosition = pos }
