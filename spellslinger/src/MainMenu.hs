@@ -16,7 +16,7 @@ import Profile ( Profile(..), loadOrNewProfile, saveProfile )
 import qualified Data.Map as M
 import SuperMax ( Game, modifyGameState, getGameState, getsGameState
                 , randomR, upon, getResource
-                , Drawing(..)
+                , SomeDrawable(..), Drawable(..), Drawing(..), Text(..)
                 , Colour(..), fromHexString
                 , InputEvent(..), KeyEvent(..), Key(..) )
 import System.FilePath ( (</>) )
@@ -60,7 +60,14 @@ loadResources resDir = do
 ----------------------
 
 drawState :: State -> Drawing
-drawState state = def
+drawState state = def { drawingDrawables = [SomeDrawable state] }
+
+instance Drawable State where
+    drawableHudTexts _state = [ Text { textFontName = "holstein"
+                                     , textPosition = (0.0, 0.0)
+                                     , textSize     = 0.4
+                                     , textText     = "Menu"
+                                     }]
   --   mconcat $
   --   [ Translate 0.5 0.80 $ Text 80 CenterAligned "Spellslinger"
   --   , featuring
