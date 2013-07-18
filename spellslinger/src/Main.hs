@@ -4,9 +4,10 @@ import Data.Default ( def )
 import Data.Dynamic ( Dynamic )
 import Data.Map ( Map )
 import GlobalCommand ( GlobalCommand(..) )
+import qualified Data.Map as M
+import qualified HighScores as HighScores
 import qualified MainMenu as MainMenu
 import qualified Survival as Survival
-import qualified HighScores as HighScores
 import SuperMax ( Game, InputEvent, play, quitGame
                 , modifyGameState, getGameState, withAlternateGameState
                 , Drawing(..) )
@@ -40,7 +41,10 @@ main = do
     putStrLn ""
 
     play
+        "Spellslinger"
         tps
+        (M.fromList [("default", ("vertex.glsl", "fragment.glsl"))])
+        (M.fromList [("holstein", "holstein.png")])
         loadResources
         (\screenW screenH -> ((screenW, screenH), MainMenu MainMenu.initState))
         start

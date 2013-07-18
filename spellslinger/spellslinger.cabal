@@ -27,7 +27,7 @@ Library
                         containers,
                         data-default,
                         filepath,
-                        GLFW-b,
+                        GLFW-b < 1.0.0,
                         JuicyPixels,
                         OpenGL,
                         OpenGLRaw,
@@ -44,6 +44,7 @@ Library
                         SuperMax.Entity,
                         SuperMax.GL,
                         SuperMax.GL.Drawing,
+                        SuperMax.GL.Utils,
                         SuperMax.Input
 
 Executable spellslinger
