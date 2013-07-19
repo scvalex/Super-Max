@@ -20,6 +20,7 @@ import SuperMax ( Game, modifyGameState, getGameState, getsGameState
                 , Colour(..), fromHexString
                 , InputEvent(..), KeyEvent(..), Key(..) )
 import System.FilePath ( (</>) )
+import Text.Printf ( printf )
 
 ----------------------
 -- Game interface
@@ -63,40 +64,42 @@ drawState :: State -> Drawing
 drawState state = def { drawingDrawables = [SomeDrawable state] }
 
 instance Drawable State where
-    drawableHudTexts _state = [ Text { textFontName = "holstein"
-                                     , textPosition = (0.0, 0.0)
-                                     , textSize     = 0.4
-                                     , textText     = "Menu"
-                                     }]
-  --   mconcat $
-  --   [ Translate 0.5 0.80 $ Text 80 CenterAligned "Spellslinger"
-  --   , featuring
-  --   , mconcat $
-  --     map drawMenuItem (zip [0 :: Int ..] (map fst (getItems state)))
-  --   ]
-  -- where
-  --   drawMenuItem (i, text) = Translate 0.5 (0.5 - (fromIntegral i) * 0.1) $
-  --                            Text 50 CenterAligned $
-  --                            if i == getSelectedItem state
-  --                            then "- " ++ text ++ " -"
-  --                            else text
-
-  --   featuring =
-  --       case getPlayerProfile state of
-  --           Nothing ->
-  --               mempty
-  --           Just profile ->
-  --               let name = getProfilePlayerName profile
-  --                   headline =
-  --                       case getPlayerColourName state of
-  --                           Nothing -> name
-  --                           Just colName -> printf "%s, the %s wizard" name colName
-  --               in
-  --               Translate 0.5 0.74 $
-  --               mconcat [ Text 40 CenterAligned "featuring"
-  --                       , Translate 0 (-0.08) $
-  --                         Text 60 CenterAligned headline
-  --                       ]
+    drawableHudTexts state = concat
+        [ [ Text { textFontName = "holstein"
+                 , textPosition = (-0.8, 0.5)
+                 , textSize     = 0.14
+                 , textText     = "Spellslinger"
+                 }
+          , Text { textFontName = "holstein"
+                 , textPosition = (-0.6, 0.4)
+                 , textSize     = 0.06
+                 , textText     = "featuring"
+                 }
+          , Text { textFontName = "holstein"
+                 , textPosition = (-0.6, 0.3)
+                 , textSize     = 0.08
+                 , textText     = featuring
+                 }
+          ]
+        , [ Text { textFontName = "holstein"
+                 , textPosition = (-0.6, 0.0 - 0.2 * (fromIntegral i))
+                 , textSize     = 0.1
+                 , textText     = if i == getSelectedItem state
+                                  then "> " ++ text
+                                  else "  " ++ text
+                 }
+          | (i, (text, _)) <- zip [0 :: Int ..] (getItems state) ]
+        ]
+      where
+        featuring =
+            case getPlayerProfile state of
+                Nothing ->
+                    ""
+                Just profile ->
+                    let name = getProfilePlayerName profile
+                    in case getPlayerColourName state of
+                        Nothing -> name
+                        Just colName -> printf "%s, the %s wizard" name colName
 
 handleInput :: InputEvent -> Game State (Maybe GlobalCommand)
 handleInput (InputEvent (KeyPress KeyEsc)) = do
