@@ -2,6 +2,7 @@ module Main where
 
 import Data.Dynamic ( Dynamic )
 import Data.Map ( Map )
+import Data.Vect.Float ( Mat4(..), Vec4(..) )
 import GlobalCommand ( GlobalCommand(..) )
 import qualified Data.Map as M
 import qualified HighScores as HighScores
@@ -72,10 +73,16 @@ drawState ((_screenW, _screenH), gs) =
     -- Translate (fromIntegral (screenW - dimMin) / 2.0) (fromIntegral (screenH - dimMin) / 2.0) $
     -- Scale (fromIntegral dimMin) (fromIntegral dimMin) $
     -- Now, draw the scene
-    case gs of
-        MainMenu state   -> MainMenu.drawState state
-        Survival state   -> Survival.drawState state
-        HighScores state -> HighScores.drawState state
+    let drawing = case gs of
+            MainMenu state   -> MainMenu.drawState state
+            Survival state   -> Survival.drawState state
+            HighScores state -> HighScores.drawState state
+        drawing' = drawing { drawingViewMatrix = Mat4 (Vec4 1.0 0.0 0.0 0.0)
+                                                      (Vec4 0.0 1.0 0.0 0.0)
+                                                      (Vec4 0.0 0.0 1.0 0.0)
+                                                      (Vec4 0.0 0.0 0.0 1.0)
+                           }
+    in drawing'
 
 handleInput :: InputEvent -> Game FullState ()
 handleInput ev = do
