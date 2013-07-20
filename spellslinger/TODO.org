@@ -61,6 +61,7 @@ Todo
    :END:
 ** TODO Port game to GL engine
    :LOGBOOK:
+   CLOCK: [2013-07-20 Sat 23:47]--[2013-07-21 Sun 00:00] =>  0:13
    CLOCK: [2013-07-11 Thu 18:05]--[2013-07-11 Thu 18:18] =>  0:13
    CLOCK: [2013-07-11 Thu 17:28]--[2013-07-11 Thu 17:52] =>  0:24
    :END:

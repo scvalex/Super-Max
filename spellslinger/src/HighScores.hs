@@ -20,18 +20,19 @@ import GlobalCommand ( GlobalCommand(..) )
 import Network.HTTP ( simpleHTTP, getRequest, getResponseBody )
 import SuperMax ( Game, modifyGameState
                 , upon, getResource
-                , Drawing(..)
+                , Drawable(..), Drawing(..), SomeDrawable(..), Text(..)
                 , Colour(..), fromHexString
                 , InputEvent(..), KeyEvent(..), Key(..) )
 import Types ( Score )
+import Text.Printf ( printf )
 
 ----------------------
 -- Game interface
 ----------------------
 
-data ScoreEntry = ScoreEntry { name :: String
+data ScoreEntry = ScoreEntry { name   :: String
                              , colour :: String
-                             , score :: Score
+                             , score  :: Score
                              } deriving ( Generic )
 
 instance FromJSON ScoreEntry
@@ -61,25 +62,28 @@ start =
 ----------------------
 
 drawState :: State -> Drawing
-drawState _state = def
-  --   mconcat $
-  --   [ Translate 0.5 0.80 $ Text 80 CenterAligned "Spellslinger"
-  --   , Translate 0.5 0.74 $ Text 40 CenterAligned "High Scores"
-  --   , mconcat $
-  --     map drawScore (zip [0 :: Int ..] (getScores state))
-  --   ]
-  -- where
-  --   drawScore (i, entry) =
-  --       Translate 0.5 (0.65 - (fromIntegral i) * 0.05) $
-  --       mconcat [ Translate (-0.3) 0.0 $
-  --                 Text 40 LeftAligned $
-  --                 printf "%d. %s, the %s" i (name entry) (colour entry)
-  --               , Translate 0.3 0.0 $
-  --                 Text 40 RightAligned $
-  --                 printf "%d" (score entry)
-  --               ]
+drawState state = def { drawingDrawables = [SomeDrawable state] }
+
+-- FIXME Why does going to highscores sometimes kill the game silently?
+instance Drawable State where
+    drawableHudTexts state = concat
+        [ [ Text { textFontName = "holstein"
+                 , textPosition = (-0.8, 0.5)
+                 , textSize     = 0.14
+                 , textText     = "Highscores"
+                 }
+          ]
+        , [ Text { textFontName = "holstein"
+                 , textPosition = (-0.9, 0.3 - (fromIntegral i * 0.12))
+                 , textSize     = 0.06
+                 , textText     = printf "%d. %s, the %s %6d"
+                                         i (name entry) (colour entry) (score entry)
+                 }
+          | (i, entry) <- zip [0 :: Int ..] (getScores state) ]
+        ]
 
 handleInput :: InputEvent -> Game State (Maybe GlobalCommand)
+-- FIXME Why does pressing escape kill the game?
 handleInput (InputEvent (KeyRelease KeyEsc)) = return (Just ToMainMenu)
 handleInput _                                = return Nothing
 

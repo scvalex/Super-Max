@@ -71,15 +71,16 @@ instance Drawable State where
                  , textText     = "Spellslinger"
                  }
           , Text { textFontName = "holstein"
-                 , textPosition = (-0.6, 0.4)
+                 , textPosition = (-0.3, 0.4)
                  , textSize     = 0.06
                  , textText     = "featuring"
                  }
-          , Text { textFontName = "holstein"
-                 , textPosition = (-0.6, 0.3)
-                 , textSize     = 0.08
-                 , textText     = featuring
-                 }
+          -- FIXME Why does showing the featuring text lead to artifacts?
+          -- , Text { textFontName = "holstein"
+          --        , textPosition = (-0.3, 0.3)
+          --        , textSize     = 0.08
+          --        , textText     = featuring
+          --        }
           ]
         , [ Text { textFontName = "holstein"
                  , textPosition = (-0.6, 0.0 - 0.2 * (fromIntegral i))
