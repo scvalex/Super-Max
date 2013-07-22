@@ -59,10 +59,11 @@ instance Entity Zombie where
           }
 
 instance Drawable Zombie where
-    drawableVertices (Zombie { getZombiePosition   = Position (_xz, _yz)
-                             , getZombieAreaBounds = _bounds
-                             , getZombieVisualTint = _tint
-                             , getZombieAlerted    = _malerted }) =
+    drawableModel (Zombie { getZombiePosition   = Position (_xz, _yz)
+                          , getZombieAreaBounds = _bounds
+                          , getZombieVisualTint = _tint
+                          , getZombieAlerted    = _malerted }) =
+        Nothing
         -- let col = Colour (RGBA 0 (180 + floor (75.0 * sin tint)) 0 255) in
         -- fromAreaCoordinates bounds $
         -- mconcat [ case malerted of
@@ -84,7 +85,6 @@ instance Drawable Zombie where
         --         , col $
         --           intRectangle xz yz 1 1
         --         ]
-        []
 
     drawableHudTexts (Zombie {}) =
         []

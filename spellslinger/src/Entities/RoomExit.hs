@@ -38,8 +38,9 @@ instance Entity RoomExit where
     tickVisual = id
 
 instance Drawable RoomExit where
-    drawableVertices (RE { getREPosition   = Position (_xe, _ye)
-                         , getREAreaBounds = _bounds }) =
+    drawableModel (RE { getREPosition   = Position (_xe, _ye)
+                      , getREAreaBounds = _bounds }) =
+        Nothing
         -- fromAreaCoordinates bounds $
         -- Translate (fromIntegral xe) (fromIntegral ye) $
         -- mconcat [ Colour (RGBA 255 215 0 255) $
@@ -50,7 +51,6 @@ instance Drawable RoomExit where
         --         , Translate 1 2 $
         --           smallText CenterAligned "Exit"
         --         ]
-        []
 
     drawableHudTexts (RE {}) =
         []

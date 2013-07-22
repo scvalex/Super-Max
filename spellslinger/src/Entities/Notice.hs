@@ -47,10 +47,11 @@ instance Entity Notice where
     tickVisual = id
 
 instance Drawable Notice where
-    drawableVertices (Notice { getNoticePosition   = Position (_xn, _yn)
-                             , getNoticeAreaBounds = _bounds
-                             , getNoticeActive     = _active
-                             , getNoticeText       = _text }) =
+    drawableModel (Notice { getNoticePosition   = Position (_xn, _yn)
+                          , getNoticeAreaBounds = _bounds
+                          , getNoticeActive     = _active
+                          , getNoticeText       = _text }) =
+        Nothing
         -- Translate (fromIntegral xn) (fromIntegral yn) $
         -- let colour = if active
         --              then Colour (RGB 0.9 0.9 1.0)
@@ -66,7 +67,6 @@ instance Drawable Notice where
         --           FilledRectangle 0.2 0.1 0.7 0.7
         --         , msg
         --         ]
-        []
 
     drawableHudTexts (Notice {}) =
         []

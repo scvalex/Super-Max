@@ -38,7 +38,7 @@ import qualified Data.Set as S
 import qualified Graphics.Rendering.OpenGL.Raw as Raw
 import qualified Graphics.UI.GLFW as GLFW
 import qualified System.Random as R
-import SuperMax.GL.Drawing ( Drawing(..), SomeDrawable(..), Drawable(..)
+import SuperMax.GL.Drawing ( Drawing(..), SomeDrawable(..), Drawable(..), Model(..)
                            , serializeVertex
                            , Text(..) )
 import SuperMax.GL.Utils ( initRendering, checkError, makeShaderProgram
@@ -213,35 +213,47 @@ draw programs fonts drawing = do
         currentProgram $= Just program
 
         forM_ drawables $ \drawable -> do
-            -- Transfer vertices and colours to OpenGL
-            let drawingData = concatMap serializeVertex (drawableVertices drawable)
-            withArrayLen drawingData $ \len drawingDataPtr ->
-                bufferData ArrayBuffer $= ( fromIntegral (len * sizeOfFloat)
-                                          , drawingDataPtr
-                                          , StaticDraw )
-
             -- Transfer MVP to OpenGL
             mvpId <- withCString "MVP" $ Raw.glGetUniformLocation (programID program)
             let mvp = vp .*. drawableModelMatrix drawable
             with mvp $ Raw.glUniformMatrix4fv mvpId 1 0 . unsafeCoerce
 
-            -- Perform drawing
-            vertexArrayId <- get (attribLocation program "vertexPosition")
-            colourArrayId <- get (attribLocation program "vertexColour")
+            -- Transfer vertices and colours to OpenGL
+            case drawableModel drawable of
+                Nothing ->
+                    return ()
+                Just (TriangleModel triangles) -> do
+                    let drawingData = concatMap serializeVertex $
+                                      concatMap (\(a, b, c) -> [a, b, c]) triangles
+                    withArrayLen drawingData $ \len drawingDataPtr ->
+                        bufferData ArrayBuffer $= ( fromIntegral (len * sizeOfFloat)
+                                                  , drawingDataPtr
+                                                  , StaticDraw )
 
-            vertexAttribArray vertexArrayId $= Enabled
-            vertexAttribArray colourArrayId $= Enabled
 
-            bindBuffer ArrayBuffer $= Just vertexBuffer
-            vertexAttribPointer vertexArrayId $=
-                (ToFloat, VertexArrayDescriptor 3 Float (fromIntegral (sizeOfFloat * 6)) nullPtr)
-            vertexAttribPointer colourArrayId $=
-                (ToFloat, VertexArrayDescriptor 3 Float (fromIntegral (sizeOfFloat * 6)) (makeOffset (3 * sizeOfFloat)))
+                    -- Perform drawing
+                    vertexArrayId <- get (attribLocation program "vertexPosition")
+                    colourArrayId <- get (attribLocation program "vertexColour")
 
-            drawArrays Triangles 0 (fromIntegral (length drawingData `div` 2))
+                    vertexAttribArray vertexArrayId $= Enabled
+                    vertexAttribArray colourArrayId $= Enabled
 
-            vertexAttribArray colourArrayId $= Disabled
-            vertexAttribArray vertexArrayId $= Disabled
+                    bindBuffer ArrayBuffer $= Just vertexBuffer
+                    vertexAttribPointer vertexArrayId $=
+                        (ToFloat, VertexArrayDescriptor 3
+                                                        Float
+                                                        (fromIntegral (sizeOfFloat * 6))
+                                                        nullPtr)
+                    vertexAttribPointer colourArrayId $=
+                        (ToFloat, VertexArrayDescriptor 3
+                                                        Float
+                                                        (fromIntegral (sizeOfFloat * 6))
+                                                        (makeOffset (3 * sizeOfFloat)))
+
+                    drawArrays Triangles 0 (fromIntegral (length drawingData `div` 2))
+
+                    vertexAttribArray colourArrayId $= Disabled
+                    vertexAttribArray vertexArrayId $= Disabled
 
     -- Cleanup
     deleteObjectNames [vertexBuffer]

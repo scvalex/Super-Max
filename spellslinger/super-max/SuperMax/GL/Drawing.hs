@@ -1,7 +1,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 
 module SuperMax.GL.Drawing (
-        Drawing(..), SomeDrawable(..), Drawable(..),
+        Drawing(..), SomeDrawable(..), Model(..), Drawable(..),
         Vertex(..), serializeVertex,
         Text(..)
     ) where
@@ -21,9 +21,12 @@ instance Default Drawing where
                   , drawingDrawables  = []
                   }
 
+data Model = TriangleModel [(Vertex, Vertex, Vertex)]
+             deriving ( Show, Eq )
+
 class Drawable a where
-    drawableVertices :: a -> [Vertex]
-    drawableVertices _ = []
+    drawableModel :: a -> Maybe Model
+    drawableModel _ = def
 
     drawableHudTexts :: a -> [Text]
     drawableHudTexts _ = []
@@ -35,7 +38,7 @@ class Drawable a where
     drawableModelMatrix _ = idmtx
 
 instance Drawable SomeDrawable where
-    drawableVertices (SomeDrawable d)    = drawableVertices d
+    drawableModel (SomeDrawable d)       = drawableModel d
     drawableHudTexts (SomeDrawable d)    = drawableHudTexts d
     drawableProgramName (SomeDrawable d) = drawableProgramName d
     drawableModelMatrix (SomeDrawable d) = drawableModelMatrix d
