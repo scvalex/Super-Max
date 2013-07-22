@@ -31,7 +31,7 @@ import qualified Entities.Zombie as Zombie
 import qualified SuperMax.Entity as Entity
 import SuperMax ( InputEvent(..)
                 , Game, getsGameState, modifyGameState, getGameTick, upon, randomR
-                , Drawing(..)
+                , Drawing(..), Drawable(..), SomeDrawable(..), Model(..), Vertex(..)
                 , Colour(..), toHexString
                 , InputEvent(..), KeyEvent(..), Key(..)
                 , Entity, Behaviour(..), EntityId(..), Position(..) )
@@ -173,7 +173,24 @@ loadLevel lvl = do
           })
 
 drawState :: State -> Drawing
-drawState _w = def
+drawState _w = def { drawingDrawables = [SomeDrawable Wireframe] }
+
+data Wireframe = Wireframe
+
+instance Drawable Wireframe where
+    drawableModel Wireframe =
+        Just $ LineModel $ concat $
+        [ [(a, b), (c, d)]
+        | i <- [0.0, 0.1 .. 0.9]
+        , let a = vertex 0.0 i
+        , let b = vertex 1.0 i
+        , let c = vertex i   0.0
+        , let d = vertex i   1.0
+        ]
+      where
+        vertex x y = ColourVertex { vertexPosition = (x, y, 0.0)
+                                  , vertexColour = RGB 0.1 0.1 0.1 }
+
   --   mconcat [ wireframe
   --           , player
   --           , entities
@@ -182,13 +199,6 @@ drawState _w = def
   --           ]
   -- where
   --   -- The wireframe in the background.
-  --   wireframe = mappend (Colour (greyN 0.1) $
-  --                        FilledRectangle 0.0 0.0 1.0 1.0) $
-  --               Colour black $
-  --               mconcat $ [ FilledRectangle (i + 0.001) (j + 0.001) 0.099 0.099
-  --                         | i <- [0.0, 0.1 .. 0.9]
-  --                         , j <- [0.0, 0.1 .. 0.9]
-  --                         ]
 
   --   -- A message shown at the beginning and at the end.
   --   prePostMessage =
