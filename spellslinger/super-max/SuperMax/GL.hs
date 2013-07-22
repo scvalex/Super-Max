@@ -222,14 +222,19 @@ draw programs fonts drawing = do
             case drawableModel drawable of
                 Nothing ->
                     return ()
-                Just (TriangleModel triangles) -> do
-                    let drawingData = concatMap serializeVertex $
-                                      concatMap (\(a, b, c) -> [a, b, c]) triangles
+                Just model -> do
+                    let drawingData =
+                            case model of
+                                TriangleModel triangles ->
+                                    concatMap serializeVertex $
+                                    concatMap (\(a, b, c) -> [a, b, c]) triangles
+                                LineModel linez ->
+                                    concatMap serializeVertex $
+                                    concatMap (\(a, b) -> [a, b]) linez
                     withArrayLen drawingData $ \len drawingDataPtr ->
                         bufferData ArrayBuffer $= ( fromIntegral (len * sizeOfFloat)
                                                   , drawingDataPtr
                                                   , StaticDraw )
-
 
                     -- Perform drawing
                     vertexArrayId <- get (attribLocation program "vertexPosition")
@@ -250,7 +255,10 @@ draw programs fonts drawing = do
                                                         (fromIntegral (sizeOfFloat * 6))
                                                         (makeOffset (3 * sizeOfFloat)))
 
-                    drawArrays Triangles 0 (fromIntegral (length drawingData `div` 2))
+                    let primitive = case model of
+                            TriangleModel _ -> Triangles
+                            LineModel _     -> Lines
+                    drawArrays primitive 0 (fromIntegral (length drawingData `div` 2))
 
                     vertexAttribArray colourArrayId $= Disabled
                     vertexAttribArray vertexArrayId $= Disabled

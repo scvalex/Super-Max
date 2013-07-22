@@ -22,6 +22,7 @@ instance Default Drawing where
                   }
 
 data Model = TriangleModel [(Vertex, Vertex, Vertex)]
+           | LineModel [(Vertex, Vertex)]
              deriving ( Show, Eq )
 
 class Drawable a where
