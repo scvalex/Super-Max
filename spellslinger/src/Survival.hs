@@ -181,7 +181,7 @@ instance Drawable Wireframe where
     drawableModel Wireframe =
         Just $ LineModel $ concat $
         [ [(a, b), (c, d)]
-        | i <- [0.0, 0.1 .. 0.9]
+        | i <- [0.0, 0.1 .. 1.0]
         , let a = vertex 0.0 i
         , let b = vertex 1.0 i
         , let c = vertex i   0.0

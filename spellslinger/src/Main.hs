@@ -68,19 +68,16 @@ loadResources resDir = MainMenu.loadResources resDir
 drawState :: FullState -> Drawing
 drawState ((_screenW, _screenH), gs) =
     -- We draw on a (x = 0.0 -- 1.0, y = 0.0 -- 1.0) sized canvas.
-    -- FIXME Resize the canvas to the screen ratio.
-    -- let dimMin = min screenW screenH in
-    -- Translate (fromIntegral (screenW - dimMin) / 2.0) (fromIntegral (screenH - dimMin) / 2.0) $
-    -- Scale (fromIntegral dimMin) (fromIntegral dimMin) $
-    -- Now, draw the scene
     let drawing = case gs of
             MainMenu state   -> MainMenu.drawState state
             Survival state   -> Survival.drawState state
             HighScores state -> HighScores.drawState state
-        drawing' = drawing { drawingViewMatrix = Mat4 (Vec4 1.0 0.0 0.0 0.0)
-                                                      (Vec4 0.0 1.0 0.0 0.0)
+        -- FIXME Hardcoding this ratio is ugly.
+        r = 1.1
+        drawing' = drawing { drawingViewMatrix = Mat4 (Vec4 r   0.0 0.0 0.0)
+                                                      (Vec4 0.0 r   0.0 0.0)
                                                       (Vec4 0.0 0.0 1.0 0.0)
-                                                      (Vec4 0.0 0.0 0.0 1.0)
+                                                      (Vec4 (-0.5) (-1.0) 0.0 1.0)
                            }
     in drawing'
 

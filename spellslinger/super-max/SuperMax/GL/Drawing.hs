@@ -21,6 +21,8 @@ instance Default Drawing where
                   , drawingDrawables  = []
                   }
 
+-- FIXME Add more primitives from
+-- https://www.opengl.org/wiki/Primitive
 data Model = TriangleModel [(Vertex, Vertex, Vertex)]
            | LineModel [(Vertex, Vertex)]
              deriving ( Show, Eq )
