@@ -16,6 +16,7 @@ import Data.Default ( def )
 import Data.Foldable ( foldlM )
 import Data.Map ( Map )
 import Data.Set ( Set )
+import Data.Vect.Float ( Mat4(..), Vec4(..) )
 import Entities.InvisibleWall ( InvisibleWall, EntityParameters(..) )
 import Entities.Notice ( Notice, EntityParameters(..) )
 import Entities.RoomExit ( RoomExit, EntityParameters(..) )
@@ -47,22 +48,20 @@ type Level = Int
 -- | The state of the world is used to generate the scene, and is
 -- updated on every event (see 'handleEvent'), and on every tick (see
 -- 'handleTick').
-data State =
-    State { getState        :: RoundState
-          , getLevel        :: Maybe Level
-          , getScore        :: Score
-          , getTime         :: Float
-          , getArea         :: Area
-          , getPlayer       :: Player
-          , getHeldDownKeys :: Set Key -- ^ We get key up and key down events, but we need
-                                       -- to handle holding down a key ourselves.  We keep
-                                       -- track of which keys are being held down at any
-                                       -- time.  When we update the world, we process
-                                       -- those keys as well as all the keys that were
-                                       -- pressed and released.
-          , getEntities     :: Map EntityId SomeEntity
-          , getPlayerColour :: Colour
-          }
+data State = State
+    { getState        :: RoundState
+    , getLevel        :: Maybe Level
+    , getScore        :: Score
+    , getTime         :: Float
+    , getArea         :: Area
+    , getPlayer       :: Player
+    , getHeldDownKeys :: Set Key -- ^ We get key up and key down events, but we need to
+                                 -- handle holding down a key ourselves.  We keep track of
+                                 -- which keys are being held down at any time.  When we
+                                 -- update the world, we process those keys as well as all
+                                 -- the keys that were pressed and released.
+    , getEntities     :: Map EntityId SomeEntity
+    }
 
 data SomeEntity = forall a. (Entity a, Behaviour State a) => SomeEntity a
 
@@ -77,18 +76,20 @@ data RoundState = Loading
                 deriving ( Eq, Show )
 
 -- | The definition of the game area/map.
-data Area = Room { getRoomBounds  :: (Int, Int, Int, Int) -- ^ The bounds of the room
-                                                          -- (these coordinates are not
-                                                          -- related to the display ones).
-                                                          -- The top and right bounds are
-                                                          -- exclusive.
-                 , getRoomStart   :: Position             -- ^ The player's starting point
-                 , getRoomEntities :: forall a. [Game a SomeEntity] -- ^ The room's starting entities.
-                 }
+data Area = Room
+    { getRoomBounds  :: (Int, Int, Int, Int) -- ^ The bounds of the room (these
+                                             -- coordinates are not related to the display
+                                             -- ones).  The top and right bounds are
+                                             -- exclusive.
+    , getRoomStart   :: Position             -- ^ The player's starting point
+    , getRoomEntities :: forall a. [Game a SomeEntity] -- ^ The room's starting entities.
+    }
 
-data Player = Player { getPlayerPosition :: Position
-                     , getPlayerMovement :: Maybe Direction
-                     } deriving ( Eq, Show )
+data Player = Player
+    { playerPosition :: Position
+    , playerMovement :: Maybe Direction
+    , playerColour   :: Colour
+    } deriving ( Eq, Show )
 
 ----------------------
 -- Callbacks
@@ -128,24 +129,26 @@ initState =
           , getArea         = area1
           , getHeldDownKeys = S.empty
           , getEntities     = M.empty
-          , getPlayer       = Player { getPlayerPosition = getRoomStart area1
-                                     , getPlayerMovement = Nothing
+          , getPlayer       = Player { playerPosition = getRoomStart area1
+                                     , playerMovement = Nothing
+                                     , playerColour   = RGB 1.0 0.55 0.0
                                      }
-          , getPlayerColour = RGB 1.0 0.55 0.0
           }
 
 start :: Maybe (Level, Score) -> Game State ()
 start Nothing =
     loadOrNewProfile `upon` \profile -> do
-        modifyGameState (\w -> w { getPlayerColour = getProfilePlayerColour profile })
+        modifyGameState (\w ->
+            w { getPlayer = (getPlayer w) { playerColour = getProfilePlayerColour profile } })
         readAppFile "lastLevel" `upon` \mtext -> do
             let (lvl, score) = maybe (1, 0) read mtext
             modifyGameState (\w -> w { getScore = score })
             loadLevel lvl
 start (Just (lvl, score)) =
     loadOrNewProfile `upon` \profile -> do
-        modifyGameState (\w -> w { getPlayerColour = getProfilePlayerColour profile
-                                 , getScore        = score })
+        modifyGameState (\w ->
+            w { getPlayer = (getPlayer w) { playerColour = getProfilePlayerColour profile }
+              , getScore  = score })
         loadLevel lvl
 
 loadLevel :: Level -> Game State ()
@@ -167,13 +170,15 @@ loadLevel lvl = do
           , getTime         = 0.0
           , getHeldDownKeys = S.empty
           , getEntities     = entities
-          , getPlayer       = Player { getPlayerPosition = getRoomStart area1
-                                     , getPlayerMovement = Nothing
-                                     }
+          , getPlayer       = (getPlayer w) { playerPosition = getRoomStart area1
+                                            , playerMovement = Nothing
+                                            }
           })
 
 drawState :: State -> Drawing
-drawState _w = def { drawingDrawables = [SomeDrawable Wireframe] }
+drawState w = def { drawingDrawables = [ SomeDrawable Wireframe
+                                        , SomeDrawable (getPlayer w)
+                                        ] }
 
 data Wireframe = Wireframe
 
@@ -191,15 +196,33 @@ instance Drawable Wireframe where
         vertex x y = ColourVertex { vertexPosition = (x, y, 0.0)
                                   , vertexColour = RGB 0.1 0.1 0.1 }
 
-  --   mconcat [ wireframe
-  --           , player
-  --           , entities
+instance Drawable Player where
+    drawableModel p =
+        Just $ TriangleModel $
+        let a = vertex 0.0 0.0
+            b = vertex 0.0 1.0
+            c = vertex 1.0 0.0
+            d = vertex 1.0 1.0
+        in
+        [ (a, b, c), (b, c, d) ]
+      where
+        vertex x y = ColourVertex { vertexPosition = (x, y, 0.0)
+                                  , vertexColour = playerColour p }
+
+    drawableModelMatrix p =
+        let Position (x, y) = playerPosition p
+            r = 1.0 / 60.0
+            (xt, yt) = (r * fromIntegral x, r * fromIntegral y)
+        in Mat4 (Vec4 r   0.0 0.0 0.0)
+                (Vec4 0.0 r   0.0 0.0)
+                (Vec4 0.0 0.0 1.0 0.0)
+                (Vec4 xt  yt  0.0 1.0)
+
+  --   mconcat [ entities
   --           , hud
   --           , prePostMessage
   --           ]
   -- where
-  --   -- The wireframe in the background.
-
   --   -- A message shown at the beginning and at the end.
   --   prePostMessage =
   --       case getState w of
@@ -224,13 +247,6 @@ instance Drawable Wireframe where
   --   entities =
   --       mconcat $
   --       map (\(SomeEntity e) -> Entity.draw e) (M.elems (getEntities w))
-
-  --   -- The player.
-  --   player =
-  --       fromRoomCoordinates $
-  --       let pos = getPlayerPosition (getPlayer w) in
-  --       Colour (getPlayerColour w) $
-  --       personPicture pos
 
   --   -- The HUD is overlayed on the game.
   --   hud = mconcat [ survivalTime
@@ -309,13 +325,13 @@ processKey key = do
     p <- getsGameState getPlayer
     case key of
         KeyLeft ->
-            modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just West } })
+            modifyGameState (\w -> w { getPlayer = p { playerMovement = Just West } })
         KeyRight ->
-            modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just East } })
+            modifyGameState (\w -> w { getPlayer = p { playerMovement = Just East } })
         KeyDown ->
-            modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just South } })
+            modifyGameState (\w -> w { getPlayer = p { playerMovement = Just South } })
         KeyUp ->
-            modifyGameState (\w -> w { getPlayer = p { getPlayerMovement = Just North } })
+            modifyGameState (\w -> w { getPlayer = p { playerMovement = Just North } })
         _ ->
             return ()
 
@@ -359,8 +375,8 @@ handleTick tDelta = do
 movePlayer :: Game State ()
 movePlayer = do
     p <- getsGameState getPlayer
-    let Position (x, y) = getPlayerPosition p
-    case getPlayerMovement p of
+    let Position (x, y) = playerPosition p
+    case playerMovement p of
         Nothing ->
             return ()
         Just m -> do
@@ -370,11 +386,11 @@ movePlayer = do
             if posOccupied pos' entities
                 then do
                     modifyGameState $ \w ->
-                        w { getPlayer = p { getPlayerMovement = Nothing } }
+                        w { getPlayer = p { playerMovement = Nothing } }
                 else do
                     modifyGameState $ \w ->
-                        w { getPlayer = p { getPlayerPosition = pos'
-                                          , getPlayerMovement = Nothing } }
+                        w { getPlayer = p { playerPosition = pos'
+                                          , playerMovement = Nothing } }
 
 -- Tick entities according the their own rules.
 tickEntities :: Game State ()
@@ -403,8 +419,8 @@ instance Behaviour State Zombie where
         tick <- getGameTick
 
         -- | Zombies follow the player if he moves and is close enough.
-        pmovement <- getPlayerMovement <$> getsGameState getPlayer
-        Position (xp, yp) <- getPlayerPosition <$> getsGameState getPlayer
+        pmovement <- playerMovement <$> getsGameState getPlayer
+        Position (xp, yp) <- playerPosition <$> getsGameState getPlayer
         let Position (xz, yz) = Zombie.getPosition zombie
         let closeEnough = abs (xp - xz) <= 18 && abs (yp - yz) <= 18
         let z = if pmovement /= Nothing && closeEnough
@@ -421,7 +437,7 @@ instance Behaviour State Zombie where
       where
         moveZombieFollowing z = do
             let Position (xz, yz) = Zombie.getPosition z
-            posp@(Position (xp, yp)) <- getPlayerPosition <$> getsGameState getPlayer
+            posp@(Position (xp, yp)) <- playerPosition <$> getsGameState getPlayer
             let pos' = if abs (xp - xz) > abs (yp - yz)
                        then Position (xz + signum (xp - xz), yz)
                        else Position (xz, yz + signum (yp - yz))
@@ -436,7 +452,7 @@ instance Behaviour State Zombie where
             let Position (xz, yz) = Zombie.getPosition z
                 (xd, yd) = movementDisplacement dir
                 pos' = Position (xz + xd, yz + yd)
-            posp <- getPlayerPosition <$> getsGameState getPlayer
+            posp <- playerPosition <$> getsGameState getPlayer
             when (pos' == posp) roundLost
             entities <- getsGameState getEntities
             n <- randomR (1, 10 :: Int)
@@ -451,13 +467,13 @@ instance Behaviour State Zombie where
 -- Stepping onto the room exit wins you the round.
 instance Behaviour State RoomExit where
     behave re = do
-        posp <- getPlayerPosition <$> getsGameState getPlayer
+        posp <- playerPosition <$> getsGameState getPlayer
         when (RoomExit.contains re posp) roundWon
         return re
 
 instance Behaviour State Notice where
     behave n = do
-        Position (xp, yp) <- getPlayerPosition <$> getsGameState getPlayer
+        Position (xp, yp) <- playerPosition <$> getsGameState getPlayer
         let Position (xn, yn) = Notice.getPosition n
         if abs (xp - xn) + abs (yp - yn) <= 2
             then return (Notice.activated n)
