@@ -32,7 +32,7 @@ import qualified Entities.Zombie as Zombie
 import qualified SuperMax.Entity as Entity
 import SuperMax ( InputEvent(..)
                 , Game, getsGameState, modifyGameState, getGameTick, upon, randomR
-                , Drawing(..), Drawable(..), SomeDrawable(..), Model(..), Vertex(..)
+                , Drawing(..), Drawable(..), SomeDrawable(..), Model(..), Vertex(..), Text(..)
                 , Colour(..), toHexString
                 , InputEvent(..), KeyEvent(..), Key(..)
                 , Entity, Behaviour(..), EntityId(..), Position(..) )
@@ -177,8 +177,9 @@ loadLevel lvl = do
 
 drawState :: State -> Drawing
 drawState w = def { drawingDrawables = [ SomeDrawable Wireframe
-                                        , SomeDrawable (getPlayer w)
-                                        ] }
+                                       , SomeDrawable (getPlayer w)
+                                       , SomeDrawable (Hud w)
+                                       ] }
 
 data Wireframe = Wireframe
 
@@ -218,6 +219,27 @@ instance Drawable Player where
                 (Vec4 0.0 0.0 1.0 0.0)
                 (Vec4 xt  yt  0.0 1.0)
 
+data Hud = Hud State
+
+instance Drawable Hud where
+    drawableHudTexts (Hud w) =
+        [ Text { textFontName = "holstein"
+               , textPosition = (-1.0, 0.85)
+               , textSize     = 0.08
+               , textText     = formatSeconds (getTime w)
+               }
+        , Text { textFontName = "holstein"
+               , textPosition = (-1.0, 0.80)
+               , textSize     = 0.05
+               , textText     = printf "Score: %d" (getScore w)
+               }
+        , Text { textFontName = "holstein"
+               , textPosition = (-1.0, 0.75)
+               , textSize     = 0.05
+               , textText     = printf "Level: %s" (maybe "?" show (getLevel w))
+               }
+        ]
+
   --   mconcat [ entities
   --           , hud
   --           , prePostMessage
@@ -247,32 +269,6 @@ instance Drawable Player where
   --   entities =
   --       mconcat $
   --       map (\(SomeEntity e) -> Entity.draw e) (M.elems (getEntities w))
-
-  --   -- The HUD is overlayed on the game.
-  --   hud = mconcat [ survivalTime
-  --                 , score
-  --                 , currentLevel
-  --                 ]
-
-  --   -- Survival time in top-left corner.
-  --   survivalTime = Translate 0.04 0.94 $
-  --                  bigText LeftAligned (formatSeconds (getTime w))
-
-  --   -- Current score in the top-left corner.
-  --   score = Translate 0.04 0.91 $
-  --           mediumText LeftAligned (printf "Score: %d" (getScore w))
-
-  --   -- Current level in the top-left corner.
-  --   currentLevel = Translate 0.04 0.88 $
-  --                  mediumText LeftAligned (printf "Level: %s" (maybe "?" show (getLevel w)))
-
-  --   -- Draw the picture of a person.
-  --   personPicture (Position (xp, yp)) =
-  --       intRectangle xp yp 1 1
-
-  --   -- Convert a picture in room coordinates to one in drawing coordinates.
-  --   fromRoomCoordinates :: Picture -> Picture
-  --   fromRoomCoordinates = fromAreaCoordinates (getRoomBounds (getArea w))
 
 handleInput :: InputEvent -> Game State (Maybe GlobalCommand)
 handleInput (InputEvent ev) = handleGlobalKey ev $ do
