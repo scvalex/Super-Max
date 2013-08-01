@@ -472,11 +472,12 @@ play title tps programPaths fontPaths loadResources wInit start drawGame onInput
         updateUntilSimulationInTheFuture now simulationTime1 es1 = do
             if simulationTime1 < now
                 then do
+                    putStrLn "onTick"
                     es2 <- processEvents es1
                     let ((), es3) = runGame (onTick slice) es2  -- Fixed slice
                     let simulationTime2 = addUTCTime (fromRational (toRational slice))
                                                      simulationTime1
-                    return (simulationTime2, es3)
+                    updateUntilSimulationInTheFuture now simulationTime2 es3
                 else do
                     return (simulationTime1, es1)
 

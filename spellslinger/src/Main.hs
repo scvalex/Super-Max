@@ -11,6 +11,7 @@ import qualified Survival as Survival
 import SuperMax ( Game, InputEvent, play, quitGame
                 , modifyGameState, getGameState, withAlternateGameState
                 , Drawing(..) )
+import Debug.Trace ( trace )
 
 type NpcId = Int
 
@@ -92,6 +93,7 @@ handleInput ev = do
 
 handleTick :: Float -> Game FullState ()
 handleTick tDelta = do
+    trace "tick" $ return ()
     (_, gs) <- getGameState
     mcommand <- case gs of
         MainMenu _   -> inMainMenu (MainMenu.handleTick tDelta)
