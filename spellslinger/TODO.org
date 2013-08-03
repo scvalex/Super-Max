@@ -65,17 +65,17 @@ Todo
    CLOCK: [2013-07-11 Thu 18:05]--[2013-07-11 Thu 18:18] =>  0:13
    CLOCK: [2013-07-11 Thu 17:28]--[2013-07-11 Thu 17:52] =>  0:24
    :END:
-** TODO Distinguish between deterministic and non-deterministic games
 ** TODO Font-based text rendering
 ** TODO Text alignment
 ** TODO Model support
+** TODO Use continuous updating in the game
+
+** TODO Distinguish between deterministic and non-deterministic games
 ** TODO Zombie and player models
 ** TODO Zombie emoticon faces
 ** TODO Player emoticon face in HUD
 ** TODO Over the shoulder view
 ** TODO Options menu
-** TODO Use continuous updating in the game
-
 ** Misc
    :LOGBOOK:
    CLOCK: [2013-07-06 Sat 11:00]--[2013-07-06 Sat 11:01] =>  0:01
