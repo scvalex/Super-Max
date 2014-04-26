@@ -1,5 +1,9 @@
 open Core.Std
 
+let draw (_ : Drawing.t) =
+  ()
+;;
+
 let run_test () =
   Sdl.init [`VIDEO];
   let (width, height) = (320, 240) in

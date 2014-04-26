@@ -1,4 +1,5 @@
-OASISFormat: 0.3
+OASISFormat: 0.4
+AlphaFeatures: ocamlbuild_more_args
 OCamlVersion: >= 4.00.1
 Name:        spells-and-roses
 Version:     0.1.0
@@ -9,7 +10,8 @@ LicenseFile: LICENSE
 Synopsis:    A game involving wizards. And roses.
 Homepage:    https://github.com/scvalex/super-max/spells-and-roses
 Plugins:     META (0.3)
-BuildTools:  ocamlbuild
+BuildTools:  ocamlbuild, camlp4o
+XOCamlbuildExtraArgs: -cflags -w,@A-44,-w,-4
 Description:
   A game involving wizards. And roses.
 
@@ -25,4 +27,6 @@ Executable spells_and_roses
   BuildDepends:
     core,
     sdl2,
+    sexplib,
+    sexplib.syntax,
     threads
