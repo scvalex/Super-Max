@@ -17,16 +17,12 @@ SourceRepository head
   Type:               git
   Location:           https://github.com/scvalex/super-max.git
 
-Executable spells_and_roses.exe
+Executable spells_and_roses
   Path:               bin/
   MainIs:             spells_and_roses.ml
   CompiledObject:     best
   Install:            true
   BuildDepends:
     core,
-    sdl,
-    threads
-  XMETARequires:
-    core,
-    sdl,
+    sdl2,
     threads

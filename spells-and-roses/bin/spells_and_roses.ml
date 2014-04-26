@@ -9,7 +9,7 @@ let run_test () =
       ~x:`undefined ~y:`undefined ~width ~height
       ~flags:[]
   in
-  Sdltimer.delay 2000;
+  Sdltimer.delay ~ms:2000;
   Sdl.quit ()
 ;;
 
