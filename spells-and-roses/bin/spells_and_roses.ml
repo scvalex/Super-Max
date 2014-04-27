@@ -1,6 +1,9 @@
 open Core.Std
 
-let draw (_ : Drawing.t) =
+let draw ~width ~height (drawing : Drawing.t) =
+  let _drawing =
+    Drawing.(scale ~x:(1.0 /. width) ~y:(1.0 /. height) drawing)
+  in
   ()
 ;;
 
