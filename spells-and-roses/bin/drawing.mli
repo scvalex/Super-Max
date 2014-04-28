@@ -41,5 +41,8 @@ val many : t list -> t
 module Example : sig
   (** [rectangles] are a bunch of rectangles that cover a 1.0 side
       square. *)
-  val rectangles : t
+  val rectangles :
+       width : int
+    -> height : int
+    -> t
 end

@@ -1,21 +1,20 @@
 open Core.Std
 
-let draw ~width ~height (drawing : Drawing.t) =
-  let _drawing =
-    Drawing.(scale ~x:(1.0 /. width) ~y:(1.0 /. height) drawing)
-  in
+let draw (_drawing : Drawing.t) =
   ()
 ;;
 
 let run_test () =
   Sdl.init [`VIDEO];
-  let (width, height) = (320, 240) in
-  let (_ : Sdlwindow.t) =
-    Sdlwindow.create2
-      ~title:"Let's try SDL2 with OCaml!"
-      ~x:`undefined ~y:`undefined ~width ~height
-      ~flags:[]
+  let (window, renderer) =
+    Sdlrender.create_window_and_renderer
+      ~width:0 ~height:0
+      ~flags:[Sdlwindow.FullScreen_Desktop]
   in
+  let (width, height) = (320, 240) in
+  Sdlwindow.set_title ~window ~title:"Something romantic";
+  Sdlrender.set_logical_size2 renderer ~x:width ~y:height;
+  draw (Drawing.Example.rectangles ~width ~height);
   Sdltimer.delay ~ms:2000;
   Sdl.quit ()
 ;;

@@ -54,24 +54,33 @@ let many ts =
 ;;
 
 module Example = struct
-  let rectangles =
+  let rectangles ~width ~height =
     let half_square = rectangle ~width:0.48 ~height:0.48 in
-    many
-      [ translate ~x:0.01 ~y:0.01
-          (colour ~r:1.0 ~g:0.0 ~b:0.0
-             half_square)
-      ; translate ~x:0.51 ~y:0.51
-          (colour ~r:0.7 ~g:0.0 ~b:0.7
-             half_square)
-      ; translate ~x:0.01 ~y:0.51
-          (colour ~r:0.7 ~g:0.0 ~b:0.7
-             half_square)
-      ; translate ~x:0.51 ~y:0.51
-          (colour ~r:0.0 ~g:0.0 ~b:1.0
-             half_square)
-      ; translate ~x:0.4 ~y:0.1
-          (colour ~r:0.0 ~g:0.5 ~b:0.0
-             (rectangle ~width:0.6 ~height:0.3))
-    ]
+    let rectangles =
+      many
+        [ translate ~x:0.01 ~y:0.01
+            (colour ~r:1.0 ~g:0.0 ~b:0.0
+               half_square)
+        ; translate ~x:0.51 ~y:0.51
+            (colour ~r:0.7 ~g:0.0 ~b:0.7
+               half_square)
+        ; translate ~x:0.01 ~y:0.51
+            (colour ~r:0.7 ~g:0.0 ~b:0.7
+               half_square)
+        ; translate ~x:0.51 ~y:0.51
+            (colour ~r:0.0 ~g:0.0 ~b:1.0
+               half_square)
+        ; translate ~x:0.4 ~y:0.1
+            (colour ~r:0.0 ~g:0.5 ~b:0.0
+               (rectangle ~width:0.6 ~height:0.3))
+        ]
+    in
+    let width = Float.of_int width in
+    let height = Float.of_int height in
+    let dim = Float.min width height in
+    translate
+      ~x:((width -. dim) /. 2.0)
+      ~y:((height -. dim) /. 2.0)
+      (scale ~x:(1.0 /. dim) ~y:(1.0 /. dim) rectangles)
   ;;
 end
