@@ -11,7 +11,8 @@ let run_test () =
       ~width:0 ~height:0
       ~flags:[Sdlwindow.FullScreen_Desktop]
   in
-  let (width, height) = (320, 240) in
+  let (width, height) = Sdlwindow.get_size window in
+  Printf.printf "Window size is (%d, %d)\n" width height;
   Sdlwindow.set_title ~window ~title:"Something romantic";
   Sdlrender.set_logical_size2 renderer ~x:width ~y:height;
   draw (Drawing.Example.rectangles ~width ~height);
