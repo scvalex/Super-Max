@@ -1,9 +1,5 @@
 open Core.Std
 
-let draw (_drawing : Drawing.t) =
-  ()
-;;
-
 let run_test () =
   Sdl.init [`VIDEO];
   let (window, renderer) =
@@ -15,7 +11,7 @@ let run_test () =
   Printf.printf "Window size is (%d, %d)\n" width height;
   Sdlwindow.set_title ~window ~title:"Something romantic";
   Sdlrender.set_logical_size2 renderer ~x:width ~y:height;
-  draw (Drawing.Example.rectangles ~width ~height);
+  Drawing.render (Drawing.Example.rectangles ~width ~height) ~renderer;
   Sdltimer.delay ~ms:2000;
   Sdl.quit ()
 ;;

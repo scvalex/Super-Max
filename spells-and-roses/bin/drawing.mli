@@ -38,6 +38,8 @@ val colour :
 
 val many : t list -> t
 
+val render : t -> renderer : Sdlrender.t -> unit
+
 module Example : sig
   (** [rectangles] are a bunch of rectangles that cover a 1.0 side
       square. *)
