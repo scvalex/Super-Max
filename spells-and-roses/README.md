@@ -34,7 +34,8 @@ cd OCamlSDL2_TTF/src
 make install
 ~~~~
 
-Build
------
+Build and run
+-------------
 
     make
+    ./spells_and_roses.native help -r
