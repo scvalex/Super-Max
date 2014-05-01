@@ -31,11 +31,14 @@ let main () =
   Command.run
     (Command.group ~summary:"Spells and Roses"
        [ ( "test",
-           Command.basic
-             ~summary:"system test"
-             Command.Spec.
-               ( empty )
-             run_test )
+           Command.group ~summary:"System tests"
+             [ ( "moving-rectangle",
+                 Command.basic
+                   ~summary:"Display a white rectangle moving horizontally"
+                   Command.Spec.
+                     ( empty )
+                   run_test )
+             ])
        ])
 ;;
 
