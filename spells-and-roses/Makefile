@@ -9,7 +9,7 @@ setup.data: setup.ml
 	ocaml setup.ml -configure --enable-tests
 
 build: setup.data
-	ocaml setup.ml -build
+	ocaml setup.ml -build -cflags -annot
 
 test: build
 	ocaml setup.ml -test
