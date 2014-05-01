@@ -103,13 +103,9 @@ let render t ~renderer =
     | Empty ->
       ()
     | Translate (xy, t) ->
-      Printf.printf "Translating by %s\n%!"
-        (Sexp.to_string_mach (sexp_of_xy xy));
       let trans = Trans.translate trans xy in
       loop trans colour t
     | Scale (xy, t) ->
-      Printf.printf "Scaling by %s\n%!"
-        (Sexp.to_string_mach (sexp_of_xy xy));
       let trans = Trans.scale trans xy in
       loop trans colour t
     | Rectangle {width; height} ->
@@ -117,11 +113,6 @@ let render t ~renderer =
       let xy1 = Trans.apply trans {x = width; y = height;} in
       let (rgb, a) = rgb_a_of_colour colour in
       Sdlrender.set_draw_color renderer ~rgb ~a;
-      Printf.printf "Transformation: %s\n%!"
-        (Sexp.to_string_mach (Trans.sexp_of_t trans));
-      Printf.printf "Drawing rectangle: (%s, %s)\n%!"
-        (Sexp.to_string_mach (sexp_of_xy xy0))
-        (Sexp.to_string_mach (sexp_of_xy xy1));
       Sdlrender.fill_rect renderer
         (Sdlrect.make4
            ~x:(Float.iround_exn xy0.x)
