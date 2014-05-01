@@ -27,6 +27,7 @@ Executable spells_and_roses
   BuildDepends:
     core,
     sdl2,
+    sdl2_ttf,
     sexplib,
     sexplib.syntax,
     threads

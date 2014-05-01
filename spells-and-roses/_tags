@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: ff59f3367450bc98c765e4372603de2b)
+# DO NOT EDIT (digest: f2f99ff6824271a6fbb04a416a33f7d4)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -16,11 +16,13 @@
 # Executable spells_and_roses
 <bin/spells_and_roses.{native,byte}>: package(core)
 <bin/spells_and_roses.{native,byte}>: package(sdl2)
+<bin/spells_and_roses.{native,byte}>: package(sdl2_ttf)
 <bin/spells_and_roses.{native,byte}>: package(sexplib)
 <bin/spells_and_roses.{native,byte}>: package(sexplib.syntax)
 <bin/spells_and_roses.{native,byte}>: package(threads)
 <bin/*.ml{,i}>: package(core)
 <bin/*.ml{,i}>: package(sdl2)
+<bin/*.ml{,i}>: package(sdl2_ttf)
 <bin/*.ml{,i}>: package(sexplib)
 <bin/*.ml{,i}>: package(sexplib.syntax)
 <bin/*.ml{,i}>: package(threads)
