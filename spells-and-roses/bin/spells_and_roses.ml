@@ -7,7 +7,12 @@ let game_loop ~initial_state ~on_event ~on_step ~tps ~drawing_of_state ~renderer
     | None ->
       (state, history)
     | Some ev ->
-      event_loop ~state:(on_event ~state ev) ~history:((step, ev) :: history) ~step
+      match on_event ~state ev with
+      | `Quit ->
+        Sdl.quit ();
+        exit 0
+      | `Continue state ->
+        event_loop ~state ~history:((step, ev) :: history) ~step
   in
   let rec step_loop ~state ~step ~game_ticks ~now =
     if Int.(game_ticks < now)
@@ -32,8 +37,13 @@ let game_loop ~initial_state ~on_event ~on_step ~tps ~drawing_of_state ~renderer
 
 let run_game ~renderer ~width ~height =
   let initial_state = 0 in
-  let on_event ~state _ev =
-    state
+  let on_event ~state ev =
+    match ev with
+    | Sdlevent.Quit _
+    | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
+      `Quit
+    | _ ->
+      `Continue state
   in
   let on_step state =
     state
