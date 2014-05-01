@@ -98,6 +98,16 @@ let many ts =
   Many ts
 ;;
 
+let centered_normalized_scene ~width ~height t =
+  let width = Float.of_int width in
+  let height = Float.of_int height in
+  let dim = Float.min width height in
+  translate
+    ~x:((width -. dim) /. 2.0)
+    ~y:((height -. dim) /. 2.0)
+    (scale ~x:dim ~y:dim t)
+;;
+
 let render t ~renderer =
   let rec loop trans colour = function
     | Empty ->
@@ -124,6 +134,8 @@ let render t ~renderer =
     | Many ts ->
       List.iter ts ~f:(loop trans colour)
   in
+  Sdlrender.set_draw_color renderer ~rgb:(0, 0, 0) ~a:255;
+  Sdlrender.clear renderer;
   let white =
     {red = 1.0; green = 1.0; blue = 1.0; alpha = 1.0; }
   in
@@ -153,12 +165,6 @@ module Example = struct
                (rectangle ~width:0.59 ~height:0.3))
         ]
     in
-    let width = Float.of_int width in
-    let height = Float.of_int height in
-    let dim = Float.min width height in
-    translate
-      ~x:((width -. dim) /. 2.0)
-      ~y:((height -. dim) /. 2.0)
-      (scale ~x:dim ~y:dim rectangles)
+    centered_normalized_scene rectangles ~width ~height
   ;;
 end

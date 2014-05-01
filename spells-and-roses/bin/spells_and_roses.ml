@@ -2,7 +2,7 @@ open Core.Std
 
 let run_test () =
   Game.with_sdl ~f:(fun ~renderer ~width ~height ->
-    let initial_state = 0 in
+    let initial_state = `Step 0 in
     let on_event ~state ev =
       match ev with
       | Sdlevent.Quit _
@@ -11,12 +11,17 @@ let run_test () =
       | _ ->
         `Continue state
     in
-    let on_step state =
-      `Continue state
+    let on_step (`Step step) =
+      `Continue (`Step (step + 1))
     in
     let steps_per_sec = 30.0 in
-    let drawing_of_state _state =
-      Drawing.Example.rectangles ~width ~height
+    let drawing_of_state (`Step step) =
+      Drawing.
+        (centered_normalized_scene ~width ~height
+           (translate
+              ~x:(Float.of_int (step mod 75) /. 100.0)
+              ~y:0.375
+              (rectangle ~width:0.25 ~height:0.25)))
     in
     Game.main_loop ~initial_state ~on_event ~on_step
       ~steps_per_sec ~drawing_of_state ~renderer)

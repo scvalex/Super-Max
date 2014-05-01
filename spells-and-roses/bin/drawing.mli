@@ -38,6 +38,12 @@ val colour :
 
 val many : t list -> t
 
+val centered_normalized_scene :
+     width : int
+  -> height : int
+  -> t
+  -> t
+
 val render : t -> renderer : Sdlrender.t -> unit
 
 module Example : sig
