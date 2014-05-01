@@ -33,3 +33,8 @@ git clone https://github.com/blue-prawn/OCamlSDL2_TTF
 cd OCamlSDL2_TTF/src
 make install
 ~~~~
+
+Build
+-----
+
+    make
