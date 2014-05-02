@@ -56,18 +56,23 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
 let with_sdl ~f =
   Sdl.init [`VIDEO];
   Sdlttf.init ();
-  let (window, renderer) =
-    Sdlrender.create_window_and_renderer
-      ~width:0 ~height:0
+  Sdlimage.init [`PNG];
+  let window =
+    Sdlwindow.create ~dims:(0, 0) ~pos:(`undefined, `undefined)
+      ~title:"Something romantic"
       ~flags:[Sdlwindow.FullScreen_Desktop]
+  in
+  let renderer =
+    Sdlrender.create_renderer ~win:window ~index:(0 - 1)
+      ~flags:[Sdlrender.Accelerated; Sdlrender.PresentVSync]
   in
   let (width, height) = Sdlwindow.get_size window in
   Printf.eprintf "Window size is (%d, %d)\n" width height;
-  Sdlwindow.set_title ~window ~title:"Something romantic";
   Exn.protect
     ~f:(fun () -> f ~renderer ~width ~height)
     ~finally:(fun () ->
         Printf.eprintf "%s\n%!" (Drawing.Global.stats ());
+        Sdlimage.quit ();
         Sdlttf.quit ();
         Sdl.quit ())
 ;;

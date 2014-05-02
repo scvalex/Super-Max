@@ -17,7 +17,7 @@ Dependencies
 opam install core
 ~~~~
 
-* [Oasis](https://github.com/ocaml/oasis)
+* [Oasis](https://github.com/ocaml/oasis):
 
 ~~~~
 opam install oasis

@@ -14,7 +14,7 @@ let simple_animation ~drawing_of_state =
       let on_step (`Step step) =
         `Continue (`Step (step + 1))
       in
-      let steps_per_sec = 30.0 in
+      let steps_per_sec = 60.0 in
       let drawing_of_state = drawing_of_state ~width ~height in
       Game.main_loop ~initial_state ~on_event ~on_step
         ~steps_per_sec ~drawing_of_state ~renderer)
@@ -84,16 +84,16 @@ module Static_text = struct
             state.acceleration
             +. (match state.direction with
                 | None ->
-                  0.0 -. state.acceleration /. 4.0
+                  0.0 -. state.acceleration /. 8.0
                 | Some `Up ->
-                  0.0 -. 0.01
+                  0.0 -. 0.005
                 | Some `Down ->
-                  0.01)
+                  0.005)
           in
           let position_y = state.position_y +. acceleration in
           `Continue {state with acceleration; position_y; }
         in
-        let steps_per_sec = 30.0 in
+        let steps_per_sec = 60.0 in
         let drawing_of_state state =
           Drawing.
             (centered_normalized_scene ~width ~height
