@@ -71,14 +71,23 @@ end = struct
 end
 
 module Global : sig
+  type texture_with_size = Sdltexture.t * [`Width of int] * [`Height of int]
+
   val get_font :
        ?data_dir : string
     -> string
     -> int
     -> Sdlttf.font
 
+  val get_or_create_texture :
+       create : (unit -> texture_with_size)
+    -> string
+    -> texture_with_size
+
   val stats : unit -> string
 end = struct
+  type texture_with_size = Sdltexture.t * [`Width of int] * [`Height of int]
+
   module Font_and_size = struct
     module T = struct
       type t = (string * int) with sexp, compare
@@ -96,22 +105,24 @@ end = struct
     Font_and_size.Table.create ()
   ;;
 
+  let textures : texture_with_size String.Table.t =
+    String.Table.create ()
+  ;;
+
   let get_font ?(data_dir = "resources") font_name size_pt =
-    match Hashtbl.find fonts (font_name, size_pt) with
-    | Some font ->
-      font
-    | None ->
-      let font =
-        Sdlttf.open_font ~file:(data_dir ^/ font_name) ~ptsize:size_pt
-      in
-      Hashtbl.set fonts ~key:(font_name, size_pt) ~data:font;
-      font
+    Hashtbl.find_or_add fonts (font_name, size_pt)
+      ~default:(fun () ->
+          Sdlttf.open_font ~file:(data_dir ^/ font_name) ~ptsize:size_pt)
+  ;;
+
+  let get_or_create_texture ~create id =
+    Hashtbl.find_or_add textures id ~default:create
   ;;
 
   let stats () =
     sprintf
-      (  "Drawing stats:\n - fonts: %d")
-      (Hashtbl.length fonts)
+      (  "Drawing stats:\n - fonts: %d\n - textures: %d")
+      (Hashtbl.length fonts) (Hashtbl.length textures)
   ;;
 end
 
@@ -187,19 +198,24 @@ let render_rectangle ~renderer ~trans ~colour ~width ~height =
 ;;
 
 let render_text ~renderer ~trans ~colour text =
-  let font = Global.get_font text.font text.size_pt in
-  let (r, g, b, a) = rgba_of_colour colour in
-  let color = {Sdlttf. r; g; b; a} in
-  let surface =
-    Sdlttf.render_text_solid font ~text:text.str ~color
+  let (texture, `Width w, `Height h) =
+    Global.get_or_create_texture
+      (sprintf "text-%s-%d-%s" text.font text.size_pt text.str)
+      ~create:(fun () ->
+          let font = Global.get_font text.font text.size_pt in
+          let (r, g, b, a) = rgba_of_colour colour in
+          let color = {Sdlttf. r; g; b; a} in
+          let surface =
+            Sdlttf.render_text_solid font ~text:text.str ~color
+          in
+          let w = Sdlsurface.get_width surface in
+          let h = Sdlsurface.get_height surface in
+          let texture =
+            Sdltexture.create_from_surface renderer surface
+          in
+          Sdlsurface.free surface;
+          (texture, `Width w, `Height h))
   in
-  let w = Sdlsurface.get_width surface in
-  let h = Sdlsurface.get_height surface in
-  (* FIXME: I should probably cache/free up textures. *)
-  let texture =
-    Sdltexture.create_from_surface renderer surface
-  in
-  Sdlsurface.free surface;
   let src_rect = Sdlrect.make4 ~x:0 ~y:0 ~w ~h in
   let xy = Trans.apply trans {x = 0.0; y = 0.0;} in
   let dst_rect =
