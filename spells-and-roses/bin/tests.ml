@@ -39,14 +39,18 @@ let rectangles () =
   simple_animation ~drawing_of_state
 ;;
 
-let static_text () =
+let static_text ?(data_dir = "resources") () =
+  let hamlet's_soliloquy =
+    In_channel.with_file (data_dir ^/ "hamlet.txt") ~f:(fun ch ->
+        In_channel.input_all ch)
+  in
   let drawing_of_state ~width ~height _state =
     Drawing.
       (centered_normalized_scene ~width ~height
          (translate ~x:0.5 ~y:0.1
             (text ~font:"UbuntuMono-B.ttf" ~size_pt:32
                ~position:(`X `Centre, `Y `Top)
-               "To be, or not to be--that is the question:")))
+               hamlet's_soliloquy)))
   in
   simple_animation ~drawing_of_state
 ;;

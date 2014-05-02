@@ -198,44 +198,60 @@ let render_rectangle ~renderer ~trans ~colour ~width ~height =
 ;;
 
 let render_text ~renderer ~trans ~colour text =
-  let (texture, `Width w, `Height h) =
-    Global.get_or_create_texture
-      (sprintf "text-%s-%d-%s" text.font text.size_pt text.str)
-      ~create:(fun () ->
-          let font = Global.get_font text.font text.size_pt in
-          let (r, g, b, a) = rgba_of_colour colour in
-          let color = {Sdlttf. r; g; b; a} in
-          let surface =
-            Sdlttf.render_text_solid font ~text:text.str ~color
-          in
-          let w = Sdlsurface.get_width surface in
-          let h = Sdlsurface.get_height surface in
-          let texture =
-            Sdltexture.create_from_surface renderer surface
-          in
-          Sdlsurface.free surface;
-          (texture, `Width w, `Height h))
+  let line_textures =
+    List.map (String.split_lines text.str) ~f:(fun str ->
+        Global.get_or_create_texture
+          (sprintf "text-%s-%d-%s" text.font text.size_pt str)
+          ~create:(fun () ->
+              let font = Global.get_font text.font text.size_pt in
+              let (r, g, b, a) = rgba_of_colour colour in
+              let color = {Sdlttf. r; g; b; a} in
+              let surface =
+                Sdlttf.render_text_solid font ~text:str ~color
+              in
+              let w = Sdlsurface.get_width surface in
+              let h = Sdlsurface.get_height surface in
+              let texture =
+                Sdltexture.create_from_surface renderer surface
+              in
+              Sdlsurface.free surface;
+              (texture, `Width w, `Height h)))
   in
-  let src_rect = Sdlrect.make4 ~x:0 ~y:0 ~w ~h in
   let xy = Trans.apply trans {x = 0.0; y = 0.0;} in
-  let dst_rect =
+  let h_and_a_half h =
+    h + Float.(iround_exn (0.5 *. of_int h))
+  in
+  let (max_w, total_h) =
+    List.fold_left ~init:(0, 0) line_textures
+      ~f:(fun (max_w, total_h) (_, `Width w, `Height h) ->
+          (Int.max max_w w, total_h + h_and_a_half h))
+  in
+  let (x, y) =
     let x =
       let x = Float.iround_exn xy.x in
       match text.position with
       | (`X `Left, _)   -> x
-      | (`X `Centre, _) -> x - w / 2
-      | (`X `Right, _)  -> x - w
+      | (`X `Centre, _) -> x - max_w / 2
+      | (`X `Right, _)  -> x - max_w
     in
     let y =
       let y = Float.iround_exn xy.y in
       match text.position with
       | (_, `Y `Top)    -> y
-      | (_, `Y `Centre) -> y - h / 2
-      | (_, `Y `Bottom) -> y - h
+      | (_, `Y `Centre) -> y - total_h / 2
+      | (_, `Y `Bottom) -> y - total_h
     in
-    Sdlrect.make4 ~w ~h ~x ~y
+    (x, y)
   in
-  Sdlrender.copy renderer ~texture ~src_rect ~dst_rect ()
+  let (_ : (int * int)) =
+    List.fold_left ~init:(x, y) line_textures
+      ~f:(fun (x, y) (texture, `Width w, `Height h) ->
+          let src_rect = Sdlrect.make4 ~x:0 ~y:0 ~w ~h in
+          let dst_rect = Sdlrect.make4 ~x ~y ~w ~h in
+          Sdlrender.copy renderer ~texture ~src_rect ~dst_rect ();
+          (x, y + h_and_a_half h))
+  in
+  ()
 ;;
 
 let render t ~renderer =
