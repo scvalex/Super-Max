@@ -50,7 +50,7 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
     loop ~state:initial_state ~step:0 ~history:[] ~game_ticks:(Sdltimer.get_ticks ())
   in
   Printf.eprintf "Game loop finished at step %d with history %d long\n%!"
-    step (List.length history)
+    step (List.length history);
 ;;
 
 let with_sdl ~f =
@@ -67,6 +67,7 @@ let with_sdl ~f =
   Exn.protect
     ~f:(fun () -> f ~renderer ~width ~height)
     ~finally:(fun () ->
+        Printf.eprintf "%s\n%!" (Drawing.Global.stats ());
         Sdlttf.quit ();
         Sdl.quit ())
 ;;

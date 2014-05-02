@@ -9,6 +9,10 @@ type t
 
 include Sexpable.S with type t := t
 
+module Global : sig
+  val stats : unit -> string
+end
+
 val empty : t
 
 val translate :

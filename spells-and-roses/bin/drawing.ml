@@ -76,6 +76,8 @@ module Global : sig
     -> string
     -> int
     -> Sdlttf.font
+
+  val stats : unit -> string
 end = struct
   module Font_and_size = struct
     module T = struct
@@ -104,6 +106,12 @@ end = struct
       in
       Hashtbl.set fonts ~key:(font_name, size_pt) ~data:font;
       font
+  ;;
+
+  let stats () =
+    sprintf
+      (  "Drawing stats:\n - fonts: %d")
+      (Hashtbl.length fonts)
   ;;
 end
 
@@ -187,6 +195,7 @@ let render_text ~renderer ~trans ~colour text =
   in
   let w = Sdlsurface.get_width surface in
   let h = Sdlsurface.get_height surface in
+  (* FIXME: I should probably cache/free up textures. *)
   let texture =
     Sdltexture.create_from_surface renderer surface
   in
