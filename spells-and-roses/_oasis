@@ -29,6 +29,7 @@ Executable spells_and_roses
     comparelib.syntax,
     core,
     sdl2,
+    sdl2_img,
     sdl2_ttf,
     sexplib,
     sexplib.syntax,

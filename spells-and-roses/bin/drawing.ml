@@ -121,7 +121,7 @@ end = struct
 
   let stats () =
     sprintf
-      (  "Drawing stats:\n - fonts: %d\n - textures: %d")
+      ("Drawing stats:\n - fonts: %d\n - textures: %d")
       (Hashtbl.length fonts) (Hashtbl.length textures)
   ;;
 end
