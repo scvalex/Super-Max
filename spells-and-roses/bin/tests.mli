@@ -1,10 +1,16 @@
 (* open Core.Std *)
 
-val moving_rectangle : unit -> unit
+module Moving_rectangle : sig
+  val run : unit -> unit
+end
 
-val rectangles : unit -> unit
+module Rectangles : sig
+  val run : unit -> unit
+end
 
-val static_text :
-     ?data_dir : string
-  -> unit
-  -> unit
+module Static_text : sig
+  val run :
+       ?data_dir : string
+    -> unit
+    -> unit
+end

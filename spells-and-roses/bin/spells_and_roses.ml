@@ -9,17 +9,17 @@ let main () =
                  Command.basic
                    ~summary:"Display a white rectangle moving horizontally"
                    Command.Spec.empty
-                   Tests.moving_rectangle )
+                   Tests.Moving_rectangle.run )
              ; ( "rectangles",
                  Command.basic
                    ~summary:"Display a several static rectangles"
                    Command.Spec.empty
-                   Tests.rectangles )
+                   Tests.Rectangles.run )
              ; ( "text",
                  Command.basic
                    ~summary:"Display static text"
                    Command.Spec.empty
-                   Tests.static_text )
+                   Tests.Static_text.run )
              ])
        ])
 ;;
