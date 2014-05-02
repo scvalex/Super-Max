@@ -20,7 +20,11 @@ let main () =
                    ~summary:"Display static text"
                    Command.Spec.empty
                    Tests.Static_text.run )
-             (* CR scvalex: Dancing banana test *)
+             ; ( "dancing-banana",
+                 Command.basic
+                   ~summary:"Display a dancing banana"
+                   Command.Spec.empty
+                   Tests.Dancing_banana.run )
              ])
        ])
 ;;

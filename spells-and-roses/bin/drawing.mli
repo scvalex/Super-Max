@@ -13,6 +13,12 @@ module Global : sig
   val stats : unit -> string
 end
 
+type text_position = ([`X of [`Left | `Centre | `Right]]
+                      * [`Y of [`Top | `Centre | `Bottom]]) with sexp
+
+type image_clip = ([`X of int] * [`Y of int]
+                   * [`Width of int] * [`Height of int]) with sexp
+
 val empty : t
 
 val translate :
@@ -45,8 +51,12 @@ val many : t list -> t
 val text :
      font : string
   -> size_pt : int
-  -> ?position : ([`X of [`Left | `Centre | `Right]]
-                  * [`Y of [`Top | `Centre | `Bottom]])
+  -> ?position : text_position
+  -> string
+  -> t
+
+val image :
+     ?clip : image_clip
   -> string
   -> t
 

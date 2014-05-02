@@ -17,12 +17,21 @@ type rgba = {
   alpha : float;
 } with sexp
 
+type text_position = ([`X of [`Left | `Centre | `Right]]
+                      * [`Y of [`Top | `Centre | `Bottom]]) with sexp
 type text = {
   str      : string;
   font     : string;
   size_pt  : int;
-  position : ([`X of [`Left | `Centre | `Right]]
-              * [`Y of [`Top | `Centre | `Bottom]]);
+  position : text_position;
+} with sexp
+
+type image_clip = ([`X of int] * [`Y of int]
+                   * [`Width of int] * [`Height of int]) with sexp
+
+type image = {
+  image : string;
+  clip  : image_clip option;
 } with sexp
 
 let rgb_a_of_colour rgba =
@@ -109,6 +118,7 @@ end = struct
     String.Table.create ()
   ;;
 
+  (* CR ascvortov: Thread a config through the functions. *)
   let get_font ?(data_dir = "resources") font_name size_pt =
     Hashtbl.find_or_add fonts (font_name, size_pt)
       ~default:(fun () ->
@@ -134,6 +144,7 @@ type t =
   | Colour of (rgba * t)
   | Many of t list
   | Text of text
+  | Image of image
 with sexp
 
 let empty = Empty;;
@@ -172,6 +183,10 @@ let many ts =
 
 let text ~font ~size_pt ?(position = (`X `Left, `Y `Top)) str =
   Text { font; size_pt; str; position; }
+;;
+
+let image ?clip image =
+  Image { image; clip; }
 ;;
 
 let centered_normalized_scene ~width ~height t =
@@ -254,6 +269,47 @@ let render_text ~renderer ~trans ~colour text =
   ()
 ;;
 
+let render_image ~renderer ~trans ~colour:_ image =
+  let (texture, `Width width, `Height height) =
+    Global.get_or_create_texture
+      (sprintf "image-%s" image.image)
+      ~create:(fun () ->
+          let rwop =
+            Sdlrwops.from_file ~mode:"rb"
+              ~filename:("resources" ^/ image.image)
+          in
+          let surface = Sdlimage.load_png_rw rwop in
+          (* CR scvalex: Close rwop here (expose http://wiki.libsdl.org/SDL_RWclose). *)
+          let w = Sdlsurface.get_width surface in
+          let h = Sdlsurface.get_height surface in
+          let texture =
+            Sdltexture.create_from_surface renderer surface
+          in
+          Sdlsurface.free surface;
+          (texture, `Width w, `Height h))
+  in
+  let src_rect =
+    match image.clip with
+    | None ->
+      Sdlrect.make4 ~x:0 ~y:0 ~w:width ~h:height
+    | Some (`X x, `Y y, `Width width, `Height height) ->
+      Sdlrect.make4 ~x ~y ~w:width ~h:height
+  in
+  let xy0 = Trans.apply trans {x = 0.0; y = 0.0;} in
+  let xy1 =
+    Trans.apply trans { x = Float.of_int src_rect.Sdlrect.w;
+                        y = Float.of_int src_rect.Sdlrect.h; }
+  in
+  let dst_rect =
+    Sdlrect.make4
+      ~x:(Float.iround_exn xy0.x)
+      ~y:(Float.iround_exn xy0.y)
+      ~w:(Float.iround_exn (xy1.x -. xy0.x))
+      ~h:(Float.iround_exn (xy1.y -. xy0.y))
+  in
+  Sdlrender.copy renderer ~texture ~src_rect ~dst_rect ()
+;;
+
 let render t ~renderer =
   let rec loop trans colour = function
     | Empty ->
@@ -272,6 +328,8 @@ let render t ~renderer =
       List.iter ts ~f:(loop trans colour)
     | Text text ->
       render_text ~renderer ~trans ~colour text
+    | Image image ->
+      render_image ~renderer ~trans ~colour image
   in
   Sdlrender.set_draw_color renderer ~rgb:(0, 0, 0) ~a:255;
   Sdlrender.clear renderer;

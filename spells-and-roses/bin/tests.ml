@@ -106,3 +106,41 @@ module Static_text = struct
           ~steps_per_sec ~drawing_of_state ~renderer)
   ;;
 end
+
+module Dancing_banana = struct
+  module Banana = struct
+    let image = "banana.png";;
+    let width = 320;;
+    let height = 316;;
+    let frames = 8;;
+  end
+
+  let run () =
+    let drawing_of_state ~width ~height (`Step step) =
+      let open Drawing in
+      let banana =
+        image Banana.image
+          ~clip:(`X ((step / 6 mod Banana.frames) * Banana.width),
+                 `Y 0,
+                 `Width Banana.width,
+                 `Height Banana.height)
+      in
+      let caption =
+        text ~font:"UbuntuMono-B.ttf" ~size_pt:32
+          ~position:(`X `Centre, `Y `Top)
+          "IT'S PEANUT BUTTER\nJELLY TIME!!!"
+      in
+      (translate
+         ~x:(Float.of_int (width - Banana.width) /. 2.0)
+         ~y:(Float.of_int (height - Banana.height) /. 2.0 -. 50.0)
+         (many
+            [ banana
+            ; translate
+                ~x:(Float.of_int Banana.width /. 2.0)
+                ~y:(Float.of_int Banana.height +. 30.0)
+                caption
+            ]))
+    in
+    simple_animation ~drawing_of_state
+  ;;
+end

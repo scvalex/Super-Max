@@ -14,3 +14,7 @@ module Static_text : sig
     -> unit
     -> unit
 end
+
+module Dancing_banana : sig
+  val run : unit -> unit
+end
