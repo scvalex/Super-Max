@@ -17,6 +17,12 @@ Dependencies
 opam install core
 ~~~~
 
+* [Oasis](https://github.com/ocaml/oasis)
+
+~~~~
+opam install oasis
+~~~~
+
 * [OCamlSDL2](https://github.com/blue-prawn/OCamlSDL2):
 
 ~~~~
@@ -35,7 +41,7 @@ cd OCamlSDL2_TTF/src
 make reinstall
 ~~~~
 
-* [OCamlSDL2_Image](https://github.com/blue-prawn/OCamlSDL2_Image)
+* [OCamlSDL2_Image](https://github.com/blue-prawn/OCamlSDL2_Image):
 
 ~~~~
 git clone https://github.com/blue-prawn/OCamlSDL2_Image.git
