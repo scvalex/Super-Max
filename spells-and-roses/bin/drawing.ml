@@ -165,6 +165,54 @@ let centered_normalized_scene ~width ~height t =
     (scale ~x:dim ~y:dim t)
 ;;
 
+let render_rectangle ~renderer ~trans ~colour ~width ~height =
+  let xy0 = Trans.apply trans {x = 0.0; y = 0.0;} in
+  let xy1 = Trans.apply trans {x = width; y = height;} in
+  let (rgb, a) = rgb_a_of_colour colour in
+  Sdlrender.set_draw_color renderer ~rgb ~a;
+  Sdlrender.fill_rect renderer
+    (Sdlrect.make4
+       ~x:(Float.iround_exn xy0.x)
+       ~y:(Float.iround_exn xy0.y)
+       ~w:(Float.iround_exn (xy1.x -. xy0.x))
+       ~h:(Float.iround_exn (xy1.y -. xy0.y)))
+;;
+
+let render_text ~renderer ~trans ~colour text =
+  let font = Global.get_font text.font text.size_pt in
+  let (r, g, b, a) = rgba_of_colour colour in
+  let color = {Sdlttf. r; g; b; a} in
+  let surface =
+    Sdlttf.render_text_solid font ~text:text.str ~color
+  in
+  let w = Sdlsurface.get_width surface in
+  let h = Sdlsurface.get_height surface in
+  let texture =
+    Sdltexture.create_from_surface renderer surface
+  in
+  Sdlsurface.free surface;
+  let src_rect = Sdlrect.make4 ~x:0 ~y:0 ~w ~h in
+  let xy = Trans.apply trans {x = 0.0; y = 0.0;} in
+  let dst_rect =
+    let x =
+      let x = Float.iround_exn xy.x in
+      match text.position with
+      | (`X `Left, _)   -> x
+      | (`X `Centre, _) -> x - w / 2
+      | (`X `Right, _)  -> x - w
+    in
+    let y =
+      let y = Float.iround_exn xy.y in
+      match text.position with
+      | (_, `Y `Top)    -> y
+      | (_, `Y `Centre) -> y - h / 2
+      | (_, `Y `Bottom) -> y - h
+    in
+    Sdlrect.make4 ~w ~h ~x ~y
+  in
+  Sdlrender.copy renderer ~texture ~src_rect ~dst_rect ()
+;;
+
 let render t ~renderer =
   let rec loop trans colour = function
     | Empty ->
@@ -176,53 +224,13 @@ let render t ~renderer =
       let trans = Trans.scale trans xy in
       loop trans colour t
     | Rectangle {width; height} ->
-      let xy0 = Trans.apply trans {x = 0.0; y = 0.0;} in
-      let xy1 = Trans.apply trans {x = width; y = height;} in
-      let (rgb, a) = rgb_a_of_colour colour in
-      Sdlrender.set_draw_color renderer ~rgb ~a;
-      Sdlrender.fill_rect renderer
-        (Sdlrect.make4
-           ~x:(Float.iround_exn xy0.x)
-           ~y:(Float.iround_exn xy0.y)
-           ~w:(Float.iround_exn (xy1.x -. xy0.x))
-           ~h:(Float.iround_exn (xy1.y -. xy0.y)))
+      render_rectangle ~renderer ~trans ~colour ~width ~height
     | Colour (colour, t) ->
       loop trans colour t
     | Many ts ->
       List.iter ts ~f:(loop trans colour)
     | Text text ->
-      let font = Global.get_font text.font text.size_pt in
-      let (r, g, b, a) = rgba_of_colour colour in
-      let color = {Sdlttf. r; g; b; a} in
-      let surface =
-        Sdlttf.render_text_solid font ~text:text.str ~color
-      in
-      let w = Sdlsurface.get_width surface in
-      let h = Sdlsurface.get_height surface in
-      let texture =
-        Sdltexture.create_from_surface renderer surface
-      in
-      Sdlsurface.free surface;
-      let src_rect = Sdlrect.make4 ~x:0 ~y:0 ~w ~h in
-      let xy = Trans.apply trans {x = 0.0; y = 0.0;} in
-      let dst_rect =
-        let x =
-          let x = Float.iround_exn xy.x in
-          match text.position with
-          | (`X `Left, _)   -> x
-          | (`X `Centre, _) -> x - w / 2
-          | (`X `Right, _)  -> x - w
-        in
-        let y =
-          let y = Float.iround_exn xy.y in
-          match text.position with
-          | (_, `Y `Top)    -> y
-          | (_, `Y `Centre) -> y - h / 2
-          | (_, `Y `Bottom) -> y - h
-        in
-        Sdlrect.make4 ~w ~h ~x ~y
-      in
-      Sdlrender.copy renderer ~texture ~src_rect ~dst_rect ()
+      render_text ~renderer ~trans ~colour text
   in
   Sdlrender.set_draw_color renderer ~rgb:(0, 0, 0) ~a:255;
   Sdlrender.clear renderer;
