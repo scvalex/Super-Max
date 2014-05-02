@@ -41,6 +41,8 @@ val many : t list -> t
 val text :
      font : string
   -> size_pt : int
+  -> ?position : ([`X of [`Left | `Centre | `Right]]
+                  * [`Y of [`Top | `Centre | `Bottom]])
   -> string
   -> t
 

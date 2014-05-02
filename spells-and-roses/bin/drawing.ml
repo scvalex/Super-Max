@@ -18,9 +18,11 @@ type rgba = {
 } with sexp
 
 type text = {
-  str     : string;
-  font    : string;
-  size_pt : int;
+  str      : string;
+  font     : string;
+  size_pt  : int;
+  position : ([`X of [`Left | `Centre | `Right]]
+              * [`Y of [`Top | `Centre | `Bottom]]);
 } with sexp
 
 let rgb_a_of_colour rgba =
@@ -149,8 +151,8 @@ let many ts =
   Many ts
 ;;
 
-let text ~font ~size_pt str =
-  Text { font; size_pt; str; }
+let text ~font ~size_pt ?(position = (`X `Left, `Y `Top)) str =
+  Text { font; size_pt; str; position; }
 ;;
 
 let centered_normalized_scene ~width ~height t =
@@ -204,9 +206,21 @@ let render t ~renderer =
       let src_rect = Sdlrect.make4 ~x:0 ~y:0 ~w ~h in
       let xy = Trans.apply trans {x = 0.0; y = 0.0;} in
       let dst_rect =
-        Sdlrect.make4 ~w ~h
-          ~x:(Float.iround_exn xy.x)
-          ~y:(Float.iround_exn xy.y)
+        let x =
+          let x = Float.iround_exn xy.x in
+          match text.position with
+          | (`X `Left, _)   -> x
+          | (`X `Centre, _) -> x - w / 2
+          | (`X `Right, _)  -> x - w
+        in
+        let y =
+          let y = Float.iround_exn xy.y in
+          match text.position with
+          | (_, `Y `Top)    -> y
+          | (_, `Y `Centre) -> y - h / 2
+          | (_, `Y `Bottom) -> y - h
+        in
+        Sdlrect.make4 ~w ~h ~x ~y
       in
       Sdlrender.copy renderer ~texture ~src_rect ~dst_rect ()
   in

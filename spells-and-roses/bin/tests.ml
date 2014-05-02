@@ -43,8 +43,10 @@ let static_text () =
   let drawing_of_state ~width ~height _state =
     Drawing.
       (centered_normalized_scene ~width ~height
-         (text ~font:"UbuntuMono-B.ttf" ~size_pt:32
-            "To be, or not to be--that is the question:"))
+         (translate ~x:0.5 ~y:0.1
+            (text ~font:"UbuntuMono-B.ttf" ~size_pt:32
+               ~position:(`X `Centre, `Y `Top)
+               "To be, or not to be--that is the question:")))
   in
   simple_animation ~drawing_of_state
 ;;
