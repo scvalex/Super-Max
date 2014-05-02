@@ -15,7 +15,11 @@ let main () =
                    ~summary:"Display a several static rectangles"
                    Command.Spec.empty
                    Tests.rectangles )
-             (* CR scvalex: SM test *)
+             ; ( "text",
+                 Command.basic
+                   ~summary:"Display static text"
+                   Command.Spec.empty
+                   Tests.static_text )
              ])
        ])
 ;;

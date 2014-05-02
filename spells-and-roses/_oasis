@@ -25,6 +25,8 @@ Executable spells_and_roses
   CompiledObject:     best
   Install:            true
   BuildDepends:
+    comparelib,
+    comparelib.syntax,
     core,
     sdl2,
     sdl2_ttf,

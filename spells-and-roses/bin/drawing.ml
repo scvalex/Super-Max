@@ -17,6 +17,12 @@ type rgba = {
   alpha : float;
 } with sexp
 
+type text = {
+  str     : string;
+  font    : string;
+  size_pt : int;
+} with sexp
+
 let rgb_a_of_colour rgba =
   let rgb =
     (Float.iround_exn (rgba.red *. 255.0),
@@ -25,6 +31,13 @@ let rgb_a_of_colour rgba =
   in
   let a = Float.iround_exn (rgba.alpha *. 255.0) in
   (rgb, a)
+;;
+
+let rgba_of_colour rgba =
+  (Float.iround_exn (rgba.red *. 255.0),
+   Float.iround_exn (rgba.green *. 255.0),
+   Float.iround_exn (rgba.blue *. 255.0),
+   Float.iround_exn (rgba.alpha *. 255.0))
 ;;
 
 module Trans : sig
@@ -55,6 +68,43 @@ end = struct
   ;;
 end
 
+module Global : sig
+  val get_font :
+       ?data_dir : string
+    -> string
+    -> int
+    -> Sdlttf.font
+end = struct
+  module Font_and_size = struct
+    module T = struct
+      type t = (string * int) with sexp, compare
+
+      let hash (font, size) =
+        String.hash (sprintf "%s-%d" font size)
+      ;;
+    end
+
+    include T
+    include Hashable.Make(T)
+  end
+
+  let fonts : Sdlttf.font Font_and_size.Table.t =
+    Font_and_size.Table.create ()
+  ;;
+
+  let get_font ?(data_dir = "resources") font_name size_pt =
+    match Hashtbl.find fonts (font_name, size_pt) with
+    | Some font ->
+      font
+    | None ->
+      let font =
+        Sdlttf.open_font ~file:(data_dir ^/ font_name) ~ptsize:size_pt
+      in
+      Hashtbl.set fonts ~key:(font_name, size_pt) ~data:font;
+      font
+  ;;
+end
+
 type t =
   | Empty
   | Translate of (xy * t)
@@ -62,6 +112,7 @@ type t =
   | Rectangle of width_height
   | Colour of (rgba * t)
   | Many of t list
+  | Text of text
 with sexp
 
 let empty = Empty;;
@@ -96,6 +147,10 @@ let colour ~r:red ~g:green ~b:blue ?a:(alpha = 1.0) t =
 
 let many ts =
   Many ts
+;;
+
+let text ~font ~size_pt str =
+  Text { font; size_pt; str; }
 ;;
 
 let centered_normalized_scene ~width ~height t =
@@ -133,6 +188,27 @@ let render t ~renderer =
       loop trans colour t
     | Many ts ->
       List.iter ts ~f:(loop trans colour)
+    | Text text ->
+      let font = Global.get_font text.font text.size_pt in
+      let (r, g, b, a) = rgba_of_colour colour in
+      let color = {Sdlttf. r; g; b; a} in
+      let surface =
+        Sdlttf.render_text_solid font ~text:text.str ~color
+      in
+      let w = Sdlsurface.get_width surface in
+      let h = Sdlsurface.get_height surface in
+      let texture =
+        Sdltexture.create_from_surface renderer surface
+      in
+      Sdlsurface.free surface;
+      let src_rect = Sdlrect.make4 ~x:0 ~y:0 ~w ~h in
+      let xy = Trans.apply trans {x = 0.0; y = 0.0;} in
+      let dst_rect =
+        Sdlrect.make4 ~w ~h
+          ~x:(Float.iround_exn xy.x)
+          ~y:(Float.iround_exn xy.y)
+      in
+      Sdlrender.copy renderer ~texture ~src_rect ~dst_rect ()
   in
   Sdlrender.set_draw_color renderer ~rgb:(0, 0, 0) ~a:255;
   Sdlrender.clear renderer;

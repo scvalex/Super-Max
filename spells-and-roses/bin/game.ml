@@ -55,6 +55,7 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
 
 let with_sdl ~f =
   Sdl.init [`VIDEO];
+  Sdlttf.init ();
   let (window, renderer) =
     Sdlrender.create_window_and_renderer
       ~width:0 ~height:0
@@ -65,5 +66,7 @@ let with_sdl ~f =
   Sdlwindow.set_title ~window ~title:"Something romantic";
   Exn.protect
     ~f:(fun () -> f ~renderer ~width ~height)
-    ~finally:(fun () -> Sdl.quit ())
+    ~finally:(fun () ->
+        Sdlttf.quit ();
+        Sdl.quit ())
 ;;

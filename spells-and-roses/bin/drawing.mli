@@ -38,6 +38,12 @@ val colour :
 
 val many : t list -> t
 
+val text :
+     font : string
+  -> size_pt : int
+  -> string
+  -> t
+
 val centered_normalized_scene :
      width : int
   -> height : int

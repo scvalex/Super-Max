@@ -38,3 +38,13 @@ let rectangles () =
   in
   simple_animation ~drawing_of_state
 ;;
+
+let static_text () =
+  let drawing_of_state ~width ~height _state =
+    Drawing.
+      (centered_normalized_scene ~width ~height
+         (text ~font:"UbuntuMono-B.ttf" ~size_pt:32
+            "To be, or not to be--that is the question:"))
+  in
+  simple_animation ~drawing_of_state
+;;
