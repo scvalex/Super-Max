@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 7ed12b3ec85f11b769ad5988b86c0716)
+# DO NOT EDIT (digest: 44ad3ac15b9e97dd6ff19fae0c8a6d3e)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -13,6 +13,21 @@
 ".git": not_hygienic
 "_darcs": -traverse
 "_darcs": not_hygienic
+# Library super_max
+"lib/super_max.cmxs": use_super_max
+"lib/drawing.cmx": for-pack(Super_max)
+"lib/game.cmx": for-pack(Super_max)
+"lib/mat.cmx": for-pack(Super_max)
+"lib/std.cmx": for-pack(Super_max)
+<lib/*.ml{,i}>: package(comparelib)
+<lib/*.ml{,i}>: package(comparelib.syntax)
+<lib/*.ml{,i}>: package(core)
+<lib/*.ml{,i}>: package(sdl2)
+<lib/*.ml{,i}>: package(sdl2_img)
+<lib/*.ml{,i}>: package(sdl2_ttf)
+<lib/*.ml{,i}>: package(sexplib)
+<lib/*.ml{,i}>: package(sexplib.syntax)
+<lib/*.ml{,i}>: package(threads)
 # Executable spells_and_roses
 <bin/spells_and_roses.{native,byte}>: package(comparelib)
 <bin/spells_and_roses.{native,byte}>: package(comparelib.syntax)
@@ -23,6 +38,7 @@
 <bin/spells_and_roses.{native,byte}>: package(sexplib)
 <bin/spells_and_roses.{native,byte}>: package(sexplib.syntax)
 <bin/spells_and_roses.{native,byte}>: package(threads)
+<bin/spells_and_roses.{native,byte}>: use_super_max
 <bin/*.ml{,i}>: package(comparelib)
 <bin/*.ml{,i}>: package(comparelib.syntax)
 <bin/*.ml{,i}>: package(core)
@@ -32,5 +48,6 @@
 <bin/*.ml{,i}>: package(sexplib)
 <bin/*.ml{,i}>: package(sexplib.syntax)
 <bin/*.ml{,i}>: package(threads)
+<bin/*.ml{,i}>: use_super_max
 # OASIS_STOP
 <{bin,lib,test}/*.ml{,i}>: syntax_camlp4o

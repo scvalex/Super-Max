@@ -19,9 +19,10 @@ doc: build
 
 clean:
 	-ocaml setup.ml -clean
-	rm -f myocamlbuild.ml setup.ml setup.data
+	rm -f myocamlbuild.ml setup.ml setup.data lib/META
 
 p:
 	permamake.sh Makefile \
 	             _oasis \
+	             lib/*.ml* \
 	             bin/*.ml*

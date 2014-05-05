@@ -19,11 +19,10 @@ SourceRepository head
   Type:               git
   Location:           https://github.com/scvalex/super-max.git
 
-Executable spells_and_roses
-  Path:               bin/
-  MainIs:             spells_and_roses.ml
-  CompiledObject:     best
-  Install:            true
+Library super_max
+  Path:               lib
+  FindlibName:        super_max
+  Pack:               true
   BuildDepends:
     comparelib,
     comparelib.syntax,
@@ -33,4 +32,20 @@ Executable spells_and_roses
     sdl2_ttf,
     sexplib,
     sexplib.syntax,
+    threads
+  Modules:
+    Drawing,
+    Game,
+    Mat,
+    Std
+
+Executable spells_and_roses
+  Path:               bin/
+  MainIs:             spells_and_roses.ml
+  CompiledObject:     best
+  Install:            true
+  BuildDepends:
+    core,
+    sdl2,
+    super_max,
     threads

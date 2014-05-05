@@ -31,6 +31,7 @@ let main () =
                    Command.Spec.empty
                    Tests.Psy_cat.run )
              ])
+       (* CR scvalex: Map editor. *)
        ])
 ;;
 
