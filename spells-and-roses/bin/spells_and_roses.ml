@@ -30,6 +30,7 @@ let main () =
                    ~summary:"Display a very special cat"
                    Command.Spec.empty
                    Tests.Psy_cat.run )
+             (* CR scvalex: Arbitrary OCaml-plugin file. *)
              ])
        (* CR scvalex: Map editor. *)
        ])
