@@ -30,8 +30,9 @@ type image_clip = ([`X of int] * [`Y of int]
                    * [`Width of int] * [`Height of int]) with sexp
 
 type image = {
-  image : string;
-  clip  : image_clip option;
+  image     : string;
+  clip      : image_clip option;
+  angle_deg : float option;
 } with sexp
 
 let rgb_a_of_colour rgba =
@@ -185,8 +186,8 @@ let text ~font ~size_pt ?(position = (`X `Left, `Y `Top)) str =
   Text { font; size_pt; str; position; }
 ;;
 
-let image ?clip image =
-  Image { image; clip; }
+let image ?clip ?angle_deg image =
+  Image { image; clip; angle_deg; }
 ;;
 
 let centered_normalized_scene ~width ~height t =
@@ -278,7 +279,12 @@ let render_image ~renderer ~trans ~colour:_ image =
             Sdlrwops.from_file ~mode:"rb"
               ~filename:("resources" ^/ image.image)
           in
-          let surface = Sdlimage.load_png_rw rwop in
+          let surface =
+            match Filename.split_extension image.image with
+            | (_, Some "png") -> Sdlimage.load_png_rw rwop
+            | (_, Some "jpg") -> Sdlimage.load_jpg_rw rwop
+            | _               -> failwithf "Unknown format: %s" image.image ()
+          in
           (* CR scvalex: Close rwop here (expose http://wiki.libsdl.org/SDL_RWclose). *)
           let w = Sdlsurface.get_width surface in
           let h = Sdlsurface.get_height surface in
@@ -307,7 +313,11 @@ let render_image ~renderer ~trans ~colour:_ image =
       ~w:(Float.iround_exn (xy1.x -. xy0.x))
       ~h:(Float.iround_exn (xy1.y -. xy0.y))
   in
-  Sdlrender.copy renderer ~texture ~src_rect ~dst_rect ()
+  match image.angle_deg with
+  | None ->
+    Sdlrender.copy renderer ~texture ~src_rect ~dst_rect ()
+  | Some angle ->
+    Sdlrender.copyEx renderer ~texture ~src_rect ~dst_rect ~angle ()
 ;;
 
 let render t ~renderer =

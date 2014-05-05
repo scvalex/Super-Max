@@ -18,3 +18,7 @@ end
 module Dancing_banana : sig
   val run : unit -> unit
 end
+
+module Psy_cat : sig
+  val run : unit -> unit
+end

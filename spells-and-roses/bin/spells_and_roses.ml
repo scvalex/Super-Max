@@ -25,6 +25,11 @@ let main () =
                    ~summary:"Display a dancing banana"
                    Command.Spec.empty
                    Tests.Dancing_banana.run )
+             ; ( "psychedelic-cat",
+                 Command.basic
+                   ~summary:"Display a very special cat"
+                   Command.Spec.empty
+                   Tests.Psy_cat.run )
              ])
        ])
 ;;

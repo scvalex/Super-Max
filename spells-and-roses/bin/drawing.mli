@@ -57,6 +57,7 @@ val text :
 
 val image :
      ?clip : image_clip
+  -> ?angle_deg : float
   -> string
   -> t
 

@@ -144,3 +144,28 @@ module Dancing_banana = struct
     simple_animation ~drawing_of_state
   ;;
 end
+
+module Psy_cat = struct
+  module Cat = struct
+    let image = "psy_cat.jpg";;
+    let width = 500;;
+    let height = 485;;
+  end
+
+  let run () =
+    let drawing_of_state ~width ~height (`Step step) =
+      let ratio =
+        Float.(max
+                 (of_int width /. of_int Cat.width)
+                 (of_int height /. of_int Cat.height))
+      in
+      Drawing.
+        (translate
+           ~x:Float.((of_int width -. of_int Cat.width *. ratio) /. 2.0)
+           ~y:Float.((of_int height -. of_int Cat.height *. ratio) /. 2.0)
+           (scale ~x:ratio ~y:ratio
+              (image ~angle_deg:(Float.of_int step) Cat.image)))
+    in
+    simple_animation ~drawing_of_state
+  ;;
+end

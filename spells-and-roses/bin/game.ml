@@ -56,7 +56,7 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
 let with_sdl ~f =
   Sdl.init [`VIDEO];
   Sdlttf.init ();
-  Sdlimage.init [`PNG];
+  Sdlimage.init [`PNG; `JPG];
   let window =
     Sdlwindow.create ~dims:(0, 0) ~pos:(`undefined, `undefined)
       ~title:"Something romantic"
