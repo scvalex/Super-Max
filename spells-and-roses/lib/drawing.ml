@@ -285,7 +285,7 @@ let render_image ~renderer ~trans ~colour:_ image =
             | (_, Some "jpg") -> Sdlimage.load_jpg_rw rwop
             | _               -> failwithf "Unknown format: %s" image.image ()
           in
-          (* CR scvalex: Close rwop here (expose http://wiki.libsdl.org/SDL_RWclose). *)
+          Sdlrwops.close rwop;
           let w = Sdlsurface.get_width surface in
           let h = Sdlsurface.get_height surface in
           let texture =
