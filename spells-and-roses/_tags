@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 44ad3ac15b9e97dd6ff19fae0c8a6d3e)
+# DO NOT EDIT (digest: 50d11c7f29a40085c8f4eb18f25e78b5)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -16,12 +16,16 @@
 # Library super_max
 "lib/super_max.cmxs": use_super_max
 "lib/drawing.cmx": for-pack(Super_max)
+"lib/entity.cmx": for-pack(Super_max)
 "lib/game.cmx": for-pack(Super_max)
 "lib/mat.cmx": for-pack(Super_max)
 "lib/std.cmx": for-pack(Super_max)
+"lib/world.cmx": for-pack(Super_max)
 <lib/*.ml{,i}>: package(comparelib)
 <lib/*.ml{,i}>: package(comparelib.syntax)
 <lib/*.ml{,i}>: package(core)
+<lib/*.ml{,i}>: package(fieldslib)
+<lib/*.ml{,i}>: package(fieldslib.syntax)
 <lib/*.ml{,i}>: package(sdl2)
 <lib/*.ml{,i}>: package(sdl2_img)
 <lib/*.ml{,i}>: package(sdl2_ttf)
@@ -32,6 +36,8 @@
 <bin/spells_and_roses.{native,byte}>: package(comparelib)
 <bin/spells_and_roses.{native,byte}>: package(comparelib.syntax)
 <bin/spells_and_roses.{native,byte}>: package(core)
+<bin/spells_and_roses.{native,byte}>: package(fieldslib)
+<bin/spells_and_roses.{native,byte}>: package(fieldslib.syntax)
 <bin/spells_and_roses.{native,byte}>: package(sdl2)
 <bin/spells_and_roses.{native,byte}>: package(sdl2_img)
 <bin/spells_and_roses.{native,byte}>: package(sdl2_ttf)
@@ -42,6 +48,8 @@
 <bin/*.ml{,i}>: package(comparelib)
 <bin/*.ml{,i}>: package(comparelib.syntax)
 <bin/*.ml{,i}>: package(core)
+<bin/*.ml{,i}>: package(fieldslib)
+<bin/*.ml{,i}>: package(fieldslib.syntax)
 <bin/*.ml{,i}>: package(sdl2)
 <bin/*.ml{,i}>: package(sdl2_img)
 <bin/*.ml{,i}>: package(sdl2_ttf)

@@ -27,6 +27,8 @@ Library super_max
     comparelib,
     comparelib.syntax,
     core,
+    fieldslib,
+    fieldslib.syntax,
     sdl2,
     sdl2_img,
     sdl2_ttf,
@@ -35,9 +37,11 @@ Library super_max
     threads
   Modules:
     Drawing,
+    Entity,
     Game,
     Mat,
-    Std
+    Std,
+    World
 
 Executable spells_and_roses
   Path:               bin/

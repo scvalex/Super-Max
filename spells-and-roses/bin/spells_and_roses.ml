@@ -33,14 +33,14 @@ let main () =
              ])
        ; ("edit",
           Command.group ~summary:"Editor"
-            [ ("map",
+            [ ("worldn",
                Command.basic
-                 ~summary:"Edit a map"
+                 ~summary:"Edit a world"
                  Command.Spec.
                    ( empty
                      +> anon ("FILE" %: file) )
                  (fun file () ->
-                    Map_editor.edit ~file))
+                    World_editor.edit ~file))
             ])
        ])
 ;;

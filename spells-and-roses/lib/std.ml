@@ -1,2 +1,4 @@
 module Drawing = Drawing
-module Game = Game
+module Entity  = Entity
+module Game    = Game
+module World   = World
