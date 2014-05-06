@@ -31,7 +31,17 @@ let main () =
                    Command.Spec.empty
                    Tests.Psy_cat.run )
              ])
-       (* CR scvalex: Map editor. *)
+       ; ("edit",
+          Command.group ~summary:"Editor"
+            [ ("map",
+               Command.basic
+                 ~summary:"Edit a map"
+                 Command.Spec.
+                   ( empty
+                     +> anon ("FILE" %: file) )
+                 (fun file () ->
+                    Map_editor.edit ~file))
+            ])
        ])
 ;;
 
