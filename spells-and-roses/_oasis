@@ -46,7 +46,6 @@ Executable spells_and_roses
   Install:            true
   BuildDepends:
     core,
-    ocaml_plugin,
     sdl2,
     super_max,
     threads
