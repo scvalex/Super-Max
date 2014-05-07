@@ -62,7 +62,7 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
     skipped_frames Float.(of_int skipped_frames /. (of_int step /. steps_per_sec));
 ;;
 
-let with_sdl ~f =
+let with_sdl ~f ~data_dir =
   let thread =
     Or_error.ok_exn
       (In_thread.Helper_thread.create ~name:"sdl-rendering-thread" ())
@@ -83,7 +83,7 @@ let with_sdl ~f =
       let (width, height) = Sdlwindow.get_size window in
       (renderer, (`Width width, `Height height)))
   >>= fun (renderer, (`Width width, `Height height)) ->
-  let ctx = Drawing.Context.create ~renderer ~thread in
+  let ctx = Drawing.Context.create ~renderer ~thread ~data_dir in
   Printf.eprintf "Window size is (%d, %d)\n" width height;
   Monitor.protect (fun () -> f ~ctx ~width ~height)
     ~finally:(fun () ->

@@ -17,4 +17,5 @@ val with_sdl :
           -> width : Int.t
           -> height : int
           -> unit Deferred.t )
+  -> data_dir : string
   -> unit Deferred.t

@@ -1,8 +1,8 @@
 open Core.Std
 open Super_max.Std
 
-let simple_animation ~drawing_of_state =
-  Game.with_sdl ~f:(fun ~ctx ~width ~height ->
+let simple_animation ~drawing_of_state ~data_dir =
+  Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
       let initial_state = `Step 0 in
       let on_event ~state ev =
         match ev with
@@ -22,7 +22,7 @@ let simple_animation ~drawing_of_state =
 ;;
 
 module Moving_rectangle = struct
-  let run () =
+  let run ~data_dir =
     let drawing_of_state ~width ~height (`Step step) =
       Drawing.
         (centered_normalized_scene ~width ~height
@@ -31,16 +31,16 @@ module Moving_rectangle = struct
               ~y:0.375
               (rectangle ~width:0.25 ~height:0.25)))
     in
-    simple_animation ~drawing_of_state
+    simple_animation ~drawing_of_state ~data_dir
   ;;
 end
 
 module Rectangles = struct
-  let run () =
+  let run ~data_dir =
     let drawing_of_state ~width ~height _state =
       Drawing.Example.rectangles ~width ~height
     in
-    simple_animation ~drawing_of_state
+    simple_animation ~drawing_of_state ~data_dir
   ;;
 end
 
@@ -51,12 +51,12 @@ module Static_text = struct
     position_y   : float;
   }
 
-  let run ?(data_dir = "resources") () =
+  let run ~data_dir =
     let hamlet's_soliloquy =
       In_channel.with_file (data_dir ^/ "hamlet.txt") ~f:(fun ch ->
           In_channel.input_all ch)
     in
-    Game.with_sdl ~f:(fun ~ctx ~width ~height ->
+    Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
         let initial_state =
           {
             direction    = None;
@@ -69,13 +69,13 @@ module Static_text = struct
           | Sdlevent.Quit _
           | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
             `Quit
-          | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Down; _} ->
+          | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Down; _}
+          | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.J; _} ->
             `Continue {state with direction = Some `Up; }
-          | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Down; _} ->
-            `Continue {state with direction = None; }
-          | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Up; _} ->
+          | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Up; _}
+          | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.K; _}->
             `Continue {state with direction = Some `Down; }
-          | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Up; _} ->
+          | Sdlevent.KeyUp _ ->
             `Continue {state with direction = None; }
           | _ ->
             `Continue state
@@ -116,7 +116,7 @@ module Dancing_banana = struct
     let frames = 8;;
   end
 
-  let run () =
+  let run ~data_dir =
     let drawing_of_state ~width ~height (`Step step) =
       let open Drawing in
       let banana =
@@ -142,7 +142,7 @@ module Dancing_banana = struct
                 caption
             ]))
     in
-    simple_animation ~drawing_of_state
+    simple_animation ~drawing_of_state ~data_dir
   ;;
 end
 
@@ -153,7 +153,7 @@ module Psy_cat = struct
     let height = 485;;
   end
 
-  let run () =
+  let run ~data_dir =
     let drawing_of_state ~width ~height (`Step step) =
       let ratio =
         Float.(max
@@ -167,6 +167,6 @@ module Psy_cat = struct
            (scale ~x:ratio ~y:ratio
               (image ~angle_deg:(Float.of_int step) Cat.image)))
     in
-    simple_animation ~drawing_of_state
+    simple_animation ~drawing_of_state ~data_dir
   ;;
 end

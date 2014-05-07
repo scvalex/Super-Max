@@ -89,6 +89,7 @@ module Context : sig
   val create :
        renderer : Sdlrender.t
     -> thread : In_thread.Helper_thread.t
+    -> data_dir : string
     -> t
 
   val renderer : t -> Sdlrender.t
@@ -97,14 +98,13 @@ module Context : sig
 
   val get_font :
        t
-    -> ?data_dir : string
     -> string
     -> int
     -> Sdlttf.font
 
   val get_or_create_texture :
        t
-    -> create : (unit -> texture_with_size)
+    -> create : (data_dir : string -> texture_with_size)
     -> string
     -> texture_with_size
 
@@ -128,22 +128,24 @@ end = struct
     fonts    : Sdlttf.font Font_and_size.Table.t;
     textures : texture_with_size String.Table.t;
     thread   : In_thread.Helper_thread.t;
+    data_dir : string;
   } with fields
 
-  let create ~renderer ~thread =
+  let create ~renderer ~thread ~data_dir =
     let fonts = Font_and_size.Table.create () in
     let textures = String.Table.create () in
-    { renderer; fonts; textures; thread; }
+    { renderer; fonts; textures; thread; data_dir; }
   ;;
 
-  let get_font t ?(data_dir = "resources") font_name size_pt =
+  let get_font t font_name size_pt =
     Hashtbl.find_or_add t.fonts (font_name, size_pt)
       ~default:(fun () ->
-          Sdlttf.open_font ~file:(data_dir ^/ font_name) ~ptsize:size_pt)
+          Sdlttf.open_font ~file:(t.data_dir ^/ font_name) ~ptsize:size_pt)
   ;;
 
   let get_or_create_texture t ~create id =
-    Hashtbl.find_or_add t.textures id ~default:create
+    Hashtbl.find_or_add t.textures id
+      ~default:(fun () -> create ~data_dir:t.data_dir)
   ;;
 
   let stats t =
@@ -234,7 +236,7 @@ let render_text ~ctx ~trans ~colour text =
     List.map (String.split_lines text.str) ~f:(fun str ->
         Context.get_or_create_texture ctx
           (sprintf "text-%s-%d-%s" text.font text.size_pt str)
-          ~create:(fun () ->
+          ~create:(fun ~data_dir:_ ->
               let font = Context.get_font ctx text.font text.size_pt in
               let (r, g, b, a) = rgba_of_colour colour in
               let color = {Sdlttf. r; g; b; a} in
@@ -290,10 +292,10 @@ let render_image ~ctx ~trans ~colour:_ image =
   let (texture, `Width width, `Height height) =
     Context.get_or_create_texture ctx
       (sprintf "image-%s" image.image)
-      ~create:(fun () ->
+      ~create:(fun ~data_dir ->
           let rwop =
             Sdlrwops.from_file ~mode:"rb"
-              ~filename:("resources" ^/ image.image)
+              ~filename:(data_dir ^/ image.image)
           in
           let surface =
             match Filename.split_extension image.image with

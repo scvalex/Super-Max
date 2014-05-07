@@ -5,10 +5,10 @@ module Context : sig
   (** A [Context.t] is used when drawing. *)
   type t
 
-  (* CR ascvortov: Pass in a data-dir. *)
   val create :
        renderer : Sdlrender.t
     -> thread : In_thread.Helper_thread.t
+    -> data_dir : string
     -> t
 
   val stats : t -> string
