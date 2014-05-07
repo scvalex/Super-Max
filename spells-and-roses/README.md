@@ -17,6 +17,12 @@ Dependencies
 opam install core
 ~~~~
 
+* [Async](https://github.com/janestreet/async):
+
+~~~~
+opam install async
+~~~~
+
 * [Oasis](https://github.com/ocaml/oasis):
 
 ~~~~
