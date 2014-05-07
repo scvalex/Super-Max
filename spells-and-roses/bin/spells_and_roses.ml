@@ -10,51 +10,33 @@ module Flag = struct
   ;;
 end
 
+let test_command ~summary f =
+  Command.async_basic ~summary
+    Flag.(empty +> data_dir)
+    (fun data_dir () ->
+       f ~data_dir)
+;;
+
 let main () =
   Command.run
     (Command.group ~summary:"Spells and Roses"
        [ ( "test",
            Command.group ~summary:"System tests"
              [ ( "moving-rectangle",
-                 Command.async_basic
-                   ~summary:"Display a white rectangle moving horizontally"
-                   Flag.
-                     ( empty
-                       +> data_dir )
-                   (fun data_dir () ->
-                      Tests.Moving_rectangle.run ~data_dir) )
+                 test_command Tests.Moving_rectangle.run
+                   ~summary:"Display a white rectangle moving horizontally" )
              ; ( "rectangles",
-                 Command.async_basic
-                   ~summary:"Display a several static rectangles"
-                   Flag.
-                     ( empty
-                       +> data_dir )
-                   (fun data_dir () ->
-                      Tests.Rectangles.run ~data_dir) )
+                 test_command Tests.Rectangles.run
+                   ~summary:"Display a several static rectangles" )
              ; ( "text",
-                 Command.async_basic
-                   ~summary:"Display static text"
-                   Flag.
-                     ( empty
-                       +> data_dir )
-                   (fun data_dir () ->
-                      Tests.Static_text.run ~data_dir) )
+                 test_command Tests.Static_text.run
+                   ~summary:"Display static text" )
              ; ( "dancing-banana",
-                 Command.async_basic
-                   ~summary:"Display a dancing banana"
-                   Flag.
-                     ( empty
-                       +> data_dir )
-                   (fun data_dir () ->
-                      Tests.Dancing_banana.run ~data_dir) )
+                 test_command Tests.Dancing_banana.run
+                   ~summary:"Display a dancing banana" )
              ; ( "psychedelic-cat",
-                 Command.async_basic
-                   ~summary:"Display a very special cat"
-                   Flag.
-                     ( empty
-                       +> data_dir )
-                   (fun data_dir () ->
-                      Tests.Psy_cat.run ~data_dir) )
+                 test_command Tests.Psy_cat.run
+                   ~summary:"Display a very special cat" )
              ])
        ; ("edit",
           Command.group ~summary:"Editor"
