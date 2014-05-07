@@ -2,7 +2,7 @@ open Core.Std
 open Super_max.Std
 
 let simple_animation ~drawing_of_state =
-  Game.with_sdl ~f:(fun ~renderer ~width ~height ->
+  Game.with_sdl ~f:(fun ~ctx ~width ~height ->
       let initial_state = `Step 0 in
       let on_event ~state ev =
         match ev with
@@ -18,7 +18,7 @@ let simple_animation ~drawing_of_state =
       let steps_per_sec = 60.0 in
       let drawing_of_state = drawing_of_state ~width ~height in
       Game.main_loop ~initial_state ~on_event ~on_step
-        ~steps_per_sec ~drawing_of_state ~renderer)
+        ~steps_per_sec ~drawing_of_state ~ctx)
 ;;
 
 module Moving_rectangle = struct
@@ -56,7 +56,7 @@ module Static_text = struct
       In_channel.with_file (data_dir ^/ "hamlet.txt") ~f:(fun ch ->
           In_channel.input_all ch)
     in
-    Game.with_sdl ~f:(fun ~renderer ~width ~height ->
+    Game.with_sdl ~f:(fun ~ctx ~width ~height ->
         let initial_state =
           {
             direction    = None;
@@ -104,7 +104,7 @@ module Static_text = struct
                      hamlet's_soliloquy)))
         in
         Game.main_loop ~initial_state ~on_event ~on_step
-          ~steps_per_sec ~drawing_of_state ~renderer)
+          ~steps_per_sec ~drawing_of_state ~ctx)
   ;;
 end
 

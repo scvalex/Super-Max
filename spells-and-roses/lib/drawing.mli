@@ -1,5 +1,14 @@
 open Core.Std
 
+module Context : sig
+  (** A [Context.t] is used when drawing. *)
+  type t
+
+  val create : renderer : Sdlrender.t -> t
+
+  val stats : t -> string
+end
+
 (** A [Drawing.t] is the only thing that can be shown on a screen.
 
     Coordinate system: @(0.0, 0.0)@ is the top-left corner of the
@@ -8,10 +17,6 @@ open Core.Std
 type t
 
 include Sexpable.S with type t := t
-
-module Global : sig
-  val stats : unit -> string
-end
 
 type text_position = ([`X of [`Left | `Centre | `Right]]
                       * [`Y of [`Top | `Centre | `Bottom]]) with sexp
@@ -67,7 +72,7 @@ val centered_normalized_scene :
   -> t
   -> t
 
-val render : t -> renderer : Sdlrender.t -> unit
+val render : t -> ctx : Context.t -> unit
 
 module Example : sig
   (** [rectangles] are a bunch of rectangles that cover a 1.0 side

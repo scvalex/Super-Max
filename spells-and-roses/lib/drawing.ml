@@ -35,6 +35,8 @@ type image = {
   angle_deg : float option;
 } with sexp
 
+type texture_with_size = Sdltexture.t * [`Width of int] * [`Height of int]
+
 let rgb_a_of_colour rgba =
   let rgb =
     (Float.iround_exn (rgba.red *. 255.0),
@@ -80,24 +82,30 @@ end = struct
   ;;
 end
 
-module Global : sig
-  type texture_with_size = Sdltexture.t * [`Width of int] * [`Height of int]
+module Context : sig
+  type t
+
+  val create :
+       renderer : Sdlrender.t
+    -> t
+
+  val renderer : t -> Sdlrender.t
 
   val get_font :
-       ?data_dir : string
+       t
+    -> ?data_dir : string
     -> string
     -> int
     -> Sdlttf.font
 
   val get_or_create_texture :
-       create : (unit -> texture_with_size)
+       t
+    -> create : (unit -> texture_with_size)
     -> string
     -> texture_with_size
 
-  val stats : unit -> string
+  val stats : t -> string
 end = struct
-  type texture_with_size = Sdltexture.t * [`Width of int] * [`Height of int]
-
   module Font_and_size = struct
     module T = struct
       type t = (string * int) with sexp, compare
@@ -111,29 +119,32 @@ end = struct
     include Hashable.Make(T)
   end
 
-  let fonts : Sdlttf.font Font_and_size.Table.t =
-    Font_and_size.Table.create ()
+  type t = {
+    renderer : Sdlrender.t;
+    fonts    : Sdlttf.font Font_and_size.Table.t;
+    textures : texture_with_size String.Table.t;
+  } with fields
+
+  let create ~renderer =
+    let fonts = Font_and_size.Table.create () in
+    let textures = String.Table.create () in
+    { renderer; fonts; textures; }
   ;;
 
-  let textures : texture_with_size String.Table.t =
-    String.Table.create ()
-  ;;
-
-  (* CR ascvortov: Thread a config through the functions. *)
-  let get_font ?(data_dir = "resources") font_name size_pt =
-    Hashtbl.find_or_add fonts (font_name, size_pt)
+  let get_font t ?(data_dir = "resources") font_name size_pt =
+    Hashtbl.find_or_add t.fonts (font_name, size_pt)
       ~default:(fun () ->
           Sdlttf.open_font ~file:(data_dir ^/ font_name) ~ptsize:size_pt)
   ;;
 
-  let get_or_create_texture ~create id =
-    Hashtbl.find_or_add textures id ~default:create
+  let get_or_create_texture t ~create id =
+    Hashtbl.find_or_add t.textures id ~default:create
   ;;
 
-  let stats () =
+  let stats t =
     sprintf
       ("Drawing stats:\n - fonts: %d\n - textures: %d")
-      (Hashtbl.length fonts) (Hashtbl.length textures)
+      (Hashtbl.length t.fonts) (Hashtbl.length t.textures)
   ;;
 end
 
@@ -200,12 +211,12 @@ let centered_normalized_scene ~width ~height t =
     (scale ~x:dim ~y:dim t)
 ;;
 
-let render_rectangle ~renderer ~trans ~colour ~width ~height =
+let render_rectangle ~ctx ~trans ~colour ~width ~height =
   let xy0 = Trans.apply trans {x = 0.0; y = 0.0;} in
   let xy1 = Trans.apply trans {x = width; y = height;} in
   let (rgb, a) = rgb_a_of_colour colour in
-  Sdlrender.set_draw_color renderer ~rgb ~a;
-  Sdlrender.fill_rect renderer
+  Sdlrender.set_draw_color (Context.renderer ctx) ~rgb ~a;
+  Sdlrender.fill_rect (Context.renderer ctx)
     (Sdlrect.make4
        ~x:(Float.iround_exn xy0.x)
        ~y:(Float.iround_exn xy0.y)
@@ -213,13 +224,13 @@ let render_rectangle ~renderer ~trans ~colour ~width ~height =
        ~h:(Float.iround_exn (xy1.y -. xy0.y)))
 ;;
 
-let render_text ~renderer ~trans ~colour text =
+let render_text ~ctx ~trans ~colour text =
   let line_textures =
     List.map (String.split_lines text.str) ~f:(fun str ->
-        Global.get_or_create_texture
+        Context.get_or_create_texture ctx
           (sprintf "text-%s-%d-%s" text.font text.size_pt str)
           ~create:(fun () ->
-              let font = Global.get_font text.font text.size_pt in
+              let font = Context.get_font ctx text.font text.size_pt in
               let (r, g, b, a) = rgba_of_colour colour in
               let color = {Sdlttf. r; g; b; a} in
               let surface =
@@ -228,7 +239,7 @@ let render_text ~renderer ~trans ~colour text =
               let w = Sdlsurface.get_width surface in
               let h = Sdlsurface.get_height surface in
               let texture =
-                Sdltexture.create_from_surface renderer surface
+                Sdltexture.create_from_surface (Context.renderer ctx) surface
               in
               Sdlsurface.free surface;
               (texture, `Width w, `Height h)))
@@ -264,15 +275,15 @@ let render_text ~renderer ~trans ~colour text =
       ~f:(fun (x, y) (texture, `Width w, `Height h) ->
           let src_rect = Sdlrect.make4 ~x:0 ~y:0 ~w ~h in
           let dst_rect = Sdlrect.make4 ~x ~y ~w ~h in
-          Sdlrender.copy renderer ~texture ~src_rect ~dst_rect ();
+          Sdlrender.copy (Context.renderer ctx) ~texture ~src_rect ~dst_rect ();
           (x, y + h_and_a_half h))
   in
   ()
 ;;
 
-let render_image ~renderer ~trans ~colour:_ image =
+let render_image ~ctx ~trans ~colour:_ image =
   let (texture, `Width width, `Height height) =
-    Global.get_or_create_texture
+    Context.get_or_create_texture ctx
       (sprintf "image-%s" image.image)
       ~create:(fun () ->
           let rwop =
@@ -289,7 +300,7 @@ let render_image ~renderer ~trans ~colour:_ image =
           let w = Sdlsurface.get_width surface in
           let h = Sdlsurface.get_height surface in
           let texture =
-            Sdltexture.create_from_surface renderer surface
+            Sdltexture.create_from_surface (Context.renderer ctx) surface
           in
           Sdlsurface.free surface;
           (texture, `Width w, `Height h))
@@ -315,14 +326,14 @@ let render_image ~renderer ~trans ~colour:_ image =
   in
   match image.angle_deg with
   | None ->
-    Sdlrender.copy renderer ~texture ~src_rect ~dst_rect ()
+    Sdlrender.copy (Context.renderer ctx) ~texture ~src_rect ~dst_rect ()
   | Some angle ->
-    Sdlrender.copyEx renderer ~texture ~src_rect ~dst_rect ~angle ()
+    Sdlrender.copyEx (Context.renderer ctx) ~texture ~src_rect ~dst_rect ~angle ()
 ;;
 
 (* CR scvalex: Wrap this in a In_thread.run and async-ify the rest of
    the program. *)
-let render t ~renderer =
+let render t ~ctx =
   let rec loop trans colour = function
     | Empty ->
       ()
@@ -333,23 +344,23 @@ let render t ~renderer =
       let trans = Trans.scale trans xy in
       loop trans colour t
     | Rectangle {width; height} ->
-      render_rectangle ~renderer ~trans ~colour ~width ~height
+      render_rectangle ~ctx ~trans ~colour ~width ~height
     | Colour (colour, t) ->
       loop trans colour t
     | Many ts ->
       List.iter ts ~f:(loop trans colour)
     | Text text ->
-      render_text ~renderer ~trans ~colour text
+      render_text ~ctx ~trans ~colour text
     | Image image ->
-      render_image ~renderer ~trans ~colour image
+      render_image ~ctx ~trans ~colour image
   in
-  Sdlrender.set_draw_color renderer ~rgb:(0, 0, 0) ~a:255;
-  Sdlrender.clear renderer;
+  Sdlrender.set_draw_color (Context.renderer ctx) ~rgb:(0, 0, 0) ~a:255;
+  Sdlrender.clear (Context.renderer ctx);
   let white =
     {red = 1.0; green = 1.0; blue = 1.0; alpha = 1.0; }
   in
   loop Trans.id white t;
-  Sdlrender.render_present renderer
+  Sdlrender.render_present (Context.renderer ctx)
 ;;
 
 module Example = struct

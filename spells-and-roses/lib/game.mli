@@ -8,11 +8,11 @@ val main_loop :
   -> on_step : ('a -> 'a resp)
   -> steps_per_sec : float
   -> drawing_of_state : ('a -> Drawing.t)
-  -> renderer : Sdlrender.t
+  -> ctx : Drawing.Context.t
   -> unit
 
 val with_sdl :
-     f : (   renderer : Sdlrender.t
+     f : (   ctx : Drawing.Context.t
           -> width : int
           -> height : int
           -> unit )

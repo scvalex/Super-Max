@@ -3,7 +3,7 @@ open Core.Std
 type 'a resp = [`Continue of 'a | `Quit]
 
 let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
-    ~drawing_of_state ~renderer =
+    ~drawing_of_state ~ctx =
   let slice = Float.iround_exn (1000.0 /. steps_per_sec) in
   let rec event_loop ~state ~history ~step =
     match Sdlevent.poll_event () with
@@ -43,7 +43,7 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
         (`Step step, history, `Skipped_frames skipped_frames)
       | `Continue (state, step, game_ticks) ->
         let drawing = drawing_of_state state in
-        Drawing.render drawing ~renderer;
+        Drawing.render drawing ~ctx;
         let skipped_frames =
           skipped_frames + Int.max 0 (step - old_step - 1)
         in
@@ -73,12 +73,13 @@ let with_sdl ~f =
     Sdlrender.create_renderer ~win:window ~index:(0 - 1)
       ~flags:[Sdlrender.Accelerated; Sdlrender.PresentVSync]
   in
+  let ctx = Drawing.Context.create ~renderer in
   let (width, height) = Sdlwindow.get_size window in
   Printf.eprintf "Window size is (%d, %d)\n" width height;
   Exn.protect
-    ~f:(fun () -> f ~renderer ~width ~height)
+    ~f:(fun () -> f ~ctx ~width ~height)
     ~finally:(fun () ->
-        Printf.eprintf "%s\n%!" (Drawing.Global.stats ());
+        Printf.eprintf "%s\n%!" (Drawing.Context.stats ctx);
         Sdlimage.quit ();
         Sdlttf.quit ();
         Sdl.quit ())

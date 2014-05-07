@@ -24,6 +24,7 @@ Library super_max
   FindlibName:        super_max
   Pack:               true
   BuildDepends:
+    async,
     comparelib,
     comparelib.syntax,
     core,
