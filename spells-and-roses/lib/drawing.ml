@@ -320,6 +320,8 @@ let render_image ~renderer ~trans ~colour:_ image =
     Sdlrender.copyEx renderer ~texture ~src_rect ~dst_rect ~angle ()
 ;;
 
+(* CR scvalex: Wrap this in a In_thread.run and async-ify the rest of
+   the program. *)
 let render t ~renderer =
   let rec loop trans colour = function
     | Empty ->

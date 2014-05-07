@@ -31,26 +31,33 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
       `Continue (state, step, game_ticks)
     end
   in
-  let rec loop ~state ~step ~history ~game_ticks =
+  let rec loop ~state ~step ~history ~game_ticks ~skipped_frames =
     match event_loop ~state ~history ~step with
     | `Quit history ->
-      (step, history)
+      (`Step step, history, `Skipped_frames skipped_frames)
     | `Continue (state, history) ->
       let now = Sdltimer.get_ticks () in
+      let old_step = step in
       match step_loop ~state ~step ~game_ticks ~now with
       | `Quit step ->
-        (step, history)
+        (`Step step, history, `Skipped_frames skipped_frames)
       | `Continue (state, step, game_ticks) ->
         let drawing = drawing_of_state state in
         Drawing.render drawing ~renderer;
+        let skipped_frames =
+          skipped_frames + Int.max 0 (step - old_step - 1)
+        in
         Sdltimer.delay ~ms:(game_ticks - now);
-        loop ~state ~step ~history ~game_ticks
+        loop ~state ~step ~history ~game_ticks ~skipped_frames
   in
-  let (step, history) =
+  let (`Step step, history, `Skipped_frames skipped_frames) =
     loop ~state:initial_state ~step:0 ~history:[] ~game_ticks:(Sdltimer.get_ticks ())
+      ~skipped_frames:0
   in
   Printf.eprintf "Game loop finished at step %d with history %d long\n%!"
     step (List.length history);
+  Printf.eprintf "Skipped frames: %d (%.2f/s)\n%!"
+    skipped_frames Float.(of_int skipped_frames /. (of_int step /. steps_per_sec));
 ;;
 
 let with_sdl ~f =
