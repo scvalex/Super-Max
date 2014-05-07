@@ -1,4 +1,5 @@
-(* open Core.Std *)
+open Core.Std
+open Async.Std
 
 type 'a resp = [`Continue of 'a | `Quit]
 
@@ -9,11 +10,11 @@ val main_loop :
   -> steps_per_sec : float
   -> drawing_of_state : ('a -> Drawing.t)
   -> ctx : Drawing.Context.t
-  -> unit
+  -> unit Deferred.t
 
 val with_sdl :
      f : (   ctx : Drawing.Context.t
-          -> width : int
+          -> width : Int.t
           -> height : int
-          -> unit )
-  -> unit
+          -> unit Deferred.t )
+  -> unit Deferred.t

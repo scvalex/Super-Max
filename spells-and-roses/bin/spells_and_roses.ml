@@ -1,4 +1,5 @@
 open Core.Std
+open Async.Std
 
 let main () =
   Command.run
@@ -6,35 +7,35 @@ let main () =
        [ ( "test",
            Command.group ~summary:"System tests"
              [ ( "moving-rectangle",
-                 Command.basic
+                 Command.async_basic
                    ~summary:"Display a white rectangle moving horizontally"
                    Command.Spec.empty
                    Tests.Moving_rectangle.run )
              ; ( "rectangles",
-                 Command.basic
+                 Command.async_basic
                    ~summary:"Display a several static rectangles"
                    Command.Spec.empty
                    Tests.Rectangles.run )
              ; ( "text",
-                 Command.basic
+                 Command.async_basic
                    ~summary:"Display static text"
                    Command.Spec.empty
                    Tests.Static_text.run )
              ; ( "dancing-banana",
-                 Command.basic
+                 Command.async_basic
                    ~summary:"Display a dancing banana"
                    Command.Spec.empty
                    Tests.Dancing_banana.run )
              ; ( "psychedelic-cat",
-                 Command.basic
+                 Command.async_basic
                    ~summary:"Display a very special cat"
                    Command.Spec.empty
                    Tests.Psy_cat.run )
              ])
        ; ("edit",
           Command.group ~summary:"Editor"
-            [ ("worldn",
-               Command.basic
+            [ ("world",
+               Command.async_basic
                  ~summary:"Edit a world"
                  Command.Spec.
                    ( empty

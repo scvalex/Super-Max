@@ -1,4 +1,5 @@
 open Core.Std
+open Async.Std
 
 type xy = {
   x : float;
@@ -87,9 +88,12 @@ module Context : sig
 
   val create :
        renderer : Sdlrender.t
+    -> thread : In_thread.Helper_thread.t
     -> t
 
   val renderer : t -> Sdlrender.t
+
+  val thread : t -> In_thread.Helper_thread.t
 
   val get_font :
        t
@@ -123,12 +127,13 @@ end = struct
     renderer : Sdlrender.t;
     fonts    : Sdlttf.font Font_and_size.Table.t;
     textures : texture_with_size String.Table.t;
+    thread   : In_thread.Helper_thread.t;
   } with fields
 
-  let create ~renderer =
+  let create ~renderer ~thread =
     let fonts = Font_and_size.Table.create () in
     let textures = String.Table.create () in
-    { renderer; fonts; textures; }
+    { renderer; fonts; textures; thread; }
   ;;
 
   let get_font t ?(data_dir = "resources") font_name size_pt =
@@ -331,9 +336,7 @@ let render_image ~ctx ~trans ~colour:_ image =
     Sdlrender.copyEx (Context.renderer ctx) ~texture ~src_rect ~dst_rect ~angle ()
 ;;
 
-(* CR scvalex: Wrap this in a In_thread.run and async-ify the rest of
-   the program. *)
-let render t ~ctx =
+let render_blocking t ~ctx =
   let rec loop trans colour = function
     | Empty ->
       ()
@@ -361,6 +364,11 @@ let render t ~ctx =
   in
   loop Trans.id white t;
   Sdlrender.render_present (Context.renderer ctx)
+;;
+
+let render t ~ctx =
+  In_thread.run (fun () -> render_blocking t ~ctx)
+    ~thread:(Context.thread ctx)
 ;;
 
 module Example = struct

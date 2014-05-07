@@ -1,4 +1,5 @@
 open Core.Std
+open Async.Std
 
 type 'a resp = [`Continue of 'a | `Quit]
 
@@ -34,26 +35,27 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
   let rec loop ~state ~step ~history ~game_ticks ~skipped_frames =
     match event_loop ~state ~history ~step with
     | `Quit history ->
-      (`Step step, history, `Skipped_frames skipped_frames)
+      Deferred.return (`Step step, history, `Skipped_frames skipped_frames)
     | `Continue (state, history) ->
       let now = Sdltimer.get_ticks () in
       let old_step = step in
       match step_loop ~state ~step ~game_ticks ~now with
       | `Quit step ->
-        (`Step step, history, `Skipped_frames skipped_frames)
+        Deferred.return (`Step step, history, `Skipped_frames skipped_frames)
       | `Continue (state, step, game_ticks) ->
         let drawing = drawing_of_state state in
-        Drawing.render drawing ~ctx;
+        Drawing.render drawing ~ctx
+        >>= fun () ->
         let skipped_frames =
           skipped_frames + Int.max 0 (step - old_step - 1)
         in
-        Sdltimer.delay ~ms:(game_ticks - now);
+        Clock.after (Time.Span.of_ms (Float.of_int (game_ticks - now)))
+        >>= fun () ->
         loop ~state ~step ~history ~game_ticks ~skipped_frames
   in
-  let (`Step step, history, `Skipped_frames skipped_frames) =
-    loop ~state:initial_state ~step:0 ~history:[] ~game_ticks:(Sdltimer.get_ticks ())
-      ~skipped_frames:0
-  in
+  loop ~state:initial_state ~step:0 ~history:[] ~game_ticks:(Sdltimer.get_ticks ())
+    ~skipped_frames:0
+  >>| fun (`Step step, history, `Skipped_frames skipped_frames) ->
   Printf.eprintf "Game loop finished at step %d with history %d long\n%!"
     step (List.length history);
   Printf.eprintf "Skipped frames: %d (%.2f/s)\n%!"
@@ -61,26 +63,33 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
 ;;
 
 let with_sdl ~f =
-  Sdl.init [`VIDEO];
-  Sdlttf.init ();
-  Sdlimage.init [`PNG; `JPG];
-  let window =
-    Sdlwindow.create ~dims:(0, 0) ~pos:(`undefined, `undefined)
-      ~title:"Something romantic"
-      ~flags:[Sdlwindow.FullScreen_Desktop]
+  let thread =
+    Or_error.ok_exn
+      (In_thread.Helper_thread.create ~name:"sdl-rendering-thread" ())
   in
-  let renderer =
-    Sdlrender.create_renderer ~win:window ~index:(0 - 1)
-      ~flags:[Sdlrender.Accelerated; Sdlrender.PresentVSync]
-  in
-  let ctx = Drawing.Context.create ~renderer in
-  let (width, height) = Sdlwindow.get_size window in
+  In_thread.run ~thread (fun () ->
+      Sdl.init [`VIDEO];
+      Sdlttf.init ();
+      Sdlimage.init [`PNG; `JPG];
+      let window =
+        Sdlwindow.create ~dims:(0, 0) ~pos:(`undefined, `undefined)
+          ~title:"Something romantic"
+          ~flags:[Sdlwindow.FullScreen_Desktop]
+      in
+      let renderer =
+        Sdlrender.create_renderer ~win:window ~index:(0 - 1)
+          ~flags:[Sdlrender.Accelerated; Sdlrender.PresentVSync]
+      in
+      let (width, height) = Sdlwindow.get_size window in
+      (renderer, (`Width width, `Height height)))
+  >>= fun (renderer, (`Width width, `Height height)) ->
+  let ctx = Drawing.Context.create ~renderer ~thread in
   Printf.eprintf "Window size is (%d, %d)\n" width height;
-  Exn.protect
-    ~f:(fun () -> f ~ctx ~width ~height)
+  Monitor.protect (fun () -> f ~ctx ~width ~height)
     ~finally:(fun () ->
         Printf.eprintf "%s\n%!" (Drawing.Context.stats ctx);
-        Sdlimage.quit ();
-        Sdlttf.quit ();
-        Sdl.quit ())
+        In_thread.run ~thread (fun () ->
+            Sdlimage.quit ();
+            Sdlttf.quit ();
+            Sdl.quit ()))
 ;;

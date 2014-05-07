@@ -1,10 +1,15 @@
 open Core.Std
+open Async.Std
 
 module Context : sig
   (** A [Context.t] is used when drawing. *)
   type t
 
-  val create : renderer : Sdlrender.t -> t
+  (* CR ascvortov: Pass in a data-dir. *)
+  val create :
+       renderer : Sdlrender.t
+    -> thread : In_thread.Helper_thread.t
+    -> t
 
   val stats : t -> string
 end
@@ -72,7 +77,7 @@ val centered_normalized_scene :
   -> t
   -> t
 
-val render : t -> ctx : Context.t -> unit
+val render : t -> ctx : Context.t -> unit Deferred.t
 
 module Example : sig
   (** [rectangles] are a bunch of rectangles that cover a 1.0 side

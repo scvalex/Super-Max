@@ -50,6 +50,7 @@ Executable spells_and_roses
   CompiledObject:     best
   Install:            true
   BuildDepends:
+    async,
     core,
     sdl2,
     super_max,

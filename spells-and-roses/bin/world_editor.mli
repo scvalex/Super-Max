@@ -1,5 +1,6 @@
-(* open Core.Std *)
+open Core.Std
+open Async.Std
 
 val edit :
-     file : string
-  -> unit
+     file : String.t
+  -> unit Deferred.t
