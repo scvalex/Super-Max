@@ -23,6 +23,7 @@ clean:
 
 p:
 	permamake.sh Makefile \
+	             myocamlbuild.ml \
 	             _oasis \
 	             lib/*.ml* \
 	             bin/*.ml*

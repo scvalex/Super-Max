@@ -616,6 +616,8 @@ let dispatch = function
     let stdlib = BaseEnvLight.var_get "standard_library" env in
     rule "ocaml_plugin standalone archive"
       ~deps:["bin/script_intf.cmi";
+             "myocamlbuild.ml";
+             "lib/super_max.cmi";
             ]
       ~prod:"bin/ocaml_archive.c"
       (fun _ _ ->
@@ -627,10 +629,14 @@ let dispatch = function
                  A "-pa-cmxs"; P (loc "fieldslib" / "pa_fields_conv.cmxs");
                  A "-cc"; A (Command.search_in_path "ocamlopt.opt");
                  A (stdlib / "pervasives.cmi");
+                 A (stdlib / "printf.cmi");
+                 A (loc "ocaml_plugin" / "ocaml_plugin.cmi");
                  A (loc "core" / "core.cmi");
+                 A (loc "async" / "async.cmi");
                  A (loc "fieldslib" / "fieldslib.cmi");
                  A (loc "sexplib" / "sexplib.cmi");
                  A "bin/script_intf.cmi";
+                 A "lib/super_max.cmi";
                  A "-o"; A "bin/ocaml_archive.c"]))
   | _ ->
     ()
