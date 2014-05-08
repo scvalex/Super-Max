@@ -23,6 +23,13 @@ opam install core
 opam install async
 ~~~~
 
+* [OCaml Plugin](https://github.com/janestreet/ocaml_plugin):
+
+~~~~
+opam install ocaml_plugin
+~~~~
+
+
 * [Oasis](https://github.com/ocaml/oasis):
 
 ~~~~

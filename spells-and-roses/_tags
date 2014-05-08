@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: bea2117b08e6c68b36b4d7bbca4b5fee)
+# DO NOT EDIT (digest: 7738afaff064c0cbe901fc38b1efa1c4)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -33,6 +33,12 @@
 <lib/*.ml{,i}>: package(sexplib)
 <lib/*.ml{,i}>: package(sexplib.syntax)
 <lib/*.ml{,i}>: package(threads)
+# Library ocaml_plugin_archive
+"bin/ocaml_plugin_archive.cmxs": use_ocaml_plugin_archive
+<bin/ocaml_plugin_archive.{cma,cmxa}>: use_libocaml_plugin_archive_stubs
+"bin/ocaml_archive.c": package(ocaml_plugin)
+"bin/ocaml_archive.c": package(sexplib)
+"bin/ocaml_archive.c": package(type_conv)
 # Executable spells_and_roses
 <bin/spells_and_roses.{native,byte}>: package(async)
 <bin/spells_and_roses.{native,byte}>: package(comparelib)
@@ -40,12 +46,15 @@
 <bin/spells_and_roses.{native,byte}>: package(core)
 <bin/spells_and_roses.{native,byte}>: package(fieldslib)
 <bin/spells_and_roses.{native,byte}>: package(fieldslib.syntax)
+<bin/spells_and_roses.{native,byte}>: package(ocaml_plugin)
 <bin/spells_and_roses.{native,byte}>: package(sdl2)
 <bin/spells_and_roses.{native,byte}>: package(sdl2_img)
 <bin/spells_and_roses.{native,byte}>: package(sdl2_ttf)
 <bin/spells_and_roses.{native,byte}>: package(sexplib)
 <bin/spells_and_roses.{native,byte}>: package(sexplib.syntax)
 <bin/spells_and_roses.{native,byte}>: package(threads)
+<bin/spells_and_roses.{native,byte}>: package(type_conv)
+<bin/spells_and_roses.{native,byte}>: use_ocaml_plugin_archive
 <bin/spells_and_roses.{native,byte}>: use_super_max
 <bin/*.ml{,i}>: package(async)
 <bin/*.ml{,i}>: package(comparelib)
@@ -53,12 +62,15 @@
 <bin/*.ml{,i}>: package(core)
 <bin/*.ml{,i}>: package(fieldslib)
 <bin/*.ml{,i}>: package(fieldslib.syntax)
+<bin/*.ml{,i}>: package(ocaml_plugin)
 <bin/*.ml{,i}>: package(sdl2)
 <bin/*.ml{,i}>: package(sdl2_img)
 <bin/*.ml{,i}>: package(sdl2_ttf)
 <bin/*.ml{,i}>: package(sexplib)
 <bin/*.ml{,i}>: package(sexplib.syntax)
 <bin/*.ml{,i}>: package(threads)
+<bin/*.ml{,i}>: package(type_conv)
+<bin/*.ml{,i}>: use_ocaml_plugin_archive
 <bin/*.ml{,i}>: use_super_max
 # OASIS_STOP
 <{bin,lib,test}/*.ml{,i}>: syntax_camlp4o

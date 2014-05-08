@@ -1,9 +1,9 @@
 _build/
-lib/META
+META
+*.clib
 *.mldylib
 *.mllib
 *.mlpack
-myocamlbuild.ml
 setup.data
 setup.log
 setup.ml

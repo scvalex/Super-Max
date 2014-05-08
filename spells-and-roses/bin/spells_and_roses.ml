@@ -38,6 +38,14 @@ let main () =
                  test_command Tests.Psy_cat.run
                    ~summary:"Display a very special cat" )
              ])
+       ; ("script",
+          Command.async_basic
+            ~summary:"Run a script"
+            Flag.
+              ( empty
+                +> anon ("FILE" %: file) )
+            (fun file () ->
+               Script.run ~file))
        ; ("edit",
           Command.group ~summary:"Editor"
             [ ("world",

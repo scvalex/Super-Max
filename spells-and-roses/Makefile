@@ -19,7 +19,7 @@ doc: build
 
 clean:
 	-ocaml setup.ml -clean
-	rm -f myocamlbuild.ml setup.ml setup.data lib/META
+	rm -f setup.ml setup.data lib/META
 
 p:
 	permamake.sh Makefile \

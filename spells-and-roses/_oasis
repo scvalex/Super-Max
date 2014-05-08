@@ -44,6 +44,13 @@ Library super_max
     Std,
     World
 
+Library ocaml_plugin_archive
+  Path:               bin
+  Install:            false
+  BuildDepends:       ocaml_plugin, type_conv, sexplib
+  Modules:            Script_plugin_dummy
+  CSources:           ocaml_archive.c
+
 Executable spells_and_roses
   Path:               bin/
   MainIs:             spells_and_roses.ml
@@ -52,6 +59,8 @@ Executable spells_and_roses
   BuildDepends:
     async,
     core,
+    ocaml_plugin,
+    ocaml_plugin_archive,
     sdl2,
     super_max,
     threads
