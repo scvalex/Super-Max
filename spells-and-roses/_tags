@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 9909e265b6a0be49126621edd6f7f66d)
+# DO NOT EDIT (digest: c90dc3d0de5b1642a4e955dc8028d71d)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -37,6 +37,7 @@
 # Library spells_and_roses_lib
 "lib/spells_and_roses_lib.cmxs": use_spells_and_roses_lib
 "lib/demo.cmx": for-pack(Spells_and_roses_lib)
+"lib/demo_entities.cmx": for-pack(Spells_and_roses_lib)
 "lib/tests.cmx": for-pack(Spells_and_roses_lib)
 "lib/world_editor.cmx": for-pack(Spells_and_roses_lib)
 <lib/*.ml{,i}>: package(async)

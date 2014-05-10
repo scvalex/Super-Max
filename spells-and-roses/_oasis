@@ -58,6 +58,7 @@ Library spells_and_roses_lib
     threads
   Modules:
     Demo,
+    Demo_entities,
     Tests,
     World_editor
 

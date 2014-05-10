@@ -5,14 +5,14 @@ module Zelda = struct
     type t = {
       x : float;
       y : float;
-      z : float;
+      z : int;
     } with sexp
   end
 end
 
 module type Zelda = sig
-  type engine
+  type world
   type t
 
-  val entities : t -> (engine Entity.t * Zelda.Position.t) Entity.Id.Map.t
+  val entities : t -> (world Entity.t * Zelda.Position.t) Entity.Id.Map.t
 end

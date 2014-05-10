@@ -2,23 +2,17 @@ open Core.Std
 
 module Id : Identifiable.S
 
-module On_disk : sig
-  type t
-
-  include Sexpable.S with type t := t
-end
-
 type 'w t
 
 val create :
-    id : ('a -> 'w -> Id.t)
+    id : Id.t
  -> to_drawing : ('a -> 'w -> Drawing.t)
  -> on_step : ('a -> 'w -> ('a * 'w))
  -> on_event : ('a -> 'w -> Sdlevent.t -> ('a * 'w))
  -> state : 'a
  -> 'w t
 
-val id : 'w t -> 'w -> Id.t
+val id : 'w t -> Id.t
 
 val to_drawing : 'w t -> 'w -> Drawing.t
 
