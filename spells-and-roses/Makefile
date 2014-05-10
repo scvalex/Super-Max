@@ -16,7 +16,7 @@ test: build
 	misc/check_all.sh
 
 push: test
-	git push --all --tags
+	git push --all
 
 doc: build
 	ocaml setup.ml -doc
