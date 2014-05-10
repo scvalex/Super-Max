@@ -1,6 +1,6 @@
 all: build
 
-.PHONY: build test doc clean p bench push
+.PHONY: build test doc clean p bench
 
 setup.ml: _oasis
 	oasis setup
@@ -14,9 +14,6 @@ build: setup.data
 test: build
 	ocaml setup.ml -test
 	misc/check_all.sh
-
-push: test
-	git push --all
 
 doc: build
 	ocaml setup.ml -doc
