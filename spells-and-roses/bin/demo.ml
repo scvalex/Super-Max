@@ -25,6 +25,11 @@ let on_step t =
   `Continue t
 ;;
 
-let on_event t _event =
-  `Continue t
+let on_event t ev =
+  match ev with
+  | Sdlevent.Quit _
+  | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
+    `Quit
+  | _ ->
+    `Continue t
 ;;
