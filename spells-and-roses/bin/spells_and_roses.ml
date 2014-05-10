@@ -43,9 +43,13 @@ let main () =
             ~summary:"Run a script"
             Flag.
               ( empty
+                +> flag "check-only" no_arg
+                  ~doc:" Check that a script is loadable without running it"
                 +> anon ("FILE" %: file) )
-            (fun file () ->
-               Script.run ~file))
+            (fun check_only file () ->
+               if check_only
+               then Script.check_load ~file
+               else Script.run ~file))
        ; ("edit",
           Command.group ~summary:"Editor"
             [ ("world",

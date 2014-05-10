@@ -9,10 +9,20 @@ module Script = Ocaml_compiler.Make(struct
   let univ_constr_repr = "Script_intf.univ_constr";;
 end)
 
-let run ~file =
+let load ~file =
   Script.load_ocaml_src_files [file]
   |! Deferred.Or_error.ok_exn
+;;
+
+let run ~file =
+  load ~file
   >>= fun script ->
   let module M = (val script : Script_intf.S) in
   M.run ()
+;;
+
+let check_load ~file =
+  load ~file
+  >>= fun _script ->
+  Deferred.unit
 ;;
