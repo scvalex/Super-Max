@@ -40,9 +40,10 @@ Library super_max
     Drawing,
     Entity,
     Game,
+    Game_intf,
     Mat,
     Std,
-    World
+    World_intf
 
 Library ocaml_plugin_archive
   Path:               bin

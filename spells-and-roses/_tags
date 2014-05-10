@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 7738afaff064c0cbe901fc38b1efa1c4)
+# DO NOT EDIT (digest: c423cb05dc7b2a8d26c9519419997f54)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -18,9 +18,10 @@
 "lib/drawing.cmx": for-pack(Super_max)
 "lib/entity.cmx": for-pack(Super_max)
 "lib/game.cmx": for-pack(Super_max)
+"lib/game_intf.cmx": for-pack(Super_max)
 "lib/mat.cmx": for-pack(Super_max)
 "lib/std.cmx": for-pack(Super_max)
-"lib/world.cmx": for-pack(Super_max)
+"lib/world_intf.cmx": for-pack(Super_max)
 <lib/*.ml{,i}>: package(async)
 <lib/*.ml{,i}>: package(comparelib)
 <lib/*.ml{,i}>: package(comparelib.syntax)

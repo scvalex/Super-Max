@@ -21,6 +21,7 @@ doc: build
 clean:
 	-ocaml setup.ml -clean
 	rm -f setup.ml setup.data lib/META
+	rm -f */*.mllib */*.mldylib */*.clib */*.mlpack
 
 p:
 	permamake.sh Makefile \

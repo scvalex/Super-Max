@@ -4,7 +4,7 @@ open Super_max.Std
 let simple_animation ~drawing_of_state ~data_dir =
   Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
       let initial_state = `Step 0 in
-      let on_event ~state ev =
+      let on_event state ev =
         match ev with
         | Sdlevent.Quit _
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
@@ -64,7 +64,7 @@ module Static_text = struct
             position_y   = 0.1;
           }
         in
-        let on_event ~state ev =
+        let on_event state ev =
           match ev with
           | Sdlevent.Quit _
           | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->

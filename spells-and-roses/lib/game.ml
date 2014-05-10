@@ -1,7 +1,7 @@
 open Core.Std
 open Async.Std
 
-type 'a resp = [`Continue of 'a | `Quit]
+include Game_intf
 
 let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
     ~drawing_of_state ~ctx =
@@ -12,7 +12,7 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
       `Continue (state, history)
     | Some ev ->
       let history = (step, ev) :: history in
-      match on_event ~state ev with
+      match on_event state ev with
       | `Quit ->
         `Quit history
       | `Continue state ->
@@ -92,4 +92,16 @@ let with_sdl ~f ~data_dir =
             Sdlimage.quit ();
             Sdlttf.quit ();
             Sdl.quit ()))
+;;
+
+let run game ~data_dir =
+  let module G = (val game : Game_intf.S) in
+  with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
+      main_loop
+        ~initial_state:(G.create ~width ~height)
+        ~on_event:G.on_event
+        ~on_step:G.on_step
+        ~steps_per_sec:G.steps_per_sec
+        ~drawing_of_state:G.drawing_of_state
+        ~ctx)
 ;;

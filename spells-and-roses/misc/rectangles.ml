@@ -5,7 +5,7 @@ let run () =
   let data_dir = "resources" in
   Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
       let initial_state = `Step 0 in
-      let on_event ~state ev =
+      let on_event state ev =
         match ev with
         | Sdlevent.Quit _
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->

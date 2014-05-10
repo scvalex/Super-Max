@@ -61,6 +61,12 @@ let main () =
                  (fun file () ->
                     World_editor.edit ~file))
             ])
+       ; ("demo",
+          Command.async_basic
+            ~summary:"Run demo"
+            Flag.(empty +> data_dir)
+            (fun data_dir () ->
+               Game.run (module Demo) ~data_dir))
        ])
 ;;
 
