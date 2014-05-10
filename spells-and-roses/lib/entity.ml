@@ -8,23 +8,23 @@ module On_disk = struct
   } with sexp
 end
 
-type t = {
-  id         : unit -> Id.t;
-  to_drawing : unit -> Drawing.t;
-  on_step    : unit -> t;
-  on_event   : Sdlevent.t -> t;
+type 'w t = {
+  id         : 'w -> Id.t;
+  to_drawing : 'w -> Drawing.t;
+  on_step    : 'w -> ('w t * 'w);
+  on_event   : 'w -> Sdlevent.t -> ('w t * 'w);
 }
 
 let rec create ~id ~to_drawing ~on_step ~on_event ~state =
-  let id' () = id state in
-  let to_drawing' () = to_drawing state in
-   let on_step' () =
-    let state = on_step state in
-    create ~id ~to_drawing ~on_step ~on_event ~state
+  let id' world = id state world in
+  let to_drawing' world = to_drawing state world in
+  let on_step' world =
+    let (state, world) = on_step state world in
+    (create ~id ~to_drawing ~on_step ~on_event ~state, world)
   in
-  let on_event' event =
-    let state = on_event state event in
-    create ~id ~to_drawing ~on_step ~on_event ~state
+  let on_event' world event =
+    let (state, world) = on_event state world event in
+    (create ~id ~to_drawing ~on_step ~on_event ~state, world)
   in
   {
     id         = id';
@@ -34,10 +34,10 @@ let rec create ~id ~to_drawing ~on_step ~on_event ~state =
   }
 ;;
 
-let id t = t.id ();;
+let id t world = t.id world;;
 
-let to_drawing t = t.to_drawing ();;
+let to_drawing t world = t.to_drawing world;;
 
-let on_step t = t.on_step ();;
+let on_step t world = t.on_step world;;
 
-let on_event t event = t.on_event event;;
+let on_event t world event = t.on_event world event;;

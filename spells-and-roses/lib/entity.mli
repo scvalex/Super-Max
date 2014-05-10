@@ -8,20 +8,20 @@ module On_disk : sig
   include Sexpable.S with type t := t
 end
 
-type t
+type 'w t
 
 val create :
-    id : ('a -> Id.t)
- -> to_drawing : ('a -> Drawing.t)
- -> on_step : ('a -> 'a)
- -> on_event : ('a -> Sdlevent.t -> 'a)
+    id : ('a -> 'w -> Id.t)
+ -> to_drawing : ('a -> 'w -> Drawing.t)
+ -> on_step : ('a -> 'w -> ('a * 'w))
+ -> on_event : ('a -> 'w -> Sdlevent.t -> ('a * 'w))
  -> state : 'a
- -> t
+ -> 'w t
 
-val id : t -> Id.t
+val id : 'w t -> 'w -> Id.t
 
-val to_drawing : t -> Drawing.t
+val to_drawing : 'w t -> 'w -> Drawing.t
 
-val on_step : t -> t
+val on_step : 'w t -> 'w -> ('w t * 'w)
 
-val on_event : t -> Sdlevent.t -> t
+val on_event : 'w t -> 'w -> Sdlevent.t -> ('w t * 'w)

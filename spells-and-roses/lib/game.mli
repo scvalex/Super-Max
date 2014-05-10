@@ -1,4 +1,3 @@
-open Core.Std
 open Async.Std
 
 type 'a resp = [`Continue of 'a | `Quit]
@@ -14,7 +13,7 @@ val main_loop :
 
 val with_sdl :
      f : (   ctx : Drawing.Context.t
-          -> width : Int.t
+          -> width : int
           -> height : int
           -> unit Deferred.t )
   -> data_dir : string
