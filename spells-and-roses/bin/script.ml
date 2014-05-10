@@ -14,11 +14,11 @@ let load ~file =
   |! Deferred.Or_error.ok_exn
 ;;
 
-let run ~file =
+let run ~file ~args =
   load ~file
   >>= fun script ->
   let module M = (val script : Script_intf.S) in
-  M.run ()
+  M.run ~args
 ;;
 
 let check_load ~file =

@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: e9d0338cb22a4d106318900c89762cd1) *)
+(* DO NOT EDIT (digest: 77c5d2b6a50bbfb2052dcf004a5fc1a0) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -596,16 +596,21 @@ open Ocamlbuild_plugin;;
 let package_default =
   {
      MyOCamlbuildBase.lib_ocaml =
-       [("super_max", ["lib"], []); ("ocaml_plugin_archive", ["bin"], [])];
-     lib_c = [("ocaml_plugin_archive", "bin", [])];
+       [
+          ("super_max", ["super_max"], []);
+          ("spells_and_roses_lib", ["lib"], []);
+          ("ocaml_plugin_archive", ["plugin"], [])
+       ];
+     lib_c = [("ocaml_plugin_archive", "plugin", [])];
      flags = [];
-     includes = [("bin", ["lib"])]
+     includes =
+       [("lib", ["super_max"]); ("bin", ["lib"; "plugin"; "super_max"])]
   }
   ;;
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 
-# 609 "myocamlbuild.ml"
+# 614 "myocamlbuild.ml"
 (* OASIS_STOP *)
 
 let dispatch = function
@@ -615,11 +620,12 @@ let dispatch = function
     let env = BaseEnvLight.load () in
     let stdlib = BaseEnvLight.var_get "standard_library" env in
     rule "ocaml_plugin standalone archive"
-      ~deps:["bin/script_intf.cmi";
-             "myocamlbuild.ml";
-             "lib/super_max.cmi";
+      ~deps:[ "super_max/super_max.cmi"
+            ; "myocamlbuild.ml"
+            ; "lib/spells_and_roses_lib.cmi"
+            ; "bin/script_intf.cmi"
             ]
-      ~prod:"bin/ocaml_archive.c"
+      ~prod:"plugin/ocaml_archive.c"
       (fun _ _ ->
          let loc pkg = (Findlib.query pkg).Findlib.location in
          Cmd (S [P "ocaml-embed-compiler";
@@ -637,9 +643,10 @@ let dispatch = function
                  A (loc "sexplib" / "sexplib.cmi");
                  A (loc "sdl2" / "sdlevent.cmi");
                  A (loc "sdl2" / "sdlkeycode.cmi");
+                 A "super_max/super_max.cmi";
                  A "bin/script_intf.cmi";
-                 A "lib/super_max.cmi";
-                 A "-o"; A "bin/ocaml_archive.c"]))
+                 A "lib/spells_and_roses_lib.cmi";
+                 A "-o"; A "plugin/ocaml_archive.c"]))
   | _ ->
     ()
 ;;

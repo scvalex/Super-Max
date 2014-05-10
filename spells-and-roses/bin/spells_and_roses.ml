@@ -1,6 +1,7 @@
 open Core.Std
 open Async.Std
 open Super_max.Std
+open Spells_and_roses_lib
 
 module Flag = struct
   include Command.Spec
@@ -46,11 +47,12 @@ let main () =
               ( empty
                 +> flag "check-only" no_arg
                   ~doc:" Check that a script is loadable without running it"
-                +> anon ("FILE" %: file) )
-            (fun check_only file () ->
+                +> anon ("FILE" %: file)
+                +> anon (sequence ("ARG" %: string)))
+            (fun check_only file args () ->
                if check_only
                then Script.check_load ~file
-               else Script.run ~file))
+               else Script.run ~file ~args))
        ; ("edit",
           Command.group ~summary:"Editor"
             [ ("world",

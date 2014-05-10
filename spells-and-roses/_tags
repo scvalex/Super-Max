@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: c423cb05dc7b2a8d26c9519419997f54)
+# DO NOT EDIT (digest: 9909e265b6a0be49126621edd6f7f66d)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -14,32 +14,56 @@
 "_darcs": -traverse
 "_darcs": not_hygienic
 # Library super_max
-"lib/super_max.cmxs": use_super_max
-"lib/drawing.cmx": for-pack(Super_max)
-"lib/entity.cmx": for-pack(Super_max)
-"lib/game.cmx": for-pack(Super_max)
-"lib/game_intf.cmx": for-pack(Super_max)
-"lib/mat.cmx": for-pack(Super_max)
-"lib/std.cmx": for-pack(Super_max)
-"lib/world_intf.cmx": for-pack(Super_max)
+"super_max/super_max.cmxs": use_super_max
+"super_max/drawing.cmx": for-pack(Super_max)
+"super_max/entity.cmx": for-pack(Super_max)
+"super_max/game.cmx": for-pack(Super_max)
+"super_max/game_intf.cmx": for-pack(Super_max)
+"super_max/mat.cmx": for-pack(Super_max)
+"super_max/std.cmx": for-pack(Super_max)
+"super_max/world_intf.cmx": for-pack(Super_max)
+<super_max/*.ml{,i}>: package(async)
+<super_max/*.ml{,i}>: package(comparelib)
+<super_max/*.ml{,i}>: package(comparelib.syntax)
+<super_max/*.ml{,i}>: package(core)
+<super_max/*.ml{,i}>: package(fieldslib)
+<super_max/*.ml{,i}>: package(fieldslib.syntax)
+<super_max/*.ml{,i}>: package(sdl2)
+<super_max/*.ml{,i}>: package(sdl2_img)
+<super_max/*.ml{,i}>: package(sdl2_ttf)
+<super_max/*.ml{,i}>: package(sexplib)
+<super_max/*.ml{,i}>: package(sexplib.syntax)
+<super_max/*.ml{,i}>: package(threads)
+# Library spells_and_roses_lib
+"lib/spells_and_roses_lib.cmxs": use_spells_and_roses_lib
+"lib/demo.cmx": for-pack(Spells_and_roses_lib)
+"lib/tests.cmx": for-pack(Spells_and_roses_lib)
+"lib/world_editor.cmx": for-pack(Spells_and_roses_lib)
 <lib/*.ml{,i}>: package(async)
 <lib/*.ml{,i}>: package(comparelib)
 <lib/*.ml{,i}>: package(comparelib.syntax)
 <lib/*.ml{,i}>: package(core)
 <lib/*.ml{,i}>: package(fieldslib)
 <lib/*.ml{,i}>: package(fieldslib.syntax)
+<lib/*.ml{,i}>: package(ocaml_plugin)
 <lib/*.ml{,i}>: package(sdl2)
 <lib/*.ml{,i}>: package(sdl2_img)
 <lib/*.ml{,i}>: package(sdl2_ttf)
 <lib/*.ml{,i}>: package(sexplib)
 <lib/*.ml{,i}>: package(sexplib.syntax)
 <lib/*.ml{,i}>: package(threads)
+<lib/*.ml{,i}>: use_super_max
 # Library ocaml_plugin_archive
-"bin/ocaml_plugin_archive.cmxs": use_ocaml_plugin_archive
-<bin/ocaml_plugin_archive.{cma,cmxa}>: use_libocaml_plugin_archive_stubs
-"bin/ocaml_archive.c": package(ocaml_plugin)
-"bin/ocaml_archive.c": package(sexplib)
-"bin/ocaml_archive.c": package(type_conv)
+"plugin/ocaml_plugin_archive.cmxs": use_ocaml_plugin_archive
+<plugin/ocaml_plugin_archive.{cma,cmxa}>: use_libocaml_plugin_archive_stubs
+<plugin/*.ml{,i}>: package(ocaml_plugin)
+<plugin/*.ml{,i}>: package(sexplib)
+<plugin/*.ml{,i}>: package(threads)
+<plugin/*.ml{,i}>: package(type_conv)
+"plugin/ocaml_archive.c": package(ocaml_plugin)
+"plugin/ocaml_archive.c": package(sexplib)
+"plugin/ocaml_archive.c": package(threads)
+"plugin/ocaml_archive.c": package(type_conv)
 # Executable spells_and_roses
 <bin/spells_and_roses.{native,byte}>: package(async)
 <bin/spells_and_roses.{native,byte}>: package(comparelib)
@@ -56,6 +80,7 @@
 <bin/spells_and_roses.{native,byte}>: package(threads)
 <bin/spells_and_roses.{native,byte}>: package(type_conv)
 <bin/spells_and_roses.{native,byte}>: use_ocaml_plugin_archive
+<bin/spells_and_roses.{native,byte}>: use_spells_and_roses_lib
 <bin/spells_and_roses.{native,byte}>: use_super_max
 <bin/*.ml{,i}>: package(async)
 <bin/*.ml{,i}>: package(comparelib)
@@ -72,6 +97,7 @@
 <bin/*.ml{,i}>: package(threads)
 <bin/*.ml{,i}>: package(type_conv)
 <bin/*.ml{,i}>: use_ocaml_plugin_archive
+<bin/*.ml{,i}>: use_spells_and_roses_lib
 <bin/*.ml{,i}>: use_super_max
 # OASIS_STOP
-<{bin,lib,test}/*.ml{,i}>: syntax_camlp4o
+<{bin,super_max,plugin,lib,test}/*.ml{,i}>: syntax_camlp4o

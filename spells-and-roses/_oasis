@@ -20,7 +20,7 @@ SourceRepository head
   Location:           https://github.com/scvalex/super-max.git
 
 Library super_max
-  Path:               lib
+  Path:               super_max
   FindlibName:        super_max
   Pack:               true
   BuildDepends:
@@ -45,12 +45,32 @@ Library super_max
     Std,
     World_intf
 
+Library spells_and_roses_lib
+  Path:               lib
+  FindlibName:        spells_and_roses_lib
+  Pack:               true
+  BuildDepends:
+    async,
+    core,
+    ocaml_plugin,
+    sdl2,
+    super_max,
+    threads
+  Modules:
+    Demo,
+    Tests,
+    World_editor
+
 Library ocaml_plugin_archive
-  Path:               bin
+  Path:               plugin
   Install:            false
-  BuildDepends:       ocaml_plugin, type_conv, sexplib
   Modules:            Script_plugin_dummy
   CSources:           ocaml_archive.c
+  BuildDepends:
+    ocaml_plugin,
+    sexplib,
+    threads,
+    type_conv
 
 Executable spells_and_roses
   Path:               bin/
@@ -60,8 +80,7 @@ Executable spells_and_roses
   BuildDepends:
     async,
     core,
-    ocaml_plugin,
     ocaml_plugin_archive,
-    sdl2,
+    spells_and_roses_lib,
     super_max,
     threads
