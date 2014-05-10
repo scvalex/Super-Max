@@ -635,6 +635,8 @@ let dispatch = function
                  A (loc "async" / "async.cmi");
                  A (loc "fieldslib" / "fieldslib.cmi");
                  A (loc "sexplib" / "sexplib.cmi");
+                 A (loc "sdl2" / "sdlevent.cmi");
+                 A (loc "sdl2" / "sdlkeycode.cmi");
                  A "bin/script_intf.cmi";
                  A "lib/super_max.cmi";
                  A "-o"; A "bin/ocaml_archive.c"]))
