@@ -1,5 +1,6 @@
 open Core.Std
 open Async.Std
+open Super_max.Std
 
 module Flag = struct
   include Command.Spec
