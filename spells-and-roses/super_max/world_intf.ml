@@ -14,12 +14,9 @@ module type S = sig
   type entity_common
   type t
 
-  val create :
-       width : int
-    -> height : int
-    -> t
-
-  val entities : t -> ((entity_common, world) Entity.t * Position.t) Entity.Id.Map.t
+  module World_editor_private : sig
+    val entities : ((entity_common, world) Entity.t * Position.t) Entity.Id.Map.t
+  end
 
   val layers : int list
 end

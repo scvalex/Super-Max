@@ -101,19 +101,26 @@ let on_step t =
   `Continue t
 ;;
 
+let drawing_of_state _t ~world_drawing =
+  let open Drawing in
+  many
+    [ world_drawing
+    ]
+;;
+
 let edit ~file ~data_dir =
   load ~file
   >>= fun world ->
   let module W = (val world : World.S) in
-  Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
+  Game.with_sdl ~data_dir ~f:(fun ~ctx ~width:_ ~height:_ ->
       (* CR scvalex: This shouldn't be W.create; it should be some
          static, auto-generated submodule. *)
-      let world_state = W.create ~width ~height in
       let initial_state = create () in
       let steps_per_sec = 60.0 in
       let drawing_of_state t =
-        World.to_drawing (W.entities world_state) ~layers:W.layers
-          ~camera:(`X t.camera_x, `Y t.camera_y)
+        drawing_of_state t
+          ~world_drawing:(World.to_drawing W.World_editor_private.entities ~layers:W.layers
+                            ~camera:(`X t.camera_x, `Y t.camera_y))
       in
       Game.main_loop ~initial_state ~on_event ~on_step
         ~steps_per_sec ~drawing_of_state ~ctx)

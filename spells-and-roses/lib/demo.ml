@@ -16,9 +16,9 @@ type t = {
   entities : ((entity_common, world) Entity.t * Pos.t) Entity.Id.Map.t;
 } with fields
 
-let steps_per_sec = 60.0;;
-
-let layers = [0; 1; 2; 3];;
+let add_entitiy entities entity ~pos =
+  Map.add entities ~key:(Entity.id entity) ~data:(entity, pos)
+;;
 
 let pos ~x ~y ~z =
   let z =
@@ -31,20 +31,27 @@ let pos ~x ~y ~z =
   { Pos. x; y; z; }
 ;;
 
-let add_entitiy entities entity ~pos =
-  Map.add entities ~key:(Entity.id entity) ~data:(entity, pos)
-;;
+module World_editor_private = struct
+  let entities =
+    let acc = Entity.Id.Map.empty in
+    let acc =
+      let grass = Demo_entities.Grass.create () in
+      add_entitiy acc grass ~pos:(pos ~x:0.0 ~y:0.0 ~z:`Background)
+    in
+    let acc =
+      let cliff = Demo_entities.Cliff_s.create () in
+      add_entitiy acc cliff ~pos:(pos ~x:0.0 ~y:40.0 ~z:`Background)
+    in
+    acc
+  ;;
+end
+
+let steps_per_sec = 60.0;;
+
+let layers = [0; 1; 2; 3];;
 
 let create ~width ~height =
-  let entities = Entity.Id.Map.empty in
-  let entities =
-    let grass = Demo_entities.Grass.create () in
-    add_entitiy entities grass ~pos:(pos ~x:0.0 ~y:0.0 ~z:`Background)
-  in
-  let entities =
-    let cliff = Demo_entities.Cliff_s.create () in
-    add_entitiy entities cliff ~pos:(pos ~x:0.0 ~y:40.0 ~z:`Background)
-  in
+  let entities = World_editor_private.entities in
   let camera_x = 0.0 in
   let camera_y = 0.0 in
   let world = D.create_world () in
