@@ -56,26 +56,8 @@ let create ~width ~height =
 (* CR scvalex: Use Core.Sequence instead of allocating intermediate
    lists. *)
 let drawing_of_state t =
-  let open Drawing in
-  let camera_translate ~pos drawing =
-    translate ~x:(pos.P.x -. t.camera_x) ~y:(pos.P.y -. t.camera_y)
-      drawing
-  in
-  let entities = Map.data t.entities in
-  let draw_layer current_layer =
-    (* CR scvalex: The in-layer drawing order is
-       left-right-top-down. *)
-    many
-      (List.filter_map entities ~f:(fun (entity, pos) ->
-           if Int.(pos.P.z = current_layer)
-           then begin
-             Some (camera_translate ~pos
-                     (Entity.to_drawing entity t.world))
-           end else begin
-             None
-           end))
-  in
-  many (List.map layers ~f:draw_layer)
+  to_drawing t.entities ~world:t.world ~layers
+    ~camera:(`X t.camera_x, `Y t.camera_y)
 ;;
 
 let on_step t =
