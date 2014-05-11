@@ -2,33 +2,26 @@ open Core.Std
 
 module Id = String_id
 
-type 'w t = {
+type ('a, 'w) t = {
   id         : Id.t;
-  to_drawing : 'w -> Drawing.t;
-  on_step    : 'w -> ('w t * 'w);
-  on_event   : 'w -> Sdlevent.t -> ('w t * 'w);
+  to_drawing : 'a -> 'w -> Drawing.t;
+  on_step    : 'a -> 'w -> ('a * 'w);
+  on_event   : 'a -> 'w -> Sdlevent.t -> ('a * 'w);
+  state      : 'a;
 } with fields
 
-let rec create ~id ~to_drawing ~on_step ~on_event ~state =
-  let to_drawing' world = to_drawing state world in
-  let on_step' world =
-    let (state, world) = on_step state world in
-    (create ~id ~to_drawing ~on_step ~on_event ~state, world)
-  in
-  let on_event' world event =
-    let (state, world) = on_event state world event in
-    (create ~id ~to_drawing ~on_step ~on_event ~state, world)
-  in
-  {
-    id;
-    to_drawing = to_drawing';
-    on_step    = on_step';
-    on_event   = on_event';
-  }
+let create = Fields.create;;
+
+let to_drawing t world =
+  t.to_drawing t.state world
 ;;
 
-let to_drawing t world = t.to_drawing world;;
+let on_step t world =
+  let (state, world) = t.on_step t.state world in
+  ({ t with state; }, world)
+;;
 
-let on_step t world = t.on_step world;;
-
-let on_event t world event = t.on_event world event;;
+let on_event t world event =
+  let (state, world) = t.on_event t.state world event in
+  ({ t with state; }, world)
+;;

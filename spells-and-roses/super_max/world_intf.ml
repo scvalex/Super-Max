@@ -12,7 +12,8 @@ end
 
 module type Zelda = sig
   type world
+  type entity_state
   type t
 
-  val entities : t -> (world Entity.t * Zelda.Position.t) Entity.Id.Map.t
+  val entities : t -> ((entity_state, world) Entity.t * Zelda.Position.t) Entity.Id.Map.t
 end

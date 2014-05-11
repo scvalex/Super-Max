@@ -3,6 +3,10 @@ open Super_max.Std
 
 type world = unit
 
+type state = {
+  obstacle : bool;
+} with fields
+
 let sprite_width = 40;;
 let sprite_height = 40;;
 
@@ -13,6 +17,7 @@ module Make_static(E : sig
               val sprite_sheet : string
               val src_x : int
               val src_y : int
+              val obstacle : bool
            end) = struct
   let drawing =
     Drawing.image E.sprite_sheet
@@ -22,18 +27,18 @@ module Make_static(E : sig
              `Height sprite_height)
   ;;
 
-  let to_drawing () _ = drawing;;
+  let to_drawing _state _ = drawing;;
 
-  let on_step () world = ((), world);;
+  let on_step state world = (state, world);;
 
-  let on_event () world _ev = ((), world);;
+  let on_event state world _ev = (state, world);;
 
   let create () =
     let id =
       Entity.Id.of_string (sprintf "static-%s-%d" E.name !static_entities_counter)
     in
     incr static_entities_counter;
-    let state = () in
+    let state = { obstacle = E.obstacle; } in
     Entity.create ~id ~to_drawing ~on_step ~on_event ~state
   ;;
 end
@@ -43,6 +48,7 @@ module Grass = Make_static(struct
   let sprite_sheet = "demo_sheet.png";;
   let src_x = 0 * sprite_width;;
   let src_y = 1 * sprite_height;;
+  let obstacle = false;;
 end)
 
 module Cliff_s = Make_static(struct
@@ -50,8 +56,13 @@ module Cliff_s = Make_static(struct
   let sprite_sheet = "demo_sheet.png";;
   let src_x = 1 * sprite_width;;
   let src_y = 1 * sprite_height;;
+  let obstacle = true;;
 end)
 
 let create_world () =
   ()
+;;
+
+let is_obstacle entity =
+  (Entity.state entity).obstacle
 ;;
