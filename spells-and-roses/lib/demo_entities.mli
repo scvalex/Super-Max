@@ -7,3 +7,7 @@ val create_world : unit -> world
 module Grass : sig
   val create : unit -> world Entity.t
 end
+
+module Cliff_s : sig
+  val create : unit -> world Entity.t
+end

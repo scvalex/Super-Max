@@ -41,8 +41,15 @@ end
 module Grass = Make_static(struct
   let name = "grass";;
   let sprite_sheet = "demo_sheet.png";;
-  let src_x = 0;;
-  let src_y = 40;;
+  let src_x = 0 * sprite_width;;
+  let src_y = 1 * sprite_height;;
+end)
+
+module Cliff_s = Make_static(struct
+  let name = "cliff_s";;
+  let sprite_sheet = "demo_sheet.png";;
+  let src_x = 1 * sprite_width;;
+  let src_y = 1 * sprite_height;;
 end)
 
 let create_world () =

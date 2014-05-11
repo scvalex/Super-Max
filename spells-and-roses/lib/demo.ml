@@ -39,7 +39,11 @@ let create ~width ~height =
   let entities = Entity.Id.Map.empty in
   let entities =
     let grass = Demo_entities.Grass.create () in
-    add_entitiy entities grass ~pos:(pos ~x:0.0 ~y:0.0 ~z:`Scene)
+    add_entitiy entities grass ~pos:(pos ~x:0.0 ~y:0.0 ~z:`Background)
+  in
+  let entities =
+    let cliff = Demo_entities.Cliff_s.create () in
+    add_entitiy entities cliff ~pos:(pos ~x:40.0 ~y:40.0 ~z:`Background)
   in
   let camera_x = 0.0 in
   let camera_y = 0.0 in
