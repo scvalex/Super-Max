@@ -56,7 +56,7 @@ let create ~width ~height =
 (* CR scvalex: Use Core.Sequence instead of allocating intermediate
    lists. *)
 let drawing_of_state t =
-  to_drawing t.entities ~world:t.world ~layers
+  to_drawing t.entities ~layers
     ~camera:(`X t.camera_x, `Y t.camera_y)
 ;;
 

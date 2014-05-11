@@ -11,7 +11,7 @@ module Zelda = struct
 
   (* CR scvalex: Use Core.Sequence instead of allocating intermediate
      lists. *)
-  let to_drawing entities ~layers ~camera:(`X camera_x, `Y camera_y) ~world =
+  let to_drawing entities ~layers ~camera:(`X camera_x, `Y camera_y) =
     let open Drawing in
     let camera_translate ~pos drawing =
       translate drawing
@@ -26,7 +26,7 @@ module Zelda = struct
              if Int.(pos.Position.z = current_layer)
              then begin
                Some (camera_translate ~pos
-                       (Entity.to_drawing entity world))
+                       (Entity.to_drawing entity))
              end else begin
                None
              end))

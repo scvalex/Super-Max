@@ -27,7 +27,7 @@ module Make_static(E : sig
              `Height sprite_height)
   ;;
 
-  let to_drawing _state _ = drawing;;
+  let to_drawing _state = drawing;;
 
   let on_step state world = (state, world);;
 

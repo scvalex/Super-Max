@@ -6,7 +6,7 @@ type ('c, 'w) t
 
 val create :
     id : Id.t
- -> to_drawing : ('a -> 'w -> Drawing.t)
+ -> to_drawing : ('a -> Drawing.t)
  -> on_step : ('a -> 'w -> ('a * 'w))
  -> on_event : ('a -> 'w -> Sdlevent.t -> ('a * 'w))
  -> state : 'a
@@ -15,7 +15,7 @@ val create :
 
 val id : (_, 'w) t -> Id.t
 
-val to_drawing : (_, 'w) t -> 'w -> Drawing.t
+val to_drawing : (_, 'w) t -> Drawing.t
 
 val on_step : ('a, 'w) t -> 'w -> (('a, 'w) t * 'w)
 
