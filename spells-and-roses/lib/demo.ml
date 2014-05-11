@@ -45,7 +45,7 @@ let create ~width ~height =
   in
   let entities =
     let cliff = Demo_entities.Cliff_s.create () in
-    add_entitiy entities cliff ~pos:(pos ~x:40.0 ~y:40.0 ~z:`Background)
+    add_entitiy entities cliff ~pos:(pos ~x:0.0 ~y:40.0 ~z:`Background)
   in
   let camera_x = 0.0 in
   let camera_y = 0.0 in
