@@ -58,9 +58,10 @@ let main () =
                  ~summary:"Edit a world"
                  Flag.
                    ( empty
-                     +> anon ("FILE" %: file) )
-                 (fun file () ->
-                    World_editor.edit ~file))
+                     +> anon ("FILE" %: file)
+                     +> data_dir )
+                 (fun file data_dir () ->
+                    World_editor.edit ~file ~data_dir))
             ])
        ; ("demo",
           Command.async_basic

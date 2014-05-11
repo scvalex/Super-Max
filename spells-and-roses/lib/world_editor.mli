@@ -1,6 +1,6 @@
-open Core.Std
 open Async.Std
 
 val edit :
-     file : String.t
+     file : string
+  -> data_dir : string
   -> unit Deferred.t
