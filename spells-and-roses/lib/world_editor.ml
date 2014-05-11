@@ -41,48 +41,62 @@ let create () =
   { camera_x; camera_y; panning_x; panning_y; events; }
 ;;
 
-let on_event t ev =
+let generic_handle_key_event t ~key ~event ev =
   match ev with
-  | Sdlevent.Quit _
-  | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-    `Quit
-  | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Down; _} ->
-    `Continue {t with events = Set.add t.events `Down; }
-  | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Down; _} ->
-    `Continue {t with events = Set.remove t.events `Down; }
-  | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Up; _} ->
-    `Continue {t with events = Set.add t.events `Up; }
-  | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Up; _} ->
-    `Continue {t with events = Set.remove t.events `Up; }
-  | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Left; _} ->
-    `Continue {t with events = Set.add t.events `Left; }
-  | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Left; _} ->
-    `Continue {t with events = Set.remove t.events `Left; }
-  | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Right; _} ->
-    `Continue {t with events = Set.add t.events `Right; }
-  | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Right; _} ->
-    `Continue {t with events = Set.remove t.events `Right; }
+  | Sdlevent.KeyDown {Sdlevent. keycode; _} when key = keycode ->
+    Some {t with events = Set.add t.events event; }
+  | Sdlevent.KeyUp {Sdlevent. keycode; _} when key = keycode ->
+    Some {t with events = Set.remove t.events event; }
   | _ ->
+    None
+;;
+
+let on_event t ev =
+  let keys_events =
+    [ (Sdlkeycode.Down, `Down)
+    ; (Sdlkeycode.Up, `Up)
+    ; (Sdlkeycode.Left, `Left)
+    ; (Sdlkeycode.Right, `Right)
+    ]
+  in
+  let handled_t =
+    List.fold_left keys_events ~init:None ~f:(fun acc_t (key, event) ->
+        match acc_t with
+        | Some t -> Some t
+        | None   -> generic_handle_key_event t ~key ~event ev)
+  in
+  match handled_t with
+  | Some t ->
     `Continue t
+  | None ->
+    match ev with
+    | Sdlevent.Quit _
+    | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
+      `Quit
+    | _ ->
+      `Continue t
 ;;
 
 let on_step t =
-  let panning_x =
-    t.panning_x
-    +. match (Set.mem t.events `Left, Set.mem t.events `Right) with
-    | (true, false) -> 0.0 -. 0.5
-    | (false, true) -> 0.5
-    | _             -> 0.0 -. t.panning_x /. 8.0
+  let handle_pan ~camera ~panning ~down ~up =
+    let panning =
+      panning
+      +. match (Set.mem t.events down, Set.mem t.events up) with
+      | (true, false) -> 0.0 -. 0.5
+      | (false, true) -> 0.5
+      | _             -> 0.0 -. panning /. 8.0
+    in
+    let camera = camera +. panning in
+    (`Panning panning, `Camera camera)
   in
-  let camera_x = t.camera_x +. panning_x in
-  let panning_y =
-    t.panning_y
-    +. match (Set.mem t.events `Up, Set.mem t.events `Down) with
-    | (true, false) -> 0.0 -. 0.5
-    | (false, true) -> 0.5
-    | _             -> 0.0 -. t.panning_y /. 8.0
+  let (`Panning panning_x, `Camera camera_x) =
+    handle_pan ~camera:t.camera_x ~panning:t.panning_x
+      ~down:`Left ~up:`Right
   in
-  let camera_y = t.camera_y +. panning_y in
+  let (`Panning panning_y, `Camera camera_y) =
+    handle_pan ~camera:t.camera_y ~panning:t.panning_y
+      ~down:`Up ~up:`Down
+  in
   let t = { t with panning_x; camera_x; panning_y; camera_y; } in
   `Continue t
 ;;
