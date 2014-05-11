@@ -1,7 +1,5 @@
 open Core.Std
 open Async.Std
-open Super_max.Std
-open Spells_and_roses_lib
 
 module Flag = struct
   include Command.Spec

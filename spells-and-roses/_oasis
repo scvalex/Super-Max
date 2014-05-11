@@ -22,7 +22,7 @@ SourceRepository head
 Library super_max
   Path:               super_max
   FindlibName:        super_max
-  Pack:               true
+  Pack:               false
   BuildDepends:
     async,
     comparelib,
@@ -30,6 +30,7 @@ Library super_max
     core,
     fieldslib,
     fieldslib.syntax,
+    ocaml_plugin,
     sdl2,
     sdl2_img,
     sdl2_ttf,
@@ -42,13 +43,12 @@ Library super_max
     Game,
     Game_intf,
     Mat,
-    Std,
     World_intf
 
 Library spells_and_roses_lib
   Path:               lib
   FindlibName:        spells_and_roses_lib
-  Pack:               true
+  Pack:               false
   BuildDepends:
     async,
     core,

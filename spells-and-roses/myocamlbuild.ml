@@ -620,9 +620,15 @@ let dispatch = function
     let env = BaseEnvLight.load () in
     let stdlib = BaseEnvLight.var_get "standard_library" env in
     rule "ocaml_plugin standalone archive"
-      ~deps:[ "super_max/super_max.cmi"
-            ; "myocamlbuild.ml"
-            ; "lib/spells_and_roses_lib.cmi"
+      ~deps:[ "myocamlbuild.ml"
+            ; "super_max/drawing.cmi"
+            ; "super_max/entity.cmi"
+            ; "super_max/game.cmi"
+            ; "super_max/game_intf.cmi"
+            ; "super_max/mat.cmi"
+            ; "super_max/world_intf.cmi"
+            ; "lib/demo_entities.cmi"
+            ; "lib/tests.cmi"
             ; "bin/script_intf.cmi"
             ]
       ~prod:"plugin/ocaml_archive.c"
@@ -643,9 +649,15 @@ let dispatch = function
                  A (loc "sexplib" / "sexplib.cmi");
                  A (loc "sdl2" / "sdlevent.cmi");
                  A (loc "sdl2" / "sdlkeycode.cmi");
-                 A "super_max/super_max.cmi";
+                 A "super_max/drawing.cmi";
+                 A "super_max/entity.cmi";
+                 A "super_max/game.cmi";
+                 A "super_max/game_intf.cmi";
+                 A "super_max/mat.cmi";
+                 A "super_max/world_intf.cmi";
+                 A "lib/demo_entities.cmi";
+                 A "lib/tests.cmi";
                  A "bin/script_intf.cmi";
-                 A "lib/spells_and_roses_lib.cmi";
                  A "-o"; A "plugin/ocaml_archive.c"]))
   | _ ->
     ()

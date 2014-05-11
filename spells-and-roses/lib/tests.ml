@@ -1,5 +1,4 @@
 open Core.Std
-open Super_max.Std
 
 let simple_animation ~drawing_of_state ~data_dir =
   Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->

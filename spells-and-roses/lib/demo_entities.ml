@@ -1,5 +1,4 @@
 open Core.Std
-open Super_max.Std
 
 type world = unit
 

@@ -1,5 +1,3 @@
-open Super_max.Std
-
 type world
 
 type common

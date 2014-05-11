@@ -1,6 +1,5 @@
 open Core.Std let _ = _squelch_unused_module_warning_
-open Super_max.Std
-open World_intf.Zelda
+open World_intf
 
 module D = Demo_entities
 module P = Position
