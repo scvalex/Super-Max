@@ -3,7 +3,7 @@ open Super_max.Std
 
 type world = unit
 
-type state = {
+type common = {
   obstacle : bool;
 } with fields
 
@@ -39,7 +39,7 @@ module Make_static(E : sig
     in
     incr static_entities_counter;
     let state = { obstacle = E.obstacle; } in
-    Entity.create ~id ~to_drawing ~on_step ~on_event ~state
+    Entity.create ~id ~to_drawing ~on_step ~on_event ~state ~common:Fn.id
   ;;
 end
 
@@ -64,5 +64,5 @@ let create_world () =
 ;;
 
 let is_obstacle entity =
-  (Entity.state entity).obstacle
+  (Entity.common entity).obstacle
 ;;

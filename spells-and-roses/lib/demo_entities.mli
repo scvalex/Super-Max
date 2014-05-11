@@ -2,16 +2,16 @@ open Super_max.Std
 
 type world
 
-type state
+type common
 
 val create_world : unit -> world
 
 module Grass : sig
-  val create : unit -> (state, world) Entity.t
+  val create : unit -> (common, world) Entity.t
 end
 
 module Cliff_s : sig
-  val create : unit -> (state, world) Entity.t
+  val create : unit -> (common, world) Entity.t
 end
 
-val is_obstacle : (state, world) Entity.t -> bool
+val is_obstacle : (common, world) Entity.t -> bool

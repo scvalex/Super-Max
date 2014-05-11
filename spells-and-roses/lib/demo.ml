@@ -7,7 +7,7 @@ module P = Position
 
 type world = Demo_entities.world
 
-type entity_state = Demo_entities.state
+type entity_common = Demo_entities.common
 
 type t = {
   width    : int;
@@ -15,7 +15,7 @@ type t = {
   camera_x : float;
   camera_y : float;
   world    : world;
-  entities : ((entity_state, world) Entity.t * Position.t) Entity.Id.Map.t;
+  entities : ((entity_common, world) Entity.t * Position.t) Entity.Id.Map.t;
 } with fields
 
 let steps_per_sec = 60.0;;
