@@ -1,8 +1,7 @@
 open Core.Std let _ = _squelch_unused_module_warning_
-open World_intf
 
 module D = Demo_entities
-module P = Position
+module Pos = World.Position
 
 type world = Demo_entities.world
 
@@ -14,7 +13,7 @@ type t = {
   camera_x : float;
   camera_y : float;
   world    : world;
-  entities : ((entity_common, world) Entity.t * Position.t) Entity.Id.Map.t;
+  entities : ((entity_common, world) Entity.t * Pos.t) Entity.Id.Map.t;
 } with fields
 
 let steps_per_sec = 60.0;;
@@ -29,7 +28,7 @@ let pos ~x ~y ~z =
     | `Scene      -> 2
     | `Foreground -> 3
   in
-  { Position. x; y; z; }
+  { Pos. x; y; z; }
 ;;
 
 let add_entitiy entities entity ~pos =
@@ -55,7 +54,7 @@ let create ~width ~height =
 (* CR scvalex: Use Core.Sequence instead of allocating intermediate
    lists. *)
 let drawing_of_state t =
-  to_drawing t.entities ~layers
+  World.to_drawing t.entities ~layers
     ~camera:(`X t.camera_x, `Y t.camera_y)
 ;;
 

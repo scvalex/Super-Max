@@ -3,10 +3,10 @@ open Async.Std
 open Ocaml_plugin.Std
 
 module World_plugin = Ocaml_compiler.Make(struct
-  type t = (module World_intf.S)
-  let t_repr = "World_intf.S";;
-  let univ_constr = World_intf.univ_constr;;
-  let univ_constr_repr = "World_intf.univ_constr";;
+  type t = (module World.S)
+  let t_repr = "World.S";;
+  let univ_constr = World.univ_constr;;
+  let univ_constr_repr = "World.univ_constr";;
 end)
 
 let load ~file =
@@ -17,7 +17,7 @@ let load ~file =
 let edit ~file ~data_dir =
   load ~file
   >>= fun world ->
-  let module W = (val world : World_intf.S) in
+  let module W = (val world : World.S) in
   Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
       let world_state = W.create ~width ~height in
       let initial_state = () in
@@ -29,7 +29,7 @@ let edit ~file ~data_dir =
       in
       let steps_per_sec = 60.0 in
       let drawing_of_state _state =
-        World_intf.to_drawing (W.entities world_state)
+        World.to_drawing (W.entities world_state)
           ~camera:(`X 0.0, `Y 0.0) ~layers:W.layers
       in
       Game.main_loop ~initial_state ~on_event ~on_step

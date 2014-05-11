@@ -43,6 +43,7 @@ Library super_max
     Game,
     Game_intf,
     Mat,
+    World,
     World_intf
 
 Library spells_and_roses_lib

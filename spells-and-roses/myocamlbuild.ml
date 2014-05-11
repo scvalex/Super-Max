@@ -626,6 +626,7 @@ let dispatch = function
             ; "super_max/game.cmi"
             ; "super_max/game_intf.cmi"
             ; "super_max/mat.cmi"
+            ; "super_max/world.cmi"
             ; "super_max/world_intf.cmi"
             ; "lib/demo_entities.cmi"
             ; "lib/tests.cmi"
@@ -654,6 +655,7 @@ let dispatch = function
                  A "super_max/game.cmi";
                  A "super_max/game_intf.cmi";
                  A "super_max/mat.cmi";
+                 A "super_max/world.cmi";
                  A "super_max/world_intf.cmi";
                  A "lib/demo_entities.cmi";
                  A "lib/tests.cmi";
