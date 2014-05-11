@@ -14,27 +14,76 @@ let load ~file =
   |! Deferred.Or_error.ok_exn
 ;;
 
+module Event = struct
+  module T = struct
+    type t =
+      [ `Up | `Down | `Left | `Right
+      ] with sexp, compare
+  end
+  include T
+  include Comparable.Make(T)
+end
+
 type state = {
-  camera_x : float;
-  camera_y : float;
+  camera_x  : float;
+  camera_y  : float;
+  panning_x : float;
+  panning_y : float;
+  events    : Event.Set.t;
 }
 
 let create () =
   let camera_x = 0.0 in
   let camera_y = 0.0 in
-  { camera_x; camera_y; }
+  let panning_x = 0.0 in
+  let panning_y = 0.0 in
+  let events = Event.Set.empty in
+  { camera_x; camera_y; panning_x; panning_y; events; }
 ;;
 
 let on_event t ev =
-    match ev with
+  match ev with
   | Sdlevent.Quit _
   | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
     `Quit
+  | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Down; _} ->
+    `Continue {t with events = Set.add t.events `Down; }
+  | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Down; _} ->
+    `Continue {t with events = Set.remove t.events `Down; }
+  | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Up; _} ->
+    `Continue {t with events = Set.add t.events `Up; }
+  | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Up; _} ->
+    `Continue {t with events = Set.remove t.events `Up; }
+  | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Left; _} ->
+    `Continue {t with events = Set.add t.events `Left; }
+  | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Left; _} ->
+    `Continue {t with events = Set.remove t.events `Left; }
+  | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Right; _} ->
+    `Continue {t with events = Set.add t.events `Right; }
+  | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Right; _} ->
+    `Continue {t with events = Set.remove t.events `Right; }
   | _ ->
     `Continue t
 ;;
 
 let on_step t =
+  let panning_x =
+    t.panning_x
+    +. match (Set.mem t.events `Left, Set.mem t.events `Right) with
+    | (true, false) -> 0.0 -. 0.5
+    | (false, true) -> 0.5
+    | _             -> 0.0 -. t.panning_x /. 8.0
+  in
+  let camera_x = t.camera_x +. panning_x in
+  let panning_y =
+    t.panning_y
+    +. match (Set.mem t.events `Up, Set.mem t.events `Down) with
+    | (true, false) -> 0.0 -. 0.5
+    | (false, true) -> 0.5
+    | _             -> 0.0 -. t.panning_y /. 8.0
+  in
+  let camera_y = t.camera_y +. panning_y in
+  let t = { t with panning_x; camera_x; panning_y; camera_y; } in
   `Continue t
 ;;
 
