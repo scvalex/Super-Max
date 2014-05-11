@@ -14,23 +14,43 @@ let load ~file =
   |! Deferred.Or_error.ok_exn
 ;;
 
+type state = {
+  camera_x : float;
+  camera_y : float;
+}
+
+let create () =
+  let camera_x = 0.0 in
+  let camera_y = 0.0 in
+  { camera_x; camera_y; }
+;;
+
+let on_event t ev =
+    match ev with
+  | Sdlevent.Quit _
+  | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
+    `Quit
+  | _ ->
+    `Continue t
+;;
+
+let on_step t =
+  `Continue t
+;;
+
 let edit ~file ~data_dir =
   load ~file
   >>= fun world ->
   let module W = (val world : World.S) in
   Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
+      (* CR scvalex: This shouldn't be W.create; it should be some
+         static, auto-generated submodule. *)
       let world_state = W.create ~width ~height in
-      let initial_state = () in
-      let on_event state _event =
-        `Continue state
-      in
-      let on_step state =
-        `Continue state
-      in
+      let initial_state = create () in
       let steps_per_sec = 60.0 in
-      let drawing_of_state _state =
-        World.to_drawing (W.entities world_state)
-          ~camera:(`X 0.0, `Y 0.0) ~layers:W.layers
+      let drawing_of_state t =
+        World.to_drawing (W.entities world_state) ~layers:W.layers
+          ~camera:(`X t.camera_x, `Y t.camera_y)
       in
       Game.main_loop ~initial_state ~on_event ~on_step
         ~steps_per_sec ~drawing_of_state ~ctx)
