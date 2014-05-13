@@ -6,11 +6,6 @@ type xy = {
   y : float;
 } with sexp
 
-type width_height = {
-  width  : float;
-  height : float;
-} with sexp
-
 type rgba = {
   red   : float;
   green : float;
@@ -37,6 +32,12 @@ type image = {
 } with sexp
 
 type texture_with_size = Sdltexture.t * [`Width of int] * [`Height of int]
+
+type rectangle = {
+  width  : float;
+  height : float;
+  filled : bool;
+} with sexp
 
 let rgb_a_of_colour rgba =
   let rgb =
@@ -159,7 +160,7 @@ type t =
   | Empty
   | Translate of (xy * t)
   | Scale of (xy * t)
-  | Rectangle of width_height
+  | Rectangle of rectangle
   | Colour of (rgba * t)
   | Many of t list
   | Text of text
@@ -178,11 +179,11 @@ let scale ~x ~y t =
   Scale ({x; y;}, t)
 ;;
 
-let rectangle ~width ~height =
+let rectangle ~width ~height ~filled =
   if Float.(width < 0.0 || height < 0.0) then
     failwithf "Rectangle dimensions must be positive: (%f, %f)"
       width height ();
-  Rectangle {width; height;}
+  Rectangle {width; height; filled;}
 ;;
 
 let colour ~r:red ~g:green ~b:blue ?a:(alpha = 1.0) t =
@@ -218,17 +219,32 @@ let centered_normalized_scene ~width ~height t =
     (scale ~x:dim ~y:dim t)
 ;;
 
-let render_rectangle ~ctx ~trans ~colour ~width ~height =
+let render_rectangle ~ctx ~trans ~colour ~width ~height ~filled =
   let xy0 = Trans.apply trans {x = 0.0; y = 0.0;} in
   let xy1 = Trans.apply trans {x = width; y = height;} in
   let (rgb, a) = rgb_a_of_colour colour in
   Sdlrender.set_draw_color (Context.renderer ctx) ~rgb ~a;
-  Sdlrender.fill_rect (Context.renderer ctx)
-    (Sdlrect.make4
-       ~x:(Float.iround_exn xy0.x)
-       ~y:(Float.iround_exn xy0.y)
-       ~w:(Float.iround_exn (xy1.x -. xy0.x))
-       ~h:(Float.iround_exn (xy1.y -. xy0.y)))
+  let rect =
+    Sdlrect.make4
+      ~x:(Float.iround_exn xy0.x)
+      ~y:(Float.iround_exn xy0.y)
+      ~w:(Float.iround_exn (xy1.x -. xy0.x))
+      ~h:(Float.iround_exn (xy1.y -. xy0.y))
+  in
+  if filled
+  then begin
+    Sdlrender.fill_rect (Context.renderer ctx) rect
+  end else begin
+    Sdlrender.draw_rect (Context.renderer ctx) rect;
+    let rect =
+      Sdlrect.make4
+        ~x:(rect.Sdlrect.x + 1)
+        ~y:(rect.Sdlrect.y + 1)
+        ~w:(rect.Sdlrect.w - 2)
+        ~h:(rect.Sdlrect.h - 2)
+    in
+    Sdlrender.draw_rect (Context.renderer ctx) rect
+  end
 ;;
 
 let render_text ~ctx ~trans ~colour text =
@@ -348,8 +364,8 @@ let render_blocking t ~ctx =
     | Scale (xy, t) ->
       let trans = Trans.scale trans xy in
       loop trans colour t
-    | Rectangle {width; height} ->
-      render_rectangle ~ctx ~trans ~colour ~width ~height
+    | Rectangle {width; height; filled;} ->
+      render_rectangle ~ctx ~trans ~colour ~width ~height ~filled
     | Colour (colour, t) ->
       loop trans colour t
     | Many ts ->
@@ -375,7 +391,7 @@ let render t ~ctx =
 
 module Example = struct
   let rectangles ~width ~height =
-    let half_square = rectangle ~width:0.48 ~height:0.48 in
+    let half_square = rectangle ~width:0.48 ~height:0.48 ~filled:true in
     let rectangles =
       many
         [ translate ~x:0.01 ~y:0.01
@@ -392,7 +408,7 @@ module Example = struct
                half_square)
         ; translate ~x:0.4 ~y:0.1
             (colour ~r:0.0 ~g:0.5 ~b:0.0
-               (rectangle ~width:0.59 ~height:0.3))
+               (rectangle ~width:0.59 ~height:0.3 ~filled:true))
         ]
     in
     centered_normalized_scene rectangles ~width ~height

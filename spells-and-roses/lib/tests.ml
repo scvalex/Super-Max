@@ -28,7 +28,7 @@ module Moving_rectangle = struct
            (translate
               ~x:(Float.of_int (step mod 75) /. 100.0)
               ~y:0.375
-              (rectangle ~width:0.25 ~height:0.25)))
+              (rectangle ~width:0.25 ~height:0.25 ~filled:true)))
     in
     simple_animation ~drawing_of_state ~data_dir
   ;;

@@ -126,7 +126,7 @@ module Ui(W : World.S) = struct
       let height = Float.of_int height in
       colour ~r:0.9 ~g:0.3 ~b:0.3
         (translate ~x:(t.width /. 2.0) ~y:(t.height /. 2.0)
-           (rectangle ~width ~height))
+           (rectangle ~width ~height ~filled:false))
     in
     many
       [ world_drawing

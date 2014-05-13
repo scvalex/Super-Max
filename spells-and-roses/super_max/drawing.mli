@@ -46,6 +46,7 @@ val scale :
 val rectangle :
      width : float
   -> height : float
+  -> filled : bool
   -> t
 
 val colour :
