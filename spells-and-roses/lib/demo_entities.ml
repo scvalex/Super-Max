@@ -65,3 +65,10 @@ let create_world () =
 let is_obstacle entity =
   (Entity.common entity).obstacle
 ;;
+
+let entity_creators =
+  String.Map.of_alist_exn
+    [ ("grass", Grass.create)
+    ; ("cliff_s", Cliff_s.create)
+    ]
+;;

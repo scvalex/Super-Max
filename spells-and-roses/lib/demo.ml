@@ -11,6 +11,8 @@ let sprite_size =
   Demo_entities.(sprite_width, sprite_height)
 ;;
 
+let entity_creators = Demo_entities.entity_creators;;
+
 type t = {
   width    : int;
   height   : int;

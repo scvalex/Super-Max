@@ -1,3 +1,5 @@
+open Core.Std
+
 type world
 
 type common
@@ -17,3 +19,6 @@ module Cliff_s : sig
 end
 
 val is_obstacle : (common, world) Entity.t -> bool
+
+val entity_creators : (unit -> (common, world) Entity.t) String.Map.t
+

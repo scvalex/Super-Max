@@ -21,6 +21,8 @@ module type S = sig
   val layers : int list
 
   val sprite_size : (int * int)
+
+  val entity_creators : (unit -> (entity_common, world) Entity.t) String.Map.t
 end
 
 let univ_constr : (module S) Ocaml_dynloader.Univ_constr.t =
