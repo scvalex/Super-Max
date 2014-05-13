@@ -28,22 +28,28 @@ end
 
 module Ui(W : World.S) = struct
   type t = {
-    camera_x  : float;
-    camera_y  : float;
+    focus_x   : float;
+    focus_y   : float;
     panning_x : float;
     panning_y : float;
     events    : Event.Set.t;
     entities  : ((W.entity_common, W.world) Entity.t * Position.t) Entity.Id.Map.t;
+    width     : float;
+    height    : float;
   }
 
-  let create () =
-    let camera_x = 0.0 in
-    let camera_y = 0.0 in
+  let create ~width ~height =
+    let focus_x = 0.0 in
+    let focus_y = 0.0 in
     let panning_x = 0.0 in
     let panning_y = 0.0 in
     let events = Event.Set.empty in
     let entities = W.World_editor_private.entities in
-    { camera_x; camera_y; panning_x; panning_y; events; entities; }
+    let width = Float.of_int width in
+    let height = Float.of_int height in
+    { focus_x; focus_y; panning_x; panning_y; events; entities;
+      width; height;
+    }
   ;;
 
   let generic_handle_key_event t ~key ~event ev =
@@ -83,7 +89,7 @@ module Ui(W : World.S) = struct
   ;;
 
   let on_step t =
-    let handle_pan ~camera ~panning ~down ~up =
+    let handle_pan ~focus ~panning ~down ~up =
       let panning =
         panning
         +. match (Set.mem t.events down, Set.mem t.events up) with
@@ -91,35 +97,46 @@ module Ui(W : World.S) = struct
         | (false, true) -> 0.5
         | _             -> 0.0 -. panning /. 8.0
       in
-      let camera = camera +. panning in
-      (`Panning panning, `Camera camera)
+      let focus = focus +. panning in
+      (`Panning panning, `Focus focus)
     in
-    let (`Panning panning_x, `Camera camera_x) =
-      handle_pan ~camera:t.camera_x ~panning:t.panning_x
+    let (`Panning panning_x, `Focus focus_x) =
+      handle_pan ~focus:t.focus_x ~panning:t.panning_x
         ~down:`Left ~up:`Right
     in
-    let (`Panning panning_y, `Camera camera_y) =
-      handle_pan ~camera:t.camera_y ~panning:t.panning_y
+    let (`Panning panning_y, `Focus focus_y) =
+      handle_pan ~focus:t.focus_y ~panning:t.panning_y
         ~down:`Up ~up:`Down
     in
-    let t = { t with panning_x; camera_x; panning_y; camera_y; } in
+    let t = { t with panning_x; focus_x; panning_y; focus_y; } in
     `Continue t
   ;;
 
   let drawing_of_state t =
     let open Drawing in
+    let camera_x = (t.focus_x -. t.width) /. 2.0 in
+    let camera_y = (t.focus_y -. t.height) /. 2.0 in
     let world_drawing =
       World.to_drawing t.entities ~layers:W.layers
-        ~camera:(`X t.camera_x, `Y t.camera_y)
+        ~camera:(`X camera_x, `Y camera_y)
+    in
+    let focused_border =
+      let (width, height) = W.sprite_size in
+      let width = Float.of_int width in
+      let height = Float.of_int height in
+      colour ~r:0.9 ~g:0.3 ~b:0.3
+        (translate ~x:(t.width /. 2.0) ~y:(t.height /. 2.0)
+           (rectangle ~width ~height))
     in
     many
       [ world_drawing
+      ; focused_border
       ]
   ;;
 
   let run ~data_dir =
-    let t = create () in
-    Game.with_sdl ~data_dir ~f:(fun ~ctx ~width:_ ~height:_ ->
+    Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
+        let t = create ~width ~height in
         let initial_state = t in
         let steps_per_sec = 60.0 in
         Game.main_loop ~initial_state ~on_event ~on_step

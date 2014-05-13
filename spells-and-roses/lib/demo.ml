@@ -7,6 +7,10 @@ type world = Demo_entities.world
 
 type entity_common = Demo_entities.common
 
+let sprite_size =
+  Demo_entities.(sprite_width, sprite_height)
+;;
+
 type t = {
   width    : int;
   height   : int;

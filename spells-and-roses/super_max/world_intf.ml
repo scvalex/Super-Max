@@ -19,6 +19,8 @@ module type S = sig
   end
 
   val layers : int list
+
+  val sprite_size : (int * int)
 end
 
 let univ_constr : (module S) Ocaml_dynloader.Univ_constr.t =
