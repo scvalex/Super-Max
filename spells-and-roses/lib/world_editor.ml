@@ -28,14 +28,16 @@ end
 
 module Ui(W : World.S) = struct
   type t = {
-    focus_x   : float;
-    focus_y   : float;
-    panning_x : float;
-    panning_y : float;
-    events    : Event.Set.t;
-    entities  : ((W.entity_common, W.world) Entity.t * Position.t) Entity.Id.Map.t;
-    width     : float;
-    height    : float;
+    focus_x            : float;
+    focus_y            : float;
+    panning_x          : float;
+    panning_y          : float;
+    events             : Event.Set.t;
+    entities           : ((W.entity_common, W.world) Entity.t * Position.t) Entity.Id.Map.t;
+    width              : float;
+    height             : float;
+    available_entities : (string * Drawing.t) array;
+    selected_entity    : int;
   }
 
   let create ~width ~height =
@@ -47,8 +49,18 @@ module Ui(W : World.S) = struct
     let entities = W.World_editor_private.entities in
     let width = Float.of_int width in
     let height = Float.of_int height in
+    let available_entities =
+      Array.of_list
+        (List.map (Map.to_alist W.entity_creators) ~f:(fun (kind, create) ->
+             (kind, Entity.to_drawing (create ()))))
+    in
+    let selected_entity =
+      if Map.is_empty W.entity_creators
+      then failwith "No available entities in world"
+      else 0
+    in
     { focus_x; focus_y; panning_x; panning_y; events; entities;
-      width; height;
+      width; height; available_entities; selected_entity;
     }
   ;;
 
@@ -84,6 +96,12 @@ module Ui(W : World.S) = struct
       | Sdlevent.Quit _
       | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
         `Quit
+      | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Tab; _} ->
+        let selected_entity =
+          let total_entities = Map.length W.entity_creators in
+          Int.((t.selected_entity + 1) mod total_entities)
+        in
+        `Continue { t with selected_entity; }
       | _ ->
         `Continue t
   ;;
@@ -114,6 +132,9 @@ module Ui(W : World.S) = struct
 
   let drawing_of_state t =
     let open Drawing in
+    let (s_width, s_height) = W.sprite_size in
+    let s_width = Float.of_int s_width in
+    let s_height = Float.of_int s_height in
     let camera_x = (t.focus_x -. t.width) /. 2.0 in
     let camera_y = (t.focus_y -. t.height) /. 2.0 in
     let world_drawing =
@@ -121,16 +142,27 @@ module Ui(W : World.S) = struct
         ~camera:(`X camera_x, `Y camera_y)
     in
     let focused_border =
-      let (width, height) = W.sprite_size in
-      let width = Float.of_int width in
-      let height = Float.of_int height in
       colour ~r:0.9 ~g:0.3 ~b:0.3
         (translate ~x:(t.width /. 2.0) ~y:(t.height /. 2.0)
-           (rectangle ~width ~height ~filled:false))
+           (rectangle ~width:s_width ~height:s_height ~filled:false))
+    in
+    let selected_entity =
+      let (kind, drawing) = t.available_entities.(t.selected_entity) in
+      let label =
+        text ~font:"UbuntuMono-B.ttf" ~size_pt:24
+          ~position:(`X `Centre, `Y `Top)
+          kind
+      in
+      translate ~x:30.0 ~y:(t.height /. 6.0)
+        (many [ translate ~x:(s_width /. 2.0) ~y:(s_height +. 10.0)
+                  label
+              ; drawing
+              ])
     in
     many
       [ world_drawing
       ; focused_border
+      ; selected_entity
       ]
   ;;
 
