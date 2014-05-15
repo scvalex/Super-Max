@@ -27,11 +27,15 @@ module Event = struct
 end
 
 module Ui(W : World.S) = struct
+  let (s_width, s_height) = W.sprite_size;;
+  let s_width = Float.of_int s_width;;
+  let s_height = Float.of_int s_height;;
+
   type t = {
+    focus_i            : int;
+    focus_j            : int;
     focus_x            : float;
     focus_y            : float;
-    panning_x          : float;
-    panning_y          : float;
     events             : Event.Set.t;
     entities           : ((W.entity_common, W.world) Entity.t * Position.t) Entity.Id.Map.t;
     width              : float;
@@ -41,10 +45,10 @@ module Ui(W : World.S) = struct
   }
 
   let create ~width ~height =
+    let focus_i = 0 in
+    let focus_j = 0 in
     let focus_x = 0.0 in
     let focus_y = 0.0 in
-    let panning_x = 0.0 in
-    let panning_y = 0.0 in
     let events = Event.Set.empty in
     let entities = W.World_editor_private.entities in
     let width = Float.of_int width in
@@ -59,8 +63,9 @@ module Ui(W : World.S) = struct
       then failwith "No available entities in world"
       else 0
     in
-    { focus_x; focus_y; panning_x; panning_y; events; entities;
+    { focus_x; focus_y; events; entities;
       width; height; available_entities; selected_entity;
+      focus_i; focus_j;
     }
   ;;
 
@@ -107,36 +112,43 @@ module Ui(W : World.S) = struct
   ;;
 
   let on_step t =
-    let handle_pan ~focus ~panning ~down ~up =
-      let panning =
-        panning
-        +. match (Set.mem t.events down, Set.mem t.events up) with
-        | (true, false) -> 0.0 -. 0.5
-        | (false, true) -> 0.5
-        | _             -> 0.0 -. panning /. 8.0
-      in
-      let focus = focus +. panning in
-      (`Panning panning, `Focus focus)
+    let handle_pan ~target ~size ~focus ~down ~up =
+      if Float.(abs ((of_int target *. size) -. focus) > size /. 2.0)
+      then begin
+        target
+      end else begin
+        target
+        + match (Set.mem t.events down, Set.mem t.events up) with
+        | (true, false) -> 1
+        | (false, true) -> 0 - 1
+        | _             -> 0
+      end
     in
-    let (`Panning panning_x, `Focus focus_x) =
-      handle_pan ~focus:t.focus_x ~panning:t.panning_x
+    let updated_focus ~target ~size ~focus =
+      focus +. ((Float.of_int target *. size) -. focus) /. 8.0
+    in
+    let focus_j =
+      handle_pan ~target:t.focus_j ~size:s_width ~focus:t.focus_x
         ~down:`Left ~up:`Right
     in
-    let (`Panning panning_y, `Focus focus_y) =
-      handle_pan ~focus:t.focus_y ~panning:t.panning_y
+    let focus_x =
+      updated_focus ~target:focus_j ~size:s_width ~focus:t.focus_x
+    in
+    let focus_i =
+      handle_pan ~target:t.focus_i ~size:s_height ~focus:t.focus_y
         ~down:`Up ~up:`Down
     in
-    let t = { t with panning_x; focus_x; panning_y; focus_y; } in
+    let focus_y =
+      updated_focus ~target:focus_i ~size:s_height ~focus:t.focus_y
+    in
+    let t = { t with focus_i; focus_j; focus_x; focus_y; } in
     `Continue t
   ;;
 
   let drawing_of_state t =
     let open Drawing in
-    let (s_width, s_height) = W.sprite_size in
-    let s_width = Float.of_int s_width in
-    let s_height = Float.of_int s_height in
-    let camera_x = (t.focus_x -. t.width) /. 2.0 in
-    let camera_y = (t.focus_y -. t.height) /. 2.0 in
+    let camera_x = t.focus_x -. t.width /. 2.0 in
+    let camera_y = t.focus_y -. t.height /. 2.0 in
     let world_drawing =
       World.to_drawing t.entities ~layers:W.layers
         ~camera:(`X camera_x, `Y camera_y)
