@@ -147,6 +147,7 @@ module Ui(W : World.S) = struct
 
   let drawing_of_state t =
     let open Drawing in
+    let text = text ~font:"UbuntuMono-B.ttf" in
     let camera_x = t.focus_x -. t.width /. 2.0 in
     let camera_y = t.focus_y -. t.height /. 2.0 in
     let world_drawing =
@@ -161,20 +162,23 @@ module Ui(W : World.S) = struct
     let selected_entity =
       let (kind, drawing) = t.available_entities.(t.selected_entity) in
       let label =
-        text ~font:"UbuntuMono-B.ttf" ~size_pt:24
-          ~position:(`X `Centre, `Y `Top)
-          kind
+        text ~size_pt:24 ~position:(`X `Centre, `Y `Top) kind
       in
-      translate ~x:30.0 ~y:(t.height /. 6.0)
+      translate ~x:50.0 ~y:90.0
         (many [ translate ~x:(s_width /. 2.0) ~y:(s_height +. 10.0)
                   label
               ; drawing
               ])
     in
+    let coordinates =
+      translate ~x:30.0 ~y:30.0
+        (text ~size_pt:24 (sprintf "%+d, %+d" t.focus_i t.focus_j))
+    in
     many
       [ world_drawing
       ; focused_border
       ; selected_entity
+      ; coordinates
       ]
   ;;
 
