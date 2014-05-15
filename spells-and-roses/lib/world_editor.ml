@@ -146,14 +146,14 @@ module Ui(W : World.S) = struct
     in
     let focus_j =
       handle_pan ~target:t.focus_j ~size:s_width ~focus:t.focus_x
-        ~down:`Left ~up:`Right
+        ~down:`Right ~up:`Left
     in
     let focus_x =
       updated_focus ~target:focus_j ~size:s_width ~focus:t.focus_x
     in
     let focus_i =
       handle_pan ~target:t.focus_i ~size:s_height ~focus:t.focus_y
-        ~down:`Up ~up:`Down
+        ~down:`Down ~up:`Up
     in
     let focus_y =
       updated_focus ~target:focus_i ~size:s_height ~focus:t.focus_y
