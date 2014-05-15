@@ -20,6 +20,7 @@ module Event = struct
   module T = struct
     type t =
       [ `Up | `Down | `Left | `Right
+      | `Place
       ] with sexp, compare
   end
   include T
@@ -85,6 +86,7 @@ module Ui(W : World.S) = struct
       ; (Sdlkeycode.Up, `Up)
       ; (Sdlkeycode.Left, `Left)
       ; (Sdlkeycode.Right, `Right)
+      ; (Sdlkeycode.Space, `Place)
       ]
     in
     let handled_t =
@@ -109,6 +111,21 @@ module Ui(W : World.S) = struct
         `Continue { t with selected_entity; }
       | _ ->
         `Continue t
+  ;;
+
+  let add_entity_if_unique ~entities ~loc_i ~loc_j ~layer creator =
+    let y = Float.of_int loc_i *. s_height in
+    let x = Float.of_int loc_j *. s_width in
+    let z = layer in
+    if Map.exists entities ~f:(fun (_, pos) ->
+        Float.(pos.Position.x = x && pos.Position.y = y))
+    then begin
+      entities
+    end else begin
+      let entity = creator () in
+      Map.add entities ~key:(Entity.id entity)
+        ~data:(entity, { Position. x; y; z; })
+    end
   ;;
 
   let on_step t =
@@ -141,7 +158,20 @@ module Ui(W : World.S) = struct
     let focus_y =
       updated_focus ~target:focus_i ~size:s_height ~focus:t.focus_y
     in
-    let t = { t with focus_i; focus_j; focus_x; focus_y; } in
+    let entities =
+      if Set.mem t.events `Place
+      then begin
+        let (kind, _) = t.available_entities.(t.selected_entity) in
+        let creator = Map.find_exn W.entity_creators kind in
+        (* CR scvalex: Choose active layer. *)
+        add_entity_if_unique ~entities:t.entities
+          ~loc_i:focus_i ~loc_j:focus_j ~layer:2
+          creator
+      end else begin
+        t.entities
+      end
+    in
+    let t = { t with focus_i; focus_j; focus_x; focus_y; entities; } in
     `Continue t
   ;;
 
