@@ -133,7 +133,8 @@ module Ui(W : World.S) = struct
     let x = Float.of_int loc_j *. s_width in
     let z = layer in
     if Map.exists entities ~f:(fun (_, pos) ->
-        Float.(pos.Position.x = x && pos.Position.y = y))
+        Float.(pos.Position.x = x && pos.Position.y = y)
+        && Int.(pos.Position.z = z))
     then begin
       entities
     end else begin
