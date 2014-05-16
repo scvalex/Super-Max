@@ -33,6 +33,24 @@ module Ui(W : World.S) = struct
   let s_height = Float.of_int s_height;;
   let w_layers = Array.of_list W.layers;;
 
+  module Entity_manager = struct
+    let add_unique ~entities ~loc_i ~loc_j ~layer creator =
+      let y = Float.of_int loc_i *. s_height in
+      let x = Float.of_int loc_j *. s_width in
+      let z = layer in
+      if Map.exists entities ~f:(fun (_, pos) ->
+          Float.(pos.Position.x = x && pos.Position.y = y)
+          && Int.(pos.Position.z = z))
+      then begin
+        entities
+      end else begin
+        let entity = creator () in
+        Map.add entities ~key:(Entity.id entity)
+          ~data:(entity, { Position. x; y; z; })
+      end
+    ;;
+  end
+
   type t = {
     focus_i            : int;
     focus_j            : int;
@@ -128,22 +146,6 @@ module Ui(W : World.S) = struct
         `Continue t
   ;;
 
-  let add_entity_if_unique ~entities ~loc_i ~loc_j ~layer creator =
-    let y = Float.of_int loc_i *. s_height in
-    let x = Float.of_int loc_j *. s_width in
-    let z = layer in
-    if Map.exists entities ~f:(fun (_, pos) ->
-        Float.(pos.Position.x = x && pos.Position.y = y)
-        && Int.(pos.Position.z = z))
-    then begin
-      entities
-    end else begin
-      let entity = creator () in
-      Map.add entities ~key:(Entity.id entity)
-        ~data:(entity, { Position. x; y; z; })
-    end
-  ;;
-
   let on_step t =
     let handle_pan ~target ~size ~focus ~down ~up =
       if Float.(abs ((of_int target *. size) -. focus) > size /. 2.0)
@@ -179,8 +181,7 @@ module Ui(W : World.S) = struct
       then begin
         let (kind, _) = t.available_entities.(t.selected_entity) in
         let creator = Map.find_exn W.entity_creators kind in
-        (* CR scvalex: Choose active layer. *)
-        add_entity_if_unique ~entities:t.entities
+        Entity_manager.add_unique ~entities:t.entities
           ~loc_i:focus_i ~loc_j:focus_j ~layer:t.selected_layer
           creator
       end else begin
