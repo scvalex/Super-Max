@@ -20,7 +20,6 @@ module Event = struct
   module T = struct
     type t =
       [ `Up | `Down | `Left | `Right
-      | `Place
       ] with sexp, compare
   end
   include T
@@ -48,6 +47,15 @@ module Ui(W : World.S) = struct
         Map.add entities ~key:(Entity.id entity)
           ~data:(entity, { Position. x; y; z; })
       end
+    ;;
+
+    let remove ~entities ~loc_i ~loc_j ~layer =
+      let y = Float.of_int loc_i *. s_height in
+      let x = Float.of_int loc_j *. s_width in
+      let z = layer in
+      Map.filter entities ~f:(fun ~key:_ ~data:(_, pos) ->
+          not (Float .(pos.Position.x = x && pos.Position.y = y)
+               && Int.(pos.Position.z = z)))
     ;;
   end
 
@@ -107,7 +115,6 @@ module Ui(W : World.S) = struct
       ; (Sdlkeycode.Up, `Up)
       ; (Sdlkeycode.Left, `Left)
       ; (Sdlkeycode.Right, `Right)
-      ; (Sdlkeycode.Space, `Place)
       ]
     in
     let handled_t =
@@ -142,6 +149,22 @@ module Ui(W : World.S) = struct
           Int.((t.selected_layer + len - 1) mod len)
         in
         `Continue { t with selected_layer; }
+      | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Space; _} ->
+        let entities =
+          let (kind, _) = t.available_entities.(t.selected_entity) in
+          let creator = Map.find_exn W.entity_creators kind in
+          Entity_manager.add_unique ~entities:t.entities
+            ~loc_i:t.focus_i ~loc_j:t.focus_j ~layer:t.selected_layer
+            creator
+        in
+        `Continue { t with entities; }
+      | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Delete; _}
+      | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Backspace; _} ->
+        let entities =
+          Entity_manager.remove ~entities:t.entities
+            ~loc_i:t.focus_i ~loc_j:t.focus_j ~layer:t.selected_layer
+        in
+        `Continue { t with entities; }
       | _ ->
         `Continue t
   ;;
@@ -176,20 +199,8 @@ module Ui(W : World.S) = struct
     let focus_y =
       updated_focus ~target:focus_i ~size:s_height ~focus:t.focus_y
     in
-    let entities =
-      if Set.mem t.events `Place
-      then begin
-        let (kind, _) = t.available_entities.(t.selected_entity) in
-        let creator = Map.find_exn W.entity_creators kind in
-        Entity_manager.add_unique ~entities:t.entities
-          ~loc_i:focus_i ~loc_j:focus_j ~layer:t.selected_layer
-          creator
-      end else begin
-        t.entities
-      end
-    in
     let t =
-      { t with focus_i; focus_j; focus_x; focus_y; entities; }
+      { t with focus_i; focus_j; focus_x; focus_y; }
     in
     `Continue t
   ;;
