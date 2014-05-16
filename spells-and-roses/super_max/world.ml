@@ -11,7 +11,7 @@ let to_drawing entities ~layers ~camera:(`X camera_x, `Y camera_y) =
       ~x:(pos.Position.x -. camera_x) ~y:(pos.Position.y -. camera_y)
   in
   let entities = Map.data entities in
-  let draw_layer current_layer =
+  let draw_layer current_layer _name =
     (* CR scvalex: The in-layer drawing order is
        left-right-top-down. *)
     many
@@ -24,5 +24,5 @@ let to_drawing entities ~layers ~camera:(`X camera_x, `Y camera_y) =
              None
            end))
   in
-  many (List.map layers ~f:draw_layer)
+  many (List.mapi layers ~f:draw_layer)
 ;;

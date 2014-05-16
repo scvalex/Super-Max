@@ -37,6 +37,8 @@ let pos ~x ~y ~z =
   { Pos. x; y; z; }
 ;;
 
+let layers = ["parallax"; "background"; "scene"; "foreground"];;
+
 module World_editor_private = struct
   let entities =
     let acc = Entity.Id.Map.empty in
@@ -53,8 +55,6 @@ module World_editor_private = struct
 end
 
 let steps_per_sec = 60.0;;
-
-let layers = [0; 1; 2; 3];;
 
 let create ~width ~height =
   let entities = World_editor_private.entities in

@@ -18,7 +18,7 @@ module type S = sig
     val entities : ((entity_common, world) Entity.t * Position.t) Entity.Id.Map.t
   end
 
-  val layers : int list
+  val layers : string list
 
   val sprite_size : (int * int)
 

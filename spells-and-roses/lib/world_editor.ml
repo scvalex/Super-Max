@@ -31,6 +31,7 @@ module Ui(W : World.S) = struct
   let (s_width, s_height) = W.sprite_size;;
   let s_width = Float.of_int s_width;;
   let s_height = Float.of_int s_height;;
+  let w_layers = Array.of_list W.layers;;
 
   type t = {
     focus_i            : int;
@@ -43,6 +44,7 @@ module Ui(W : World.S) = struct
     height             : float;
     available_entities : (string * Drawing.t) array;
     selected_entity    : int;
+    selected_layer     : int;
   }
 
   let create ~width ~height =
@@ -64,9 +66,10 @@ module Ui(W : World.S) = struct
       then failwith "No available entities in world"
       else 0
     in
+    let selected_layer = 0 in
     { focus_x; focus_y; events; entities;
       width; height; available_entities; selected_entity;
-      focus_i; focus_j;
+      focus_i; focus_j; selected_layer;
     }
   ;;
 
@@ -109,6 +112,18 @@ module Ui(W : World.S) = struct
           Int.((t.selected_entity + 1) mod total_entities)
         in
         `Continue { t with selected_entity; }
+      | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.PageUp; _} ->
+        let selected_layer =
+          let len = Array.length w_layers in
+          Int.((t.selected_layer + 1) mod len)
+        in
+        `Continue { t with selected_layer; }
+      | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.PageDown; _} ->
+        let selected_layer =
+          let len = Array.length w_layers in
+          Int.((t.selected_layer + len - 1) mod len)
+        in
+        `Continue { t with selected_layer; }
       | _ ->
         `Continue t
   ;;
@@ -165,13 +180,15 @@ module Ui(W : World.S) = struct
         let creator = Map.find_exn W.entity_creators kind in
         (* CR scvalex: Choose active layer. *)
         add_entity_if_unique ~entities:t.entities
-          ~loc_i:focus_i ~loc_j:focus_j ~layer:2
+          ~loc_i:focus_i ~loc_j:focus_j ~layer:t.selected_layer
           creator
       end else begin
         t.entities
       end
     in
-    let t = { t with focus_i; focus_j; focus_x; focus_y; entities; } in
+    let t =
+      { t with focus_i; focus_j; focus_x; focus_y; entities; }
+    in
     `Continue t
   ;;
 
@@ -189,27 +206,37 @@ module Ui(W : World.S) = struct
         (translate ~x:(t.width /. 2.0) ~y:(t.height /. 2.0)
            (rectangle ~width:s_width ~height:s_height ~filled:false))
     in
-    let selected_entity =
-      let (kind, drawing) = t.available_entities.(t.selected_entity) in
-      let label =
-        text ~size_pt:24 ~position:(`X `Centre, `Y `Top) kind
-      in
-      translate ~x:50.0 ~y:90.0
-        (many [ translate ~x:(s_width /. 2.0) ~y:(s_height +. 10.0)
-                  label
-              ; drawing
-              ])
+    let layout_vertically ~x ~y_step drawings =
+      List.mapi drawings ~f:(fun idx drawing ->
+          translate ~x ~y:(Float.of_int idx *. y_step)
+            drawing)
     in
-    let coordinates =
-      translate ~x:30.0 ~y:30.0
-        (text ~size_pt:24 (sprintf "%+d, %+d" t.focus_i t.focus_j))
+    let tools =
+      let coordinates =
+        text ~size_pt:24 ~position:(`X `Centre, `Y `Top)
+          (sprintf "%+d, %+d" t.focus_i t.focus_j)
+      in
+      let selected_layer =
+        text ~size_pt:24 ~position:(`X `Centre, `Y `Top)
+          (w_layers.(t.selected_layer))
+      in
+      let selected_entity =
+        let (kind, drawing) = t.available_entities.(t.selected_entity) in
+        let label =
+          text ~size_pt:24 ~position:(`X `Centre, `Y `Top) kind
+        in
+        translate ~x:(0.0 -. s_width /. 2.0) ~y:0.0
+          (many [ translate ~x:(s_width /. 2.0) ~y:(s_height +. 10.0)
+                    label
+                ; drawing
+                ])
+      in
+      layout_vertically ~x:80.0 ~y_step:40.0
+        [ coordinates; selected_layer; selected_entity; ]
     in
     many
-      [ world_drawing
-      ; focused_border
-      ; selected_entity
-      ; coordinates
-      ]
+      ([ world_drawing; focused_border; ]
+       @ tools)
   ;;
 
   let run ~data_dir =
