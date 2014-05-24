@@ -255,18 +255,19 @@ module Ui(W : World.S) = struct
   end
 
   type t = {
-    editor : Map_editor.t;
+    editor  : Map_editor.t;
+    focused : [ `Editor ];
   }
 
   let on_event t ev =
     match Map_editor.on_event t.editor ev with
-    | `Continue editor -> `Continue { editor; }
+    | `Continue editor -> `Continue { t with editor; }
     | `Quit            -> `Quit
   ;;
 
   let on_step t =
     match Map_editor.on_step t.editor with
-    | `Continue editor -> `Continue { editor; }
+    | `Continue editor -> `Continue { t with editor; }
     | `Quit            -> `Quit
   ;;
 
@@ -277,7 +278,8 @@ module Ui(W : World.S) = struct
   let run ~data_dir =
     Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
         let editor = Map_editor.create ~width ~height in
-        let t = { editor; } in
+        let focused = `Editor in
+        let t = { editor; focused; } in
         let initial_state = t in
         let steps_per_sec = 60.0 in
         Game.main_loop ~initial_state ~on_event ~on_step
