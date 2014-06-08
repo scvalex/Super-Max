@@ -63,7 +63,7 @@ val text :
      font : string
   -> size_pt : int
   -> ?position : text_position
-  -> string
+  -> string list
   -> t
 
 val image :

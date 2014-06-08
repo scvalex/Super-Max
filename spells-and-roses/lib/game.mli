@@ -7,7 +7,7 @@ val main_loop :
   -> on_event : ('a -> Sdlevent.t -> 'a Resp.t)
   -> on_step : ('a -> 'a Resp.t)
   -> steps_per_sec : float
-  -> drawing_of_state : ('a -> Drawing.t)
+  -> to_drawing : ('a -> Drawing.t)
   -> ctx : Drawing.Context.t
   -> unit Deferred.t
 

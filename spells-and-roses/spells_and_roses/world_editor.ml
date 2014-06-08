@@ -203,7 +203,7 @@ module Ui(W : World.S) = struct
       t
     ;;
 
-    let drawing_of_state t =
+    let to_drawing t =
       let open Drawing in
       let text = text ~font:"UbuntuMono-B.ttf" in
       let camera_x = t.focus_x -. t.width /. 2.0 in
@@ -225,16 +225,16 @@ module Ui(W : World.S) = struct
       let tools =
         let coordinates =
           text ~size_pt:24 ~position:(`X `Centre, `Y `Top)
-            (sprintf "%+d, %+d" t.focus_i t.focus_j)
+            [sprintf "%+d, %+d" t.focus_i t.focus_j]
         in
         let selected_layer =
           text ~size_pt:24 ~position:(`X `Centre, `Y `Top)
-            (w_layers.(t.selected_layer))
+            [w_layers.(t.selected_layer)]
         in
         let selected_entity =
           let (kind, drawing) = t.available_entities.(t.selected_entity) in
           let label =
-            text ~size_pt:24 ~position:(`X `Centre, `Y `Top) kind
+            text ~size_pt:24 ~position:(`X `Centre, `Y `Top) [kind]
           in
           translate ~x:(0.0 -. s_width /. 2.0) ~y:0.0
             (many [ translate ~x:(s_width /. 2.0) ~y:(s_height +. 10.0)
@@ -271,8 +271,8 @@ module Ui(W : World.S) = struct
     `Continue { t with editor; }
   ;;
 
-  let drawing_of_state t =
-    Map_editor.drawing_of_state t.editor
+  let to_drawing t =
+    Map_editor.to_drawing t.editor
   ;;
 
   let run ~data_dir =
@@ -283,7 +283,7 @@ module Ui(W : World.S) = struct
         let initial_state = t in
         let steps_per_sec = 60.0 in
         Game.main_loop ~initial_state ~on_event ~on_step
-          ~steps_per_sec ~drawing_of_state ~ctx)
+          ~steps_per_sec ~to_drawing ~ctx)
   ;;
 end
 

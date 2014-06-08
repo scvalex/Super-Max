@@ -4,7 +4,7 @@ open Async.Std
 include Game_intf
 
 let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
-    ~drawing_of_state ~ctx =
+    ~to_drawing ~ctx =
   let slice = Float.iround_exn (1000.0 /. steps_per_sec) in
   let rec event_loop ~state ~history ~step =
     match Sdlevent.poll_event () with
@@ -43,7 +43,7 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
       | `Quit step ->
         Deferred.return (`Step step, history, `Skipped_frames skipped_frames)
       | `Continue (state, step, game_ticks) ->
-        let drawing = drawing_of_state state in
+        let drawing = to_drawing state in
         Drawing.render drawing ~ctx
         >>= fun () ->
         let skipped_frames =
@@ -102,6 +102,6 @@ let run game ~data_dir =
         ~on_event:G.on_event
         ~on_step:G.on_step
         ~steps_per_sec:G.steps_per_sec
-        ~drawing_of_state:G.drawing_of_state
+        ~to_drawing:G.to_drawing
         ~ctx)
 ;;

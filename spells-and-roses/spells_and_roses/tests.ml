@@ -1,6 +1,6 @@
 open Core.Std
 
-let simple_animation ~drawing_of_state ~data_dir =
+let simple_animation ~to_drawing ~data_dir =
   Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
       let initial_state = `Step 0 in
       let on_event state ev =
@@ -15,14 +15,14 @@ let simple_animation ~drawing_of_state ~data_dir =
         `Continue (`Step (step + 1))
       in
       let steps_per_sec = 60.0 in
-      let drawing_of_state = drawing_of_state ~width ~height in
+      let to_drawing = to_drawing ~width ~height in
       Game.main_loop ~initial_state ~on_event ~on_step
-        ~steps_per_sec ~drawing_of_state ~ctx)
+        ~steps_per_sec ~to_drawing ~ctx)
 ;;
 
 module Moving_rectangle = struct
   let run ~data_dir =
-    let drawing_of_state ~width ~height (`Step step) =
+    let to_drawing ~width ~height (`Step step) =
       Drawing.
         (centered_normalized_scene ~width ~height
            (translate
@@ -30,16 +30,16 @@ module Moving_rectangle = struct
               ~y:0.375
               (rectangle ~width:0.25 ~height:0.25 ~filled:true)))
     in
-    simple_animation ~drawing_of_state ~data_dir
+    simple_animation ~to_drawing ~data_dir
   ;;
 end
 
 module Rectangles = struct
   let run ~data_dir =
-    let drawing_of_state ~width ~height _state =
+    let to_drawing ~width ~height _state =
       Drawing.Example.rectangles ~width ~height
     in
-    simple_animation ~drawing_of_state ~data_dir
+    simple_animation ~to_drawing ~data_dir
   ;;
 end
 
@@ -53,7 +53,7 @@ module Static_text = struct
   let run ~data_dir =
     let hamlet's_soliloquy =
       In_channel.with_file (data_dir ^/ "hamlet.txt") ~f:(fun ch ->
-          In_channel.input_all ch)
+          String.split_lines (In_channel.input_all ch))
     in
     Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
         let initial_state =
@@ -94,7 +94,7 @@ module Static_text = struct
           `Continue {state with acceleration; position_y; }
         in
         let steps_per_sec = 60.0 in
-        let drawing_of_state state =
+        let to_drawing state =
           Drawing.
             (centered_normalized_scene ~width ~height
                (translate ~x:0.5 ~y:state.position_y
@@ -103,7 +103,7 @@ module Static_text = struct
                      hamlet's_soliloquy)))
         in
         Game.main_loop ~initial_state ~on_event ~on_step
-          ~steps_per_sec ~drawing_of_state ~ctx)
+          ~steps_per_sec ~to_drawing ~ctx)
   ;;
 end
 
@@ -116,7 +116,7 @@ module Dancing_banana = struct
   end
 
   let run ~data_dir =
-    let drawing_of_state ~width ~height (`Step step) =
+    let to_drawing ~width ~height (`Step step) =
       let open Drawing in
       let banana =
         image Banana.image
@@ -128,7 +128,7 @@ module Dancing_banana = struct
       let caption =
         text ~font:"UbuntuMono-B.ttf" ~size_pt:32
           ~position:(`X `Centre, `Y `Top)
-          "IT'S PEANUT BUTTER\nJELLY TIME!!!"
+          ["IT'S PEANUT BUTTER\nJELLY TIME!!!"]
       in
       (translate
          ~x:(Float.of_int (width - Banana.width) /. 2.0)
@@ -141,7 +141,7 @@ module Dancing_banana = struct
                 caption
             ]))
     in
-    simple_animation ~drawing_of_state ~data_dir
+    simple_animation ~to_drawing ~data_dir
   ;;
 end
 
@@ -153,7 +153,7 @@ module Psy_cat = struct
   end
 
   let run ~data_dir =
-    let drawing_of_state ~width ~height (`Step step) =
+    let to_drawing ~width ~height (`Step step) =
       let ratio =
         Float.(max
                  (of_int width /. of_int Cat.width)
@@ -166,6 +166,6 @@ module Psy_cat = struct
            (scale ~x:ratio ~y:ratio
               (image ~angle_deg:(Float.of_int step) Cat.image)))
     in
-    simple_animation ~drawing_of_state ~data_dir
+    simple_animation ~to_drawing ~data_dir
   ;;
 end

@@ -16,7 +16,7 @@ type rgba = {
 type text_position = ([`X of [`Left | `Centre | `Right]]
                       * [`Y of [`Top | `Centre | `Bottom]]) with sexp
 type text = {
-  str      : string;
+  str      : string list;
   font     : string;
   size_pt  : int;
   position : text_position;
@@ -249,7 +249,7 @@ let render_rectangle ~ctx ~trans ~colour ~width ~height ~filled =
 
 let render_text ~ctx ~trans ~colour text =
   let line_textures =
-    List.map (String.split_lines text.str) ~f:(fun str ->
+    List.map text.str ~f:(fun str ->
         Context.get_or_create_texture ctx
           (sprintf "text-%s-%d-%s" text.font text.size_pt str)
           ~create:(fun ~data_dir:_ ->
@@ -380,6 +380,8 @@ let render_blocking t ~ctx =
   let white =
     {red = 1.0; green = 1.0; blue = 1.0; alpha = 1.0; }
   in
+  (* CR scvalex: Make the colour here random to highlight places were
+     the colour is not explicitly set. *)
   loop Trans.id white t;
   Sdlrender.render_present (Context.renderer ctx)
 ;;

@@ -16,7 +16,7 @@ module type S = sig
 
   val on_step : t -> t Resp.t
 
-  val drawing_of_state : t -> Drawing.t
+  val to_drawing : t -> Drawing.t
 
   val steps_per_sec : float
 end
