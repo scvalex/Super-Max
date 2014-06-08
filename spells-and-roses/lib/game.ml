@@ -5,7 +5,6 @@ include Game_intf
 
 let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
     ~to_drawing ~ctx =
-  Random.self_init ();
   let slice = Float.iround_exn (1000.0 /. steps_per_sec) in
   let rec event_loop ~state ~history ~step =
     match Sdlevent.poll_event () with
