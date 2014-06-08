@@ -377,12 +377,16 @@ let render_blocking t ~ctx =
   in
   Sdlrender.set_draw_color (Context.renderer ctx) ~rgb:(0, 0, 0) ~a:255;
   Sdlrender.clear (Context.renderer ctx);
-  let white =
-    {red = 1.0; green = 1.0; blue = 1.0; alpha = 1.0; }
+  (* Random colour to make it obvious if some drawing isn't setting a
+     top-level colour. *)
+  let random_colour =
+    { red = Random.float 1.0
+    ; green = Random.float 1.0
+    ; blue = Random.float 1.0
+    ; alpha = 1.0
+    }
   in
-  (* CR scvalex: Make the colour here random to highlight places were
-     the colour is not explicitly set. *)
-  loop Trans.id white t;
+  loop Trans.id random_colour t;
   Sdlrender.render_present (Context.renderer ctx)
 ;;
 
