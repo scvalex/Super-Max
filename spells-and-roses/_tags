@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: d973f6e95ae1f070ff7d550cb47f5d88)
+# DO NOT EDIT (digest: c78cb792bc2d5d670463eddc477ee678)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -21,21 +21,21 @@
 <tangled/*.ml{,i}>: package(sexplib)
 <tangled/*.ml{,i}>: package(sexplib.syntax)
 <tangled/*.ml{,i}>: package(threads)
-# Library super_max
-"super_max/super_max.cmxs": use_super_max
-<super_max/*.ml{,i}>: package(async)
-<super_max/*.ml{,i}>: package(comparelib)
-<super_max/*.ml{,i}>: package(comparelib.syntax)
-<super_max/*.ml{,i}>: package(core)
-<super_max/*.ml{,i}>: package(fieldslib)
-<super_max/*.ml{,i}>: package(fieldslib.syntax)
-<super_max/*.ml{,i}>: package(ocaml_plugin)
-<super_max/*.ml{,i}>: package(sdl2)
-<super_max/*.ml{,i}>: package(sdl2_img)
-<super_max/*.ml{,i}>: package(sdl2_ttf)
-<super_max/*.ml{,i}>: package(sexplib)
-<super_max/*.ml{,i}>: package(sexplib.syntax)
-<super_max/*.ml{,i}>: package(threads)
+# Library lib
+"lib/lib.cmxs": use_lib
+<lib/*.ml{,i}>: package(async)
+<lib/*.ml{,i}>: package(comparelib)
+<lib/*.ml{,i}>: package(comparelib.syntax)
+<lib/*.ml{,i}>: package(core)
+<lib/*.ml{,i}>: package(fieldslib)
+<lib/*.ml{,i}>: package(fieldslib.syntax)
+<lib/*.ml{,i}>: package(ocaml_plugin)
+<lib/*.ml{,i}>: package(sdl2)
+<lib/*.ml{,i}>: package(sdl2_img)
+<lib/*.ml{,i}>: package(sdl2_ttf)
+<lib/*.ml{,i}>: package(sexplib)
+<lib/*.ml{,i}>: package(sexplib.syntax)
+<lib/*.ml{,i}>: package(threads)
 # Library spells_and_roses
 "spells_and_roses/spells_and_roses.cmxs": use_spells_and_roses
 <spells_and_roses/*.ml{,i}>: package(async)
@@ -51,7 +51,7 @@
 <spells_and_roses/*.ml{,i}>: package(sexplib)
 <spells_and_roses/*.ml{,i}>: package(sexplib.syntax)
 <spells_and_roses/*.ml{,i}>: package(threads)
-<spells_and_roses/*.ml{,i}>: use_super_max
+<spells_and_roses/*.ml{,i}>: use_lib
 # Library ocaml_plugin_archive
 "plugin/ocaml_plugin_archive.cmxs": use_ocaml_plugin_archive
 <plugin/ocaml_plugin_archive.{cma,cmxa}>: use_libocaml_plugin_archive_stubs
@@ -80,9 +80,9 @@
 <bin/super_max.{native,byte}>: package(sexplib.syntax)
 <bin/super_max.{native,byte}>: package(threads)
 <bin/super_max.{native,byte}>: package(type_conv)
+<bin/super_max.{native,byte}>: use_lib
 <bin/super_max.{native,byte}>: use_ocaml_plugin_archive
 <bin/super_max.{native,byte}>: use_spells_and_roses
-<bin/super_max.{native,byte}>: use_super_max
 <bin/super_max.{native,byte}>: use_tangled
 <bin/*.ml{,i}>: package(async)
 <bin/*.ml{,i}>: package(comparelib)
@@ -100,9 +100,9 @@
 <bin/*.ml{,i}>: package(sexplib.syntax)
 <bin/*.ml{,i}>: package(threads)
 <bin/*.ml{,i}>: package(type_conv)
+<bin/*.ml{,i}>: use_lib
 <bin/*.ml{,i}>: use_ocaml_plugin_archive
 <bin/*.ml{,i}>: use_spells_and_roses
-<bin/*.ml{,i}>: use_super_max
 <bin/*.ml{,i}>: use_tangled
 # OASIS_STOP
-<{bin,super_max,plugin,spells_and_roses,tangled}/*.ml{,i}>: syntax_camlp4o
+<{bin,lib,plugin,spells_and_roses,tangled}/*.ml{,i}>: syntax_camlp4o

@@ -27,7 +27,7 @@ p:
 	permamake.sh Makefile \
 	             myocamlbuild.ml \
 	             _oasis \
-	             super_max/*.ml* \
+	             lib/*.ml* \
 	             spells_and_roses/*.ml* \
 	             bin/*.ml* \
 	             tangled/*.ml*

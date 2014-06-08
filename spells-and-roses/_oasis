@@ -20,10 +20,10 @@ SourceRepository head
   Location:           https://github.com/scvalex/super-max.git
 
 Library tangled
+  Path:               tangled
   FindlibName:        tangled
   Install:            false
   Pack:               false
-  Path:               tangled
   BuildDepends:
     core,
     herelib,
@@ -35,11 +35,11 @@ Library tangled
     Node,
     Node_intf
 
-Library super_max
+Library lib
+  Path:               lib
   FindlibName:        super_max
   Install:            false
   Pack:               false
-  Path:               super_max
   BuildDepends:
     async,
     comparelib,
@@ -64,10 +64,10 @@ Library super_max
     World_intf
 
 Library spells_and_roses
+  Path:               spells_and_roses
   FindlibName:        spells_and_roses
   Install:            false
   Pack:               false
-  Path:               spells_and_roses
   BuildDepends:
     async,
     core,
@@ -82,11 +82,11 @@ Library spells_and_roses
     World_editor
 
 Library ocaml_plugin_archive
+  Path:               plugin
   CSources:           ocaml_archive.c
   Install:            false
   Modules:            Script_plugin_dummy
   Pack:               false
-  Path:               plugin
   Builddepends:
     ocaml_plugin,
     sexplib,

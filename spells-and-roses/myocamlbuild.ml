@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: c36156c3cf79e94b26ad12659d34c2a2) *)
+(* DO NOT EDIT (digest: 9ccfbac9e2272ac9e7bb5a417c3c4be3) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -598,7 +598,7 @@ let package_default =
      MyOCamlbuildBase.lib_ocaml =
        [
           ("tangled", ["tangled"], []);
-          ("super_max", ["super_max"], []);
+          ("lib", ["lib"], []);
           ("spells_and_roses", ["spells_and_roses"], []);
           ("ocaml_plugin_archive", ["plugin"], [])
        ];
@@ -606,8 +606,8 @@ let package_default =
      flags = [];
      includes =
        [
-          ("spells_and_roses", ["super_max"]);
-          ("bin", ["plugin"; "spells_and_roses"; "super_max"; "tangled"])
+          ("spells_and_roses", ["lib"]);
+          ("bin", ["lib"; "plugin"; "spells_and_roses"; "tangled"])
        ]
   }
   ;;
@@ -625,13 +625,13 @@ let dispatch = function
     let stdlib = BaseEnvLight.var_get "standard_library" env in
     rule "ocaml_plugin standalone archive"
       ~deps:[ "myocamlbuild.ml"
-            ; "super_max/drawing.cmi"
-            ; "super_max/entity.cmi"
-            ; "super_max/game.cmi"
-            ; "super_max/game_intf.cmi"
-            ; "super_max/mat.cmi"
-            ; "super_max/world.cmi"
-            ; "super_max/world_intf.cmi"
+            ; "lib/drawing.cmi"
+            ; "lib/entity.cmi"
+            ; "lib/game.cmi"
+            ; "lib/game_intf.cmi"
+            ; "lib/mat.cmi"
+            ; "lib/world.cmi"
+            ; "lib/world_intf.cmi"
             ; "spells_and_roses/demo_entities.cmi"
             ; "spells_and_roses/tests.cmi"
             ; "bin/script_intf.cmi"
@@ -654,13 +654,13 @@ let dispatch = function
                  A (loc "sexplib" / "sexplib.cmi");
                  A (loc "sdl2" / "sdlevent.cmi");
                  A (loc "sdl2" / "sdlkeycode.cmi");
-                 A "super_max/drawing.cmi";
-                 A "super_max/entity.cmi";
-                 A "super_max/game.cmi";
-                 A "super_max/game_intf.cmi";
-                 A "super_max/mat.cmi";
-                 A "super_max/world.cmi";
-                 A "super_max/world_intf.cmi";
+                 A "lib/drawing.cmi";
+                 A "lib/entity.cmi";
+                 A "lib/game.cmi";
+                 A "lib/game_intf.cmi";
+                 A "lib/mat.cmi";
+                 A "lib/world.cmi";
+                 A "lib/world_intf.cmi";
                  A "spells_and_roses/demo_entities.cmi";
                  A "spells_and_roses/tests.cmi";
                  A "bin/script_intf.cmi";
