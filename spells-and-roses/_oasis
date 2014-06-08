@@ -19,6 +19,21 @@ SourceRepository head
   Type:               git
   Location:           https://github.com/scvalex/super-max.git
 
+Library tangled
+  Path:               tangled
+  FindlibName:        tangled
+  Pack:               false
+  BuildDepends:
+    core,
+    herelib,
+    herelib.syntax,
+    sexplib,
+    sexplib.syntax,
+    threads
+  Modules:
+    Node,
+    Node_intf
+
 Library super_max
   Path:               super_max
   FindlibName:        super_max
@@ -85,4 +100,5 @@ Executable spells_and_roses
     ocaml_plugin_archive,
     spells_and_roses_lib,
     super_max,
+    tangled,
     threads

@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 78466f5c45fb6a20046906794c058b10) *)
+(* DO NOT EDIT (digest: 41c58e228c43907d5cdbd28b306431b6) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -597,6 +597,7 @@ let package_default =
   {
      MyOCamlbuildBase.lib_ocaml =
        [
+          ("tangled", ["tangled"], []);
           ("super_max", ["super_max"], []);
           ("spells_and_roses_lib", ["lib"], []);
           ("ocaml_plugin_archive", ["plugin"], [])
@@ -604,13 +605,16 @@ let package_default =
      lib_c = [("ocaml_plugin_archive", "plugin", [])];
      flags = [];
      includes =
-       [("lib", ["super_max"]); ("bin", ["lib"; "plugin"; "super_max"])]
+       [
+          ("lib", ["super_max"]);
+          ("bin", ["lib"; "plugin"; "super_max"; "tangled"])
+       ]
   }
   ;;
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 
-# 614 "myocamlbuild.ml"
+# 618 "myocamlbuild.ml"
 (* OASIS_STOP *)
 
 let dispatch = function

@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 901082732b47e30a955c90a7f18eb892)
+# DO NOT EDIT (digest: 62f2a45ade53c9f5ece61f967cd33a3e)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -13,6 +13,14 @@
 ".git": not_hygienic
 "_darcs": -traverse
 "_darcs": not_hygienic
+# Library tangled
+"tangled/tangled.cmxs": use_tangled
+<tangled/*.ml{,i}>: package(core)
+<tangled/*.ml{,i}>: package(herelib)
+<tangled/*.ml{,i}>: package(herelib.syntax)
+<tangled/*.ml{,i}>: package(sexplib)
+<tangled/*.ml{,i}>: package(sexplib.syntax)
+<tangled/*.ml{,i}>: package(threads)
 # Library super_max
 "super_max/super_max.cmxs": use_super_max
 <super_max/*.ml{,i}>: package(async)
@@ -62,6 +70,8 @@
 <bin/spells_and_roses.{native,byte}>: package(core)
 <bin/spells_and_roses.{native,byte}>: package(fieldslib)
 <bin/spells_and_roses.{native,byte}>: package(fieldslib.syntax)
+<bin/spells_and_roses.{native,byte}>: package(herelib)
+<bin/spells_and_roses.{native,byte}>: package(herelib.syntax)
 <bin/spells_and_roses.{native,byte}>: package(ocaml_plugin)
 <bin/spells_and_roses.{native,byte}>: package(sdl2)
 <bin/spells_and_roses.{native,byte}>: package(sdl2_img)
@@ -73,12 +83,15 @@
 <bin/spells_and_roses.{native,byte}>: use_ocaml_plugin_archive
 <bin/spells_and_roses.{native,byte}>: use_spells_and_roses_lib
 <bin/spells_and_roses.{native,byte}>: use_super_max
+<bin/spells_and_roses.{native,byte}>: use_tangled
 <bin/*.ml{,i}>: package(async)
 <bin/*.ml{,i}>: package(comparelib)
 <bin/*.ml{,i}>: package(comparelib.syntax)
 <bin/*.ml{,i}>: package(core)
 <bin/*.ml{,i}>: package(fieldslib)
 <bin/*.ml{,i}>: package(fieldslib.syntax)
+<bin/*.ml{,i}>: package(herelib)
+<bin/*.ml{,i}>: package(herelib.syntax)
 <bin/*.ml{,i}>: package(ocaml_plugin)
 <bin/*.ml{,i}>: package(sdl2)
 <bin/*.ml{,i}>: package(sdl2_img)
@@ -90,5 +103,6 @@
 <bin/*.ml{,i}>: use_ocaml_plugin_archive
 <bin/*.ml{,i}>: use_spells_and_roses_lib
 <bin/*.ml{,i}>: use_super_max
+<bin/*.ml{,i}>: use_tangled
 # OASIS_STOP
-<{bin,super_max,plugin,lib,test}/*.ml{,i}>: syntax_camlp4o
+<{bin,super_max,plugin,lib,test,tangled}/*.ml{,i}>: syntax_camlp4o

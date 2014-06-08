@@ -29,4 +29,5 @@ p:
 	             _oasis \
 	             super_max/*.ml* \
 	             lib/*.ml* \
-	             bin/*.ml*
+	             bin/*.ml* \
+	             tangled/*.ml*

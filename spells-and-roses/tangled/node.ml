@@ -5,7 +5,9 @@ include Node_intf
 exception Event_not_in_range of (int * int) with sexp
 exception Step_not_in_history of int with sexp
 
-module Make(State : State)(Event : Event) = struct
+module Make(State : State) = struct
+  module Event = State.Event
+
   (* History semantics:
        (state_i, events_i), (state_i+1, _), ...
        state_i+1 = apply_events(state_i, events_i) *)
@@ -16,12 +18,14 @@ module Make(State : State)(Event : Event) = struct
   }
 
   let create ~step ~state ~history_length =
-    let history = Map.add Map.empty ~key:step ~data:(Event.Set.empty, state) in
+    let history =
+      Map.add Int.Map.empty ~key:step ~data:(Event.Set.empty, state)
+    in
     { step; history_length; history; }
   ;;
 
   let apply_events state events =
-    if List.is_empty events
+    if Set.is_empty events
     then
       state
     else
@@ -39,11 +43,11 @@ module Make(State : State)(Event : Event) = struct
       in
       let state' = apply_events state events in
       let history =
-        Map.change t.history (after + 1) ~f:(fun history_entry ->
+        Map.change t.history (after + 1) (fun history_entry ->
             let (events', _) = Option.value_exn ~here:_here_ history_entry in
-            Some (state', events'))
+            Some (events', state'))
       in
-      recompute_history t:({ t with history; }) ~after:(after + 1)
+      recompute_history { t with history; } ~after:(after + 1)
     end
   ;;
 
@@ -58,7 +62,7 @@ module Make(State : State)(Event : Event) = struct
       match Map.find t.history ev_step with
       | None ->
         Or_error.of_exn (Step_not_in_history ev_step)
-      | Some (events, state) =
+      | Some (events, state) ->
         let events = Set.add events ev in
         let history = Map.add t.history ~key:ev_step ~data:(events, state) in
         let t = { t with history; } in
@@ -71,10 +75,10 @@ module Make(State : State)(Event : Event) = struct
       Option.value_exn ~here:_here_ (Map.find t.history t.step)
     in
     let state' = apply_events state events in
-    let step' = step + 1 in
+    let step' = t.step + 1 in
     let history =
       Map.add ~key:step' ~data:(Event.Set.empty, state')
-        (Map.remove t.history (step - t.history_length))
+        (Map.remove t.history (t.step - t.history_length))
     in
     { t with step = step'; history; }
   ;;
