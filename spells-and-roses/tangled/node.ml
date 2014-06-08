@@ -2,6 +2,9 @@ open Core.Std
 
 include Node_intf
 
+exception Event_not_in_range of (int * int) with sexp
+exception Step_not_in_history of int with sexp
+
 module Make(State : State)(Event : Event) = struct
   (* History semantics:
        (state_i, events_i), (state_i+1, _), ...
@@ -50,16 +53,16 @@ module Make(State : State)(Event : Event) = struct
     let ev_step = Event.step ev in
     if Int.(ev_step < lo || hi < ev_step)
     then begin
-      `Event_not_in_range (lo, hi)
+      Or_error.of_exn (Event_not_in_range (lo, hi))
     end else begin
       match Map.find t.history ev_step with
       | None ->
-        `Step_not_in_history ev_step
+        Or_error.of_exn (Step_not_in_history ev_step)
       | Some (events, state) =
         let events = Set.add events ev in
         let history = Map.add t.history ~key:ev_step ~data:(events, state) in
         let t = { t with history; } in
-        `Ok (recompute_history t ~after:ev_step)
+        Ok (recompute_history t ~after:ev_step)
     end
   ;;
 
@@ -74,5 +77,12 @@ module Make(State : State)(Event : Event) = struct
         (Map.remove t.history (step - t.history_length))
     in
     { t with step = step'; history; }
+  ;;
+
+  let state t =
+    let (_, state) =
+      Option.value_exn ~here:_here_ (Map.find t.history t.step)
+    in
+    state
   ;;
 end

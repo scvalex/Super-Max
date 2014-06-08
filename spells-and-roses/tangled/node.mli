@@ -1,3 +1,5 @@
+open Core.Std
+
 include module type of Node_intf
 
 module Make(State : State)(Event : Event) : sig
@@ -9,11 +11,9 @@ module Make(State : State)(Event : Event) : sig
     -> history_length : int
     -> t
 
-  let add_event :
-       t
-    -> Event.t
-    -> [ `Event_not_in_range of (int * int)
-       | `Step_not_in_history of int
-       | `Ok of t
-       ]
+  val add_event : t -> Event.t -> t Or_error.t
+
+  val do_step : t -> t
+
+  val state : t -> State.t
 end
