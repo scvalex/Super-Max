@@ -8,13 +8,9 @@ module Simple_query = struct
     height    : float;
     font      : string;
     size_pt   : int;
-  }
+  } with fields
 
-  let create ~event_map ~query ~width ~height ~font ~size_pt =
-    let width = Float.of_int width in
-    let height = Float.of_int height in
-    { event_map; query; width; height; font; size_pt; }
-  ;;
+  let create = Fields.create;;
 
   let on_event t ev =
     match ev with
@@ -31,11 +27,13 @@ module Simple_query = struct
           Sdlkeycode.to_string keycode))
     in
     many
-      [ rectangle ~filled:false ~width:t.width ~height:t.height
+      [ colour ~r:0.0 ~g:0.0 ~b:0.0
+          (rectangle ~filled:true ~width:t.width ~height:t.height)
+      ; rectangle ~filled:false ~width:t.width ~height:t.height
       ; translate ~x:(t.width /. 2.0) ~y:(t.height /. 2.0)
           (text ~font:t.font ~size_pt:t.size_pt
              ~position:(`X `Centre, `Y `Centre)
-             [t.query; responses])
+             [sprintf "%s (%s)" t.query responses])
       ]
   ;;
 end

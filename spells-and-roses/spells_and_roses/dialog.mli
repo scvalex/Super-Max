@@ -4,8 +4,8 @@ module Simple_query : sig
   val create :
        event_map : (Sdlkeycode.t * 'a) list
     -> query : string
-    -> width : int
-    -> height : int
+    -> width : float
+    -> height : float
     -> font : string
     -> size_pt : int
     -> 'a t

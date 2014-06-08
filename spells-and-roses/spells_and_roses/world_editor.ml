@@ -16,6 +16,8 @@ let load ~file =
   |! Deferred.Or_error.ok_exn
 ;;
 
+let font = "UbuntuMono-B.ttf";;
+
 module Event = struct
   module T = struct
     type t =
@@ -81,8 +83,6 @@ module Ui(W : World.S) = struct
       let focus_y = 0.0 in
       let events = Event.Set.empty in
       let entities = W.World_editor_private.entities in
-      let width = Float.of_int width in
-      let height = Float.of_int height in
       let available_entities =
         Array.of_list
           (List.map (Map.to_alist W.entity_creators) ~f:(fun (kind, create) ->
@@ -205,7 +205,6 @@ module Ui(W : World.S) = struct
 
     let to_drawing t =
       let open Drawing in
-      let text = text ~font:"UbuntuMono-B.ttf" in
       let camera_x = t.focus_x -. t.width /. 2.0 in
       let camera_y = t.focus_y -. t.height /. 2.0 in
       let world_drawing =
@@ -224,17 +223,17 @@ module Ui(W : World.S) = struct
       in
       let tools =
         let coordinates =
-          text ~size_pt:24 ~position:(`X `Centre, `Y `Top)
+          text ~font ~size_pt:24 ~position:(`X `Centre, `Y `Top)
             [sprintf "%+d, %+d" t.focus_i t.focus_j]
         in
         let selected_layer =
-          text ~size_pt:24 ~position:(`X `Centre, `Y `Top)
+          text ~font ~size_pt:24 ~position:(`X `Centre, `Y `Top)
             [w_layers.(t.selected_layer)]
         in
         let selected_entity =
           let (kind, drawing) = t.available_entities.(t.selected_entity) in
           let label =
-            text ~size_pt:24 ~position:(`X `Centre, `Y `Top) [kind]
+            text ~font ~size_pt:24 ~position:(`X `Centre, `Y `Top) [kind]
           in
           translate ~x:(0.0 -. s_width /. 2.0) ~y:0.0
             (many [ translate ~x:(s_width /. 2.0) ~y:(s_height +. 10.0)
@@ -251,19 +250,54 @@ module Ui(W : World.S) = struct
     ;;
   end
 
+  module Quit_dialog = struct
+    type t = [`Y | `N] Dialog.Simple_query.t
+
+    let width = 400.0;;
+
+    let height = 200.0;;
+
+    let create () =
+      Dialog.Simple_query.create
+        ~width
+        ~height
+        ~font
+        ~size_pt:24
+        ~event_map:[(Sdlkeycode.Y, `Y); (Sdlkeycode.N, `N)]
+        ~query:"Really quit?"
+    ;;
+  end
+
   type t = {
-    editor  : Map_editor.t;
-    focused : [ `Editor ];
+    editor      : Map_editor.t;
+    focused     : [ `Editor | `Quit_dialog of Quit_dialog.t];
+    width       : float;
+    height      : float;
   }
+
+  let show_quit_dialog t =
+    { t with focused = `Quit_dialog (Quit_dialog.create ()); }
+  ;;
+
+  let hide_quit_dialog t =
+    { t with focused = `Editor; }
+  ;;
 
   let on_event t ev =
     match ev with
     | Sdlevent.Quit _
     | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-      `Quit
+      `Continue (show_quit_dialog t)
     | _ ->
-      let editor = Map_editor.on_event t.editor ev in
-      `Continue { t with editor; }
+      match t.focused with
+      | `Editor ->
+        let editor = Map_editor.on_event t.editor ev in
+        `Continue { t with editor; }
+      | `Quit_dialog quit_dialog ->
+        match Dialog.Simple_query.on_event quit_dialog ev with
+        | None    -> `Continue t
+        | Some `N -> `Continue (hide_quit_dialog t)
+        | Some `Y -> `Quit
   ;;
 
   let on_step t =
@@ -272,14 +306,31 @@ module Ui(W : World.S) = struct
   ;;
 
   let to_drawing t =
-    Map_editor.to_drawing t.editor
+    let open Drawing in
+    let quit_dialog_drawing =
+      match t.focused with
+      | `Quit_dialog quit_dialog ->
+        [translate
+           (Dialog.Simple_query.to_drawing quit_dialog)
+           ~x:((t.width -. Quit_dialog.width) /. 2.0)
+           ~y:((t.height -. Quit_dialog.height) /. 2.0)]
+      | _ ->
+        []
+    in
+    many
+      (List.concat
+         [ [Map_editor.to_drawing t.editor]
+         ; quit_dialog_drawing
+         ])
   ;;
 
   let run ~data_dir =
     Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
+        let width = Float.of_int width in
+        let height = Float.of_int height in
         let editor = Map_editor.create ~width ~height in
         let focused = `Editor in
-        let t = { editor; focused; } in
+        let t = { editor; focused; width; height; } in
         let initial_state = t in
         let steps_per_sec = 60.0 in
         Game.main_loop ~initial_state ~on_event ~on_step
