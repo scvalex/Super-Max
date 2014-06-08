@@ -78,6 +78,7 @@ Library spells_and_roses
   Modules:
     Demo,
     Demo_entities,
+    Dialog,
     Tests,
     World_editor
 
