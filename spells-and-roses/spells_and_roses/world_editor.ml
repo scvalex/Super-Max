@@ -126,30 +126,27 @@ module Ui(W : World.S) = struct
       in
       match handled_t with
       | Some t ->
-        `Continue t
+        t
       | None ->
         match ev with
-        | Sdlevent.Quit _
-        | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-          `Quit
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Tab; _} ->
           let selected_entity =
             let total_entities = Map.length W.entity_creators in
             Int.((t.selected_entity + 1) mod total_entities)
           in
-          `Continue { t with selected_entity; }
+          { t with selected_entity; }
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.PageUp; _} ->
           let selected_layer =
             let len = Array.length w_layers in
             Int.((t.selected_layer + 1) mod len)
           in
-          `Continue { t with selected_layer; }
+          { t with selected_layer; }
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.PageDown; _} ->
           let selected_layer =
             let len = Array.length w_layers in
             Int.((t.selected_layer + len - 1) mod len)
           in
-          `Continue { t with selected_layer; }
+          { t with selected_layer; }
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Space; _} ->
           let entities =
             let (kind, _) = t.available_entities.(t.selected_entity) in
@@ -158,16 +155,16 @@ module Ui(W : World.S) = struct
               ~loc_i:t.focus_i ~loc_j:t.focus_j ~layer:t.selected_layer
               creator
           in
-          `Continue { t with entities; }
+          { t with entities; }
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Delete; _}
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Backspace; _} ->
           let entities =
             Entity_manager.remove ~entities:t.entities
               ~loc_i:t.focus_i ~loc_j:t.focus_j ~layer:t.selected_layer
           in
-          `Continue { t with entities; }
+          { t with entities; }
         | _ ->
-          `Continue t
+          t
     ;;
 
     let on_step t =
@@ -203,7 +200,7 @@ module Ui(W : World.S) = struct
       let t =
         { t with focus_i; focus_j; focus_x; focus_y; }
       in
-      `Continue t
+      t
     ;;
 
     let drawing_of_state t =
@@ -260,15 +257,18 @@ module Ui(W : World.S) = struct
   }
 
   let on_event t ev =
-    match Map_editor.on_event t.editor ev with
-    | `Continue editor -> `Continue { t with editor; }
-    | `Quit            -> `Quit
+    match ev with
+    | Sdlevent.Quit _
+    | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
+      `Quit
+    | _ ->
+      let editor = Map_editor.on_event t.editor ev in
+      `Continue { t with editor; }
   ;;
 
   let on_step t =
-    match Map_editor.on_step t.editor with
-    | `Continue editor -> `Continue { t with editor; }
-    | `Quit            -> `Quit
+    let editor = Map_editor.on_step t.editor in
+    `Continue { t with editor; }
   ;;
 
   let drawing_of_state t =
