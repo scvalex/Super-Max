@@ -1,7 +1,5 @@
 open Core.Std
 
-type world = unit
-
 type common = {
   obstacle : bool;
 } with fields
@@ -28,9 +26,9 @@ module Make_static(E : sig
 
   let to_drawing _state = drawing;;
 
-  let on_step state world = (state, world);;
+  let on_step state = state;;
 
-  let on_event state world _ev = (state, world);;
+  let on_event state _ev = state;;
 
   let create () =
     let id =
@@ -57,10 +55,6 @@ module Cliff_s = Make_static(struct
   let src_y = 1 * sprite_height;;
   let obstacle = true;;
 end)
-
-let create_world () =
-  ()
-;;
 
 let is_obstacle entity =
   (Entity.common entity).obstacle

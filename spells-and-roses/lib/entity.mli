@@ -2,23 +2,23 @@ open Core.Std
 
 module Id : Identifiable.S
 
-type ('c, 'w) t
+type ('c, 'ev) t
 
 val create :
     id : Id.t
  -> to_drawing : ('a -> Drawing.t)
- -> on_step : ('a -> 'w -> ('a * 'w))
- -> on_event : ('a -> 'w -> Sdlevent.t -> ('a * 'w))
+ -> on_step : ('a -> 'a)
+ -> on_event : ('a -> 'ev -> 'a)
  -> state : 'a
  -> common : ('a -> 'c)
- -> ('c, 'w) t
+ -> ('c, 'ev) t
 
-val id : (_, 'w) t -> Id.t
+val id : (_, _) t -> Id.t
 
-val to_drawing : (_, 'w) t -> Drawing.t
+val to_drawing : (_, _) t -> Drawing.t
 
-val on_step : ('a, 'w) t -> 'w -> (('a, 'w) t * 'w)
+val on_step : ('a, 'ev) t -> ('a, 'ev) t
 
-val on_event : ('a, 'w) t -> 'w -> Sdlevent.t -> (('a, 'w) t * 'w)
+val on_event : ('a, 'ev) t -> 'ev -> ('a, 'ev) t
 
-val common : ('c, 'w) t -> 'c
+val common : ('c, 'ev) t -> 'c

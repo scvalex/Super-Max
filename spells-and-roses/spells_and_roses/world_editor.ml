@@ -66,7 +66,7 @@ module Ui(W : World.S) = struct
       focus_x            : float;
       focus_y            : float;
       events             : Event.Set.t;
-      entities           : ((W.entity_common, W.world) Entity.t * Position.t) Entity.Id.Map.t;
+      entities           : ((W.common, W.event) Entity.t * Position.t) Entity.Id.Map.t;
       width              : float;
       height             : float;
       available_entities : (string * Drawing.t) array;

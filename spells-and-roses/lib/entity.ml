@@ -2,17 +2,17 @@ open Core.Std
 
 module Id = String_id
 
-type ('a, 'c, 'w) entity = {
+type ('a, 'c, 'ev) entity = {
   id         : Id.t;
   to_drawing : 'a -> Drawing.t;
-  on_step    : 'a -> 'w -> ('a * 'w);
-  on_event   : 'a -> 'w -> Sdlevent.t -> ('a * 'w);
+  on_step    : 'a -> 'a;
+  on_event   : 'a -> 'ev -> 'a;
   state      : 'a;
   common     : 'a -> 'c;
 }
 
-type ('c, 'w) t =
-  | Entity : ('a, 'c, 'w) entity -> ('c, 'w) t
+type ('c, 'ev) t =
+  | Entity : ('a, 'c, 'ev) entity -> ('c, 'ev) t
 
 let create ~id ~to_drawing ~on_step ~on_event ~state ~common =
   Entity { id; to_drawing; on_step; on_event; state; common}
@@ -24,14 +24,14 @@ let to_drawing (Entity t) =
   t.to_drawing t.state
 ;;
 
-let on_step (Entity t) world =
-  let (state, world) = t.on_step t.state world in
-  (Entity { t with state; }, world)
+let on_step (Entity t) =
+  let state = t.on_step t.state in
+  Entity { t with state; }
 ;;
 
-let on_event (Entity t) world event =
-  let (state, world) = t.on_event t.state world event in
-  (Entity { t with state; }, world)
+let on_event (Entity t) ev =
+  let state = t.on_event t.state ev in
+  Entity { t with state; }
 ;;
 
 let common (Entity t) =

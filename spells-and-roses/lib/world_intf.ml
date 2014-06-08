@@ -10,19 +10,19 @@ module Position = struct
 end
 
 module type S = sig
-  type world
-  type entity_common
+  type event
+  type common
   type t
 
   module World_editor_private : sig
-    val entities : ((entity_common, world) Entity.t * Position.t) Entity.Id.Map.t
+    val entities : ((common, event) Entity.t * Position.t) Entity.Id.Map.t
   end
 
   val layers : string list
 
   val sprite_size : (int * int)
 
-  val entity_creators : (unit -> (entity_common, world) Entity.t) String.Map.t
+  val entity_creators : (unit -> (common, event) Entity.t) String.Map.t
 end
 
 let univ_constr : (module S) Ocaml_dynloader.Univ_constr.t =

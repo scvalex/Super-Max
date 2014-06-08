@@ -3,9 +3,8 @@ open Core.Std let _ = _squelch_unused_module_warning_
 module D = Demo_entities
 module Pos = World.Position
 
-type world = Demo_entities.world
-
-type entity_common = Demo_entities.common
+type common = Demo_entities.common
+type event = Sdlevent.t
 
 let sprite_size =
   Demo_entities.(sprite_width, sprite_height)
@@ -18,8 +17,7 @@ type t = {
   height   : int;
   camera_x : float;
   camera_y : float;
-  world    : world;
-  entities : ((entity_common, world) Entity.t * Pos.t) Entity.Id.Map.t;
+  entities : ((common, Sdlevent.t) Entity.t * Pos.t) Entity.Id.Map.t;
 } with fields
 
 let add_entitiy entities entity ~pos =
@@ -60,8 +58,7 @@ let create ~width ~height =
   let entities = World_editor_private.entities in
   let camera_x = 0.0 in
   let camera_y = 0.0 in
-  let world = D.create_world () in
-  { width; height; camera_x; camera_y; world; entities; }
+  { width; height; camera_x; camera_y; entities; }
 ;;
 
 (* CR scvalex: Use Core.Sequence instead of allocating intermediate
