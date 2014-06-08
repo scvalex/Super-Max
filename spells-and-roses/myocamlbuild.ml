@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 41c58e228c43907d5cdbd28b306431b6) *)
+(* DO NOT EDIT (digest: c36156c3cf79e94b26ad12659d34c2a2) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -599,15 +599,15 @@ let package_default =
        [
           ("tangled", ["tangled"], []);
           ("super_max", ["super_max"], []);
-          ("spells_and_roses_lib", ["lib"], []);
+          ("spells_and_roses", ["spells_and_roses"], []);
           ("ocaml_plugin_archive", ["plugin"], [])
        ];
      lib_c = [("ocaml_plugin_archive", "plugin", [])];
      flags = [];
      includes =
        [
-          ("lib", ["super_max"]);
-          ("bin", ["lib"; "plugin"; "super_max"; "tangled"])
+          ("spells_and_roses", ["super_max"]);
+          ("bin", ["plugin"; "spells_and_roses"; "super_max"; "tangled"])
        ]
   }
   ;;
@@ -632,8 +632,8 @@ let dispatch = function
             ; "super_max/mat.cmi"
             ; "super_max/world.cmi"
             ; "super_max/world_intf.cmi"
-            ; "lib/demo_entities.cmi"
-            ; "lib/tests.cmi"
+            ; "spells_and_roses/demo_entities.cmi"
+            ; "spells_and_roses/tests.cmi"
             ; "bin/script_intf.cmi"
             ]
       ~prod:"plugin/ocaml_archive.c"
@@ -661,8 +661,8 @@ let dispatch = function
                  A "super_max/mat.cmi";
                  A "super_max/world.cmi";
                  A "super_max/world_intf.cmi";
-                 A "lib/demo_entities.cmi";
-                 A "lib/tests.cmi";
+                 A "spells_and_roses/demo_entities.cmi";
+                 A "spells_and_roses/tests.cmi";
                  A "bin/script_intf.cmi";
                  A "-o"; A "plugin/ocaml_archive.c"]))
   | _ ->
