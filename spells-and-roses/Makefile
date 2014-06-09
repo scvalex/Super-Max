@@ -30,4 +30,5 @@ p:
 	             lib/*.ml* \
 	             spells_and_roses/*.ml* \
 	             bin/*.ml* \
+	             pong/*.ml* \
 	             tangled/*.ml*

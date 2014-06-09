@@ -82,13 +82,28 @@ Library spells_and_roses
     Tests,
     World_editor
 
+Library pong
+  Path:               pong
+  Findlibname:        pong
+  Install:            false
+  Pack:               false
+  BuildDepends:
+    async,
+    core,
+    ocaml_plugin,
+    sdl2,
+    super_max,
+    threads
+  Modules:
+    Pong
+
 Library ocaml_plugin_archive
   Path:               plugin
   CSources:           ocaml_archive.c
   Install:            false
   Modules:            Script_plugin_dummy
   Pack:               false
-  Builddepends:
+  BuildDepends:
     ocaml_plugin,
     sexplib,
     threads,
@@ -103,6 +118,7 @@ Executable super_max
     async,
     core,
     ocaml_plugin_archive,
+    pong,
     spells_and_roses,
     super_max,
     tangled,

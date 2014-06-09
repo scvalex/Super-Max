@@ -69,6 +69,12 @@ let main () =
             Flag.(empty +> data_dir)
             (fun data_dir () ->
                Game.run (module Demo) ~data_dir))
+       ; ("pong",
+          Command.async_basic
+            ~summary:"Play pong"
+            Flag.(empty +> data_dir)
+            (fun data_dir () ->
+               Game.run (module Pong) ~data_dir))
        ])
 ;;
 
