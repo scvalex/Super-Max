@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 123332077abc458f6dba2ea1437f20d7) *)
+(* DO NOT EDIT (digest: 2e09576e4a72f35fcdc52a0493162d06) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -608,7 +608,7 @@ let package_default =
      includes =
        [
           ("spells_and_roses", ["lib"]);
-          ("pong", ["lib"]);
+          ("pong", ["lib"; "tangled"]);
           ("bin", ["lib"; "plugin"; "pong"; "spells_and_roses"; "tangled"])
        ]
   }

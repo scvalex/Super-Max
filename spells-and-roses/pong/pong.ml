@@ -8,7 +8,7 @@ let steps_per_sec = 60.0;;
 
 let create ~width:_ ~height:_ =
   let node = Pong_node.create () in
-  ()
+  { node; }
 ;;
 
 let to_drawing _t =

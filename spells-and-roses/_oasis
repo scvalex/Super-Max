@@ -93,6 +93,7 @@ Library pong
     ocaml_plugin,
     sdl2,
     super_max,
+    tangled,
     threads
   Modules:
     Pong
