@@ -1,10 +1,13 @@
 open Core.Std let _ = _squelch_unused_module_warning_
 
-type t = unit
+type t = {
+  node : Pong_node.t;
+}
 
 let steps_per_sec = 60.0;;
 
 let create ~width:_ ~height:_ =
+  let node = Pong_node.create () in
   ()
 ;;
 
