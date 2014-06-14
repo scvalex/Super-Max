@@ -48,6 +48,7 @@ end
 module Pong_event = struct
   type t =
     | Player_join of Player.Id.t
+    | Player_leave of Player.Id.t
     | Move of (Player.Id.t * Direction.t)
   with sexp, compare
 end
@@ -116,9 +117,10 @@ module State = struct
   let on_event t ev =
     match Event.event ev with
     | Pong_event.Player_join id ->
-      let players_connected =
-        Set.add t.players_connected id
-      in
+      let players_connected = Set.add t.players_connected id in
+      {t with players_connected; }
+    | Pong_event.Player_leave id ->
+      let players_connected = Set.remove t.players_connected id in
       {t with players_connected; }
     | Pong_event.Move (id, dir) ->
       with_player t ~id ~f:(fun player ->
