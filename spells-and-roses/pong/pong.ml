@@ -6,8 +6,10 @@ type t = {
 
 let steps_per_sec = 60.0;;
 
-let create ~width:_ ~height:_ =
-  let node = Pong_node.create () in
+let create ~width ~height =
+  let width = Float.of_int width in
+  let height = Float.of_int height in
+  let node = Pong_node.create ~width ~height in
   { node; }
 ;;
 

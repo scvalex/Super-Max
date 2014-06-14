@@ -1,3 +1,6 @@
 type t
 
-val create : unit -> t
+val create :
+     width : float
+  -> height : float
+  -> t

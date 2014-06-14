@@ -5,10 +5,18 @@ module Direction = struct
 end
 
 module Paddle = struct
-  type t = unit
+  type t = {
+    width  : float;
+    height : float;
+  }
 
-  let create () =
-    ()
+  let create ~width ~height =
+    { width; height; }
+  ;;
+
+  let move t _dir =
+    (* CR scvalex: Actually move here. *)
+    t
   ;;
 end
 
@@ -29,15 +37,20 @@ module Player = struct
     moving : Direction.t option;
   }
 
-  let create id =
-    let paddle = Paddle.create () in
+  let create id ~height ~width =
+    let paddle = Paddle.create ~width ~height in
     let score = 0 in
     let moving = None in
     { id; paddle; score; moving; }
   ;;
 
   let step t =
-    { t with moving = None; }
+    let paddle =
+      match t.moving with
+      | None     -> t.paddle
+      | Some dir -> Paddle.move t.paddle dir
+    in
+    { t with moving = None; paddle; }
   ;;
 
   let move t dir =
@@ -93,12 +106,13 @@ module State = struct
     { t with players; }
   ;;
 
-  let create () =
+  let create ~width ~height =
+    let mk_player id =
+      (id, Player.create id ~width ~height)
+    in
     let players =
       Player.Id.Map.of_alist_exn
-        [ (Player.Id.A, Player.create Player.Id.A)
-        ; (Player.Id.B, Player.create Player.Id.B)
-        ]
+        [ mk_player Player.Id.A; mk_player Player.Id.B; ]
     in
     let players_connected = Player.Id.Set.empty in
     { players; players_connected; }
@@ -132,6 +146,7 @@ module Node = Node.Make(State)
 
 type t = Node.t
 
-let create () =
-  Node.create ~step:0 ~state:(State.create ()) ~history_length:60
+let create ~width ~height =
+  Node.create ~step:0 ~history_length:60
+    ~state:(State.create ~width ~height)
 ;;
