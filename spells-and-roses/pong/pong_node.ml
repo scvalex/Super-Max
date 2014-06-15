@@ -96,7 +96,7 @@ module Ball = struct
     pos       : xy;
     ball_dim  : float;
     move_disp : xy;
-  }
+  } with fields
 
   let start_pos ~width ~height ~ball_dim =
     let x = (width -. ball_dim) /. 2.0 in
@@ -114,7 +114,7 @@ module Ball = struct
     { width; height; pos; ball_dim; move_disp; }
   ;;
 
-  let _reset t =
+  let reset t =
     let pos =
       start_pos ~width:t.width ~height:t.height ~ball_dim:t.ball_dim
     in
@@ -212,7 +212,10 @@ module State = struct
   end
 
   type t = {
+    width             : float;
+    height            : float;
     players           : Player.t Player.Id.Map.t;
+    score             : int Player.Id.Map.t;
     players_connected : Player.Id.Set.t;
     ball              : Ball.t;
   }
@@ -245,7 +248,10 @@ module State = struct
     in
     let players_connected = Player.Id.Set.empty in
     let ball = Ball.create ~width ~height in
-    { players; players_connected; ball; }
+    let score =
+      Player.Id.Map.of_alist_exn [ (`A, 0); (`B, 0); ]
+    in
+    { width; height; players; players_connected; ball; score; }
   ;;
 
   let on_step t =
@@ -259,7 +265,24 @@ module State = struct
           ~a_box:(Paddle.bounding_box (Player.paddle player_a))
           ~b_box:(Paddle.bounding_box (Player.paddle player_b))
       in
-      { t with ball; }
+      let {x = ball_x; _;} = Ball.pos ball in
+      let player_lost =
+        if Float.(ball_x < 0.0)
+        then Some `A
+        else if Float.(ball_x > t.width)
+        then Some `B
+        else None
+      in
+      match player_lost with
+      | None ->
+        { t with ball; }
+      | Some player ->
+        let ball = Ball.reset ball in
+        let score =
+          Map.change t.score player (fun score ->
+              Some (1 + Option.value_exn ~here:_here_ score))
+        in
+        { t with ball; score; }
     end else begin
       t
     end
