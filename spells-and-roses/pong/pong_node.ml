@@ -9,6 +9,29 @@ type xy = {
   y : float;
 }
 
+module Bounding_box = struct
+  type t = {
+    top_left     : xy;
+    bottom_right : xy;
+  }
+
+  let create ~top_left ~width ~height =
+    let bottom_right =
+      let x = top_left.x +. width in
+      let y = top_left.y +. height in
+      { x; y; }
+    in
+    { top_left; bottom_right; }
+  ;;
+
+  let collide a b =
+    not Float.(a.bottom_right.y > b.top_left.y
+               || a.top_left.y < b.bottom_right.y
+               || a.bottom_right.x < b.top_left.x
+               || a.top_left.x > b.bottom_right.x)
+  ;;
+end
+
 let snapback ~lower ~upper x =
   if Float.(x < lower)
   then (lower, `Lower)
@@ -17,32 +40,52 @@ let snapback ~lower ~upper x =
   else (x, `No_snapback)
 ;;
 
+type player_id = [`A | `B] with sexp, compare
+
 module Paddle = struct
   type t = {
     width         : float;
     height        : float;
-    y             : float;
-    paddle_height : float;
+    pos           : xy;
+    dims          : xy;
     move_disp     : float;
+    player        : player_id;
   }
 
-  let create ~width ~height =
-    let paddle_height = height /. 5.0 in
-    let y = (height -. paddle_height) /. 2.0 in
+  let create ~width ~height player =
+    let dims =
+      let x = (Float.min width height) /. 20.0 in
+      let y = height /. 5.0 in
+      { x; y; }
+    in
+    let pos =
+      let x =
+        match player with
+        | `A -> 0.0
+        | `B -> width -. dims.x
+      in
+      let y = (height -. dims.x) /. 2.0 in
+      { x; y; }
+    in
     let move_disp = height /. 2.0 /. 6.0 in
-    { width; height; y; paddle_height; move_disp; }
+    { width; height; pos; dims; move_disp; player; }
   ;;
 
   let move t dir =
     let y =
       match dir with
-      | Direction.Up   -> t.y -. t.move_disp
-      | Direction.Down -> t.y -. t.move_disp
+      | Direction.Up   -> t.pos.y -. t.move_disp
+      | Direction.Down -> t.pos.y -. t.move_disp
     in
     let (y, _) =
-      snapback y ~lower:0.0 ~upper:(t.height -. t.paddle_height)
+      snapback y ~lower:0.0 ~upper:(t.height -. t.dims.y)
     in
-    { t with y; }
+    let pos = { t.pos with y; } in
+    { t with pos; }
+  ;;
+
+  let bounding_box t =
+    Bounding_box.create ~top_left:t.pos ~width:t.dims.x ~height:t.dims.y
   ;;
 end
 
@@ -55,13 +98,15 @@ module Ball = struct
     move_disp : xy;
   }
 
+  let start_pos ~width ~height ~ball_dim =
+    let x = (width -. ball_dim) /. 2.0 in
+    let y = (height -. ball_dim) /. 2.0 in
+    { x; y; }
+  ;;
+
   let create ~width ~height =
     let ball_dim = Float.min width height /. 10.0 in
-    let pos =
-      let x = (width -. ball_dim) /. 2.0 in
-      let y = (height -. ball_dim) /. 2.0 in
-      { x; y; }
-    in
+    let pos = start_pos ~width ~height ~ball_dim in
     let move_disp =
       let vel = width /. 60.0 /. 5.0 in
       { x = vel; y = vel; }
@@ -69,15 +114,47 @@ module Ball = struct
     { width; height; pos; ball_dim; move_disp; }
   ;;
 
-  let step t =
-    t
+  let _reset t =
+    let pos =
+      start_pos ~width:t.width ~height:t.height ~ball_dim:t.ball_dim
+    in
+    { t with pos; }
+  ;;
+
+  let step t ~a_box ~b_box =
+    let x = t.pos.x +. t.move_disp.x in
+    let (y, snap) =
+      snapback (t.pos.y +. t.move_disp.y)
+        ~lower:0.0 ~upper:(t.height -. t.ball_dim)
+    in
+    let pos = { x; y; } in
+    let box =
+      Bounding_box.create ~top_left:pos ~width:t.ball_dim ~height:t.ball_dim
+    in
+    (* If we hit the upper or lower screen edge, reflect vertically. *)
+    let move_disp =
+      match snap with
+      | `No_snapback ->
+        t.move_disp
+      | `Lower | `Upper ->
+        { t.move_disp with y = 0.0 -. t.move_disp.y; }
+    in
+    (* If we hit either of the paddles, reflect horizontally. *)
+    let collide_a = Bounding_box.collide box a_box in
+    let collide_b = Bounding_box.collide box b_box in
+    let move_disp =
+      if collide_a || collide_b
+      then { move_disp with x = 0.0 -. move_disp.y; }
+      else move_disp
+    in
+    { t with pos; move_disp; }
   ;;
 end
 
 module Player = struct
   module Id = struct
     module T = struct
-      type t = A | B with sexp, compare
+      type t = player_id with sexp, compare
     end
 
     include T
@@ -89,10 +166,10 @@ module Player = struct
     paddle : Paddle.t;
     score  : int;
     moving : Direction.t option;
-  }
+  } with fields
 
   let create id ~height ~width =
-    let paddle = Paddle.create ~width ~height in
+    let paddle = Paddle.create ~width ~height id in
     let score = 0 in
     let moving = None in
     { id; paddle; score; moving; }
@@ -140,18 +217,16 @@ module State = struct
     ball              : Ball.t;
   }
 
-  let with_players ~a ~b t =
-    let player_a = Map.find_exn t.players Player.Id.A in
-    let player_b = Map.find_exn t.players Player.Id.B in
-    let player_a = a player_a in
-    let player_b = b player_b in
+  let with_players t ~f =
+    let player_a = Map.find_exn t.players `A in
+    let player_b = Map.find_exn t.players `B in
+    let player_a = f player_a in
+    let player_b = f player_b in
     let players =
       Player.Id.Map.of_alist_exn
-        [ (Player.Id.A, player_a)
-        ; (Player.Id.B, player_b)
-        ]
+        [ (`A, player_a); (`B, player_b); ]
     in
-    { t with players; }
+    ({ t with players; }, `A player_a, `B player_b)
   ;;
 
   let with_player ~id t ~f =
@@ -166,8 +241,7 @@ module State = struct
       (id, Player.create id ~width ~height)
     in
     let players =
-      Player.Id.Map.of_alist_exn
-        [ mk_player Player.Id.A; mk_player Player.Id.B; ]
+      Player.Id.Map.of_alist_exn [mk_player `A; mk_player `B;]
     in
     let players_connected = Player.Id.Set.empty in
     let ball = Ball.create ~width ~height in
@@ -177,12 +251,14 @@ module State = struct
   let on_step t =
     if Int.(Player.Id.Set.length t.players_connected = 2)
     then begin
-      let t =
-        with_players t
-          ~a:Player.step
-          ~b:Player.step
+      let (t, `A player_a, `B player_b) =
+        with_players t ~f:Player.step
       in
-      let ball = Ball.step t.ball in
+      let ball =
+        Ball.step t.ball
+          ~a_box:(Paddle.bounding_box (Player.paddle player_a))
+          ~b_box:(Paddle.bounding_box (Player.paddle player_b))
+      in
       { t with ball; }
     end else begin
       t
