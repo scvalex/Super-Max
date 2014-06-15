@@ -9,6 +9,8 @@ type xy = {
   y : float;
 }
 
+let font = "UbuntuMono-B.ttf";;
+
 module Bounding_box = struct
   type t = {
     top_left     : xy;
@@ -87,6 +89,13 @@ module Paddle = struct
   let bounding_box t =
     Bounding_box.create ~top_left:t.pos ~width:t.dims.x ~height:t.dims.y
   ;;
+
+  let to_drawing t =
+    let open Drawing in
+    translate ~x:t.pos.x ~y:t.pos.y
+      (colour ~r:1.0 ~g:1.0 ~b:1.0
+         (rectangle ~width:t.dims.x ~height:t.dims.y ~filled:true))
+  ;;
 end
 
 module Ball = struct
@@ -148,6 +157,13 @@ module Ball = struct
       else move_disp
     in
     { t with pos; move_disp; }
+  ;;
+
+  let to_drawing t =
+    let open Drawing in
+    translate ~x:t.pos.x ~y:t.pos.y
+      (colour ~r:1.0 ~g:1.0 ~b:1.0
+         (rectangle ~width:t.ball_dim ~height:t.ball_dim ~filled:true))
   ;;
 end
 
@@ -300,6 +316,26 @@ module State = struct
       with_player t ~id ~f:(fun player ->
           Player.move player dir)
   ;;
+
+  let to_drawing t =
+    let open Drawing in
+    let score =
+      many
+        [ translate ~x:(t.width /. 2.0 -. t.width /. 10.0) ~y:10.0
+            (text ~font ~size_pt:32 ~position:(`X `Right, `Y `Top)
+               [sprintf "%+d" (Map.find_exn t.score `A)])
+        ; translate ~x:(t.width /. 2.0 +. t.width /. 10.0) ~y:10.0
+            (text ~font ~size_pt:32 ~position:(`X `Left, `Y `Top)
+               [sprintf "%+d" (Map.find_exn t.score `B)])
+        ]
+    in
+    many
+      [ Ball.to_drawing t.ball
+      ; Paddle.to_drawing (Player.paddle (Map.find_exn t.players `A))
+      ; Paddle.to_drawing (Player.paddle (Map.find_exn t.players `B))
+      ; score
+      ]
+  ;;
 end
 
 module Node = Node.Make(State)
@@ -309,4 +345,8 @@ type t = Node.t
 let create ~width ~height =
   Node.create ~step:0 ~history_length:60
     ~state:(State.create ~width ~height)
+;;
+
+let to_drawing t =
+  State.to_drawing (Node.state t)
 ;;
