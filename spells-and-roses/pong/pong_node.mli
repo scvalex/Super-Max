@@ -6,3 +6,5 @@ val create :
   -> t
 
 val to_drawing : t -> Drawing.t
+
+val step : t -> t

@@ -350,3 +350,7 @@ let create ~width ~height =
 let to_drawing t =
   State.to_drawing (Node.state t)
 ;;
+
+let step t =
+  Node.step t
+;;

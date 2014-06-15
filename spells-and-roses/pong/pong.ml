@@ -13,13 +13,16 @@ let create ~width ~height =
   { node; }
 ;;
 
-let to_drawing _t =
+let to_drawing t =
   let open Drawing in
-  many []
+  many
+    [ Pong_node.to_drawing t.node
+    ]
 ;;
 
 let on_step t =
-  `Continue t
+  let node = Pong_node.step t.node in
+  `Continue { t with node; }
 ;;
 
 let on_event t ev =

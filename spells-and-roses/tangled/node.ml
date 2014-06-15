@@ -70,7 +70,7 @@ module Make(State : State) = struct
     end
   ;;
 
-  let do_step t =
+  let step t =
     let (events, state) =
       Option.value_exn ~here:_here_ (Map.find t.history t.step)
     in
