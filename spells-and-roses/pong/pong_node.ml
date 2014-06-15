@@ -4,6 +4,11 @@ module Direction = struct
   type t = Up | Down with sexp, compare
 end
 
+type xy = {
+  x : float;
+  y : float;
+}
+
 let snapback ~lower ~upper x =
   if Float.(x < lower)
   then (lower, `Lower)
@@ -14,34 +19,58 @@ let snapback ~lower ~upper x =
 
 module Paddle = struct
   type t = {
-    width  : float;
-    height : float;
-    y      : float;
+    width         : float;
+    height        : float;
+    y             : float;
+    paddle_height : float;
+    move_disp     : float;
   }
 
-  let paddle_height height =
-    height /. 5.0
-  ;;
-
-  let paddle_move_disp height =
-    height /. 2.0 /. 60.0
-  ;;
-
   let create ~width ~height =
-    let y = (height -. (paddle_height height)) /. 2.0 in
-    { width; height; y; }
+    let paddle_height = height /. 5.0 in
+    let y = (height -. paddle_height) /. 2.0 in
+    let move_disp = height /. 2.0 /. 6.0 in
+    { width; height; y; paddle_height; move_disp; }
   ;;
 
   let move t dir =
     let y =
       match dir with
-      | Direction.Up   -> t.y -. paddle_move_disp t.height
-      | Direction.Down -> t.y -. paddle_move_disp t.height
+      | Direction.Up   -> t.y -. t.move_disp
+      | Direction.Down -> t.y -. t.move_disp
     in
     let (y, _) =
-      snapback y ~lower:0.0 ~upper:(t.height -. paddle_height t.height)
+      snapback y ~lower:0.0 ~upper:(t.height -. t.paddle_height)
     in
     { t with y; }
+  ;;
+end
+
+module Ball = struct
+  type t = {
+    width     : float;
+    height    : float;
+    pos       : xy;
+    ball_dim  : float;
+    move_disp : xy;
+  }
+
+  let create ~width ~height =
+    let ball_dim = Float.min width height /. 10.0 in
+    let pos =
+      let x = (width -. ball_dim) /. 2.0 in
+      let y = (height -. ball_dim) /. 2.0 in
+      { x; y; }
+    in
+    let move_disp =
+      let vel = width /. 60.0 /. 5.0 in
+      { x = vel; y = vel; }
+    in
+    { width; height; pos; ball_dim; move_disp; }
+  ;;
+
+  let step t =
+    t
   ;;
 end
 
@@ -108,6 +137,7 @@ module State = struct
   type t = {
     players           : Player.t Player.Id.Map.t;
     players_connected : Player.Id.Set.t;
+    ball              : Ball.t;
   }
 
   let with_players ~a ~b t =
@@ -140,17 +170,23 @@ module State = struct
         [ mk_player Player.Id.A; mk_player Player.Id.B; ]
     in
     let players_connected = Player.Id.Set.empty in
-    { players; players_connected; }
+    let ball = Ball.create ~width ~height in
+    { players; players_connected; ball; }
   ;;
 
   let on_step t =
     if Int.(Player.Id.Set.length t.players_connected = 2)
-    then
-      with_players t
-        ~a:Player.step
-        ~b:Player.step
-    else
+    then begin
+      let t =
+        with_players t
+          ~a:Player.step
+          ~b:Player.step
+      in
+      let ball = Ball.step t.ball in
+      { t with ball; }
+    end else begin
       t
+    end
   ;;
 
   let on_event t ev =
