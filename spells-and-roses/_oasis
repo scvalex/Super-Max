@@ -11,7 +11,7 @@ Synopsis:    A game involving wizards. And roses.
 Homepage:    https://github.com/scvalex/super-max/spells-and-roses
 Plugins:     META (0.3)
 BuildTools:  ocamlbuild, camlp4o
-XOCamlbuildExtraArgs: -cflags -w,@A-44,-w,-4
+XOCamlbuildExtraArgs: -cflags -w,@A-44,-w,-4,-w,-41
 Description:
   A game involving wizards. And roses.
 

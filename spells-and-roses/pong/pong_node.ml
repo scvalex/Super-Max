@@ -4,19 +4,44 @@ module Direction = struct
   type t = Up | Down with sexp, compare
 end
 
+let snapback ~lower ~upper x =
+  if Float.(x < lower)
+  then (lower, `Lower)
+  else if Float.(x > upper)
+  then (upper, `Upper)
+  else (x, `No_snapback)
+;;
+
 module Paddle = struct
   type t = {
     width  : float;
     height : float;
+    y      : float;
   }
 
-  let create ~width ~height =
-    { width; height; }
+  let paddle_height height =
+    height /. 5.0
   ;;
 
-  let move t _dir =
-    (* CR scvalex: Actually move here. *)
-    t
+  let paddle_move_disp height =
+    height /. 2.0 /. 60.0
+  ;;
+
+  let create ~width ~height =
+    let y = (height -. (paddle_height height)) /. 2.0 in
+    { width; height; y; }
+  ;;
+
+  let move t dir =
+    let y =
+      match dir with
+      | Direction.Up   -> t.y -. paddle_move_disp t.height
+      | Direction.Down -> t.y -. paddle_move_disp t.height
+    in
+    let (y, _) =
+      snapback y ~lower:0.0 ~upper:(t.height -. paddle_height t.height)
+    in
+    { t with y; }
   ;;
 end
 
