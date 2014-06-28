@@ -50,6 +50,7 @@ module Player_id = struct
 
   include T
   include Comparable.Make(T)
+  include Sexpable.To_stringable(T)
 end
 open Player_id.T
 
@@ -311,12 +312,21 @@ module State = struct
   ;;
 
   let on_event t ev =
+    let print_player_set_changed ev_str players_connected =
+      Mlog.m "%s.  Players connected: %s"
+        ev_str
+        (String.concat ~sep:", "
+           (List.map ~f:Player.Id.to_string
+              (Set.to_list players_connected)));
+    in
     match Event.event ev with
     | Pong_event.Player_join id ->
       let players_connected = Set.add t.players_connected id in
+      print_player_set_changed "Join" players_connected;
       {t with players_connected; }
     | Pong_event.Player_leave id ->
       let players_connected = Set.remove t.players_connected id in
+      print_player_set_changed "Leave" players_connected;
       {t with players_connected; }
     | Pong_event.Move (id, dir) ->
       with_player t ~id ~f:(fun player ->

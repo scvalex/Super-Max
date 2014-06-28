@@ -60,6 +60,7 @@ Library lib
     Game,
     Game_intf,
     Mat,
+    Mlog,
     World,
     World_intf
 

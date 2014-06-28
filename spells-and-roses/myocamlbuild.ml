@@ -632,6 +632,7 @@ let dispatch = function
             ; "lib/game.cmi"
             ; "lib/game_intf.cmi"
             ; "lib/mat.cmi"
+            ; "lib/mlog.cmi"
             ; "lib/world.cmi"
             ; "lib/world_intf.cmi"
             ; "spells_and_roses/demo_entities.cmi"
@@ -661,6 +662,7 @@ let dispatch = function
                  A "lib/game.cmi";
                  A "lib/game_intf.cmi";
                  A "lib/mat.cmi";
+                 A "lib/mlog.cmi";
                  A "lib/world.cmi";
                  A "lib/world_intf.cmi";
                  A "spells_and_roses/demo_entities.cmi";
