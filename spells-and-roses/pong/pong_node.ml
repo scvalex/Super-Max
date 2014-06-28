@@ -79,7 +79,7 @@ module Paddle = struct
       let y = (height -. dims.x) /. 2.0 in
       { x; y; }
     in
-    let move_disp = height /. 2.0 /. 6.0 in
+    let move_disp = height /. 2.0 /. 24.0 in
     { width; height; pos; dims; move_disp; player; }
   ;;
 
@@ -87,7 +87,7 @@ module Paddle = struct
     let y =
       match dir with
       | Up   -> t.pos.y -. t.move_disp
-      | Down -> t.pos.y -. t.move_disp
+      | Down -> t.pos.y +. t.move_disp
     in
     let (y, _) =
       snapback y ~lower:0.0 ~upper:(t.height -. t.dims.y)
