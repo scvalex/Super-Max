@@ -4,10 +4,9 @@ module Direction : sig
   type t = Up | Down with sexp, compare
 end
 
-(** CR scvalex: Constructor disambiguation to the rescue. *)
 module Player : sig
   module Id : sig
-    type t = [`A | `B] with sexp
+    type t = A | B with sexp
   end
 end
 

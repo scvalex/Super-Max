@@ -42,7 +42,15 @@ let snapback ~lower ~upper x =
   else (x, `No_snapback)
 ;;
 
-type player_id = [`A | `B] with sexp, compare
+module Player_id = struct
+  module T = struct
+    type t = A | B with sexp, compare
+  end
+
+  include T
+  include Comparable.Make(T)
+end
+open Player_id.T
 
 module Paddle = struct
   type t = {
@@ -51,7 +59,7 @@ module Paddle = struct
     pos           : xy;
     dims          : xy;
     move_disp     : float;
-    player        : player_id;
+    player        : Player_id.t;
   }
 
   let create ~width ~height player =
@@ -63,8 +71,8 @@ module Paddle = struct
     let pos =
       let x =
         match player with
-        | `A -> 0.0
-        | `B -> width -. dims.x
+        | A -> 0.0
+        | B -> width -. dims.x
       in
       let y = (height -. dims.x) /. 2.0 in
       { x; y; }
@@ -168,14 +176,7 @@ module Ball = struct
 end
 
 module Player = struct
-  module Id = struct
-    module T = struct
-      type t = player_id with sexp, compare
-    end
-
-    include T
-    include Comparable.Make(T)
-  end
+  module Id = Player_id
 
   type t = {
     id     : Id.t;
@@ -241,13 +242,13 @@ module State = struct
   }
 
   let with_players t ~f =
-    let player_a = Map.find_exn t.players `A in
-    let player_b = Map.find_exn t.players `B in
+    let player_a = Map.find_exn t.players A in
+    let player_b = Map.find_exn t.players B in
     let player_a = f player_a in
     let player_b = f player_b in
     let players =
       Player.Id.Map.of_alist_exn
-        [ (`A, player_a); (`B, player_b); ]
+        [ (A, player_a); (B, player_b); ]
     in
     ({ t with players; }, `A player_a, `B player_b)
   ;;
@@ -264,12 +265,12 @@ module State = struct
       (id, Player.create id ~width ~height)
     in
     let players =
-      Player.Id.Map.of_alist_exn [mk_player `A; mk_player `B;]
+      Player.Id.Map.of_alist_exn [mk_player A; mk_player B;]
     in
     let players_connected = Player.Id.Set.empty in
     let ball = Ball.create ~width ~height in
     let score =
-      Player.Id.Map.of_alist_exn [ (`A, 0); (`B, 0); ]
+      Player.Id.Map.of_alist_exn [ (A, 0); (B, 0); ]
     in
     { width; height; players; players_connected; ball; score; }
   ;;
@@ -288,9 +289,9 @@ module State = struct
       let {x = ball_x; _;} = Ball.pos ball in
       let player_lost =
         if Float.(ball_x < 0.0)
-        then Some `A
+        then Some A
         else if Float.(ball_x > t.width)
-        then Some `B
+        then Some B
         else None
       in
       match player_lost with
@@ -327,16 +328,16 @@ module State = struct
       many
         [ translate ~x:(t.width /. 2.0 -. t.width /. 10.0) ~y:10.0
             (text ~font ~size_pt:32 ~position:(`X `Right, `Y `Top)
-               [sprintf "%+d" (Map.find_exn t.score `A)])
+               [sprintf "%+d" (Map.find_exn t.score A)])
         ; translate ~x:(t.width /. 2.0 +. t.width /. 10.0) ~y:10.0
             (text ~font ~size_pt:32 ~position:(`X `Left, `Y `Top)
-               [sprintf "%+d" (Map.find_exn t.score `B)])
+               [sprintf "%+d" (Map.find_exn t.score B)])
         ]
     in
     many
       [ Ball.to_drawing t.ball
-      ; Paddle.to_drawing (Player.paddle (Map.find_exn t.players `A))
-      ; Paddle.to_drawing (Player.paddle (Map.find_exn t.players `B))
+      ; Paddle.to_drawing (Player.paddle (Map.find_exn t.players A))
+      ; Paddle.to_drawing (Player.paddle (Map.find_exn t.players B))
       ; score
       ]
   ;;

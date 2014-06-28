@@ -2,6 +2,7 @@ open Core.Std
 
 module Event = Pong_node.Event
 open Pong_node.Pong_event
+open Pong_node.Player.Id
 
 type t = {
   node : Pong_node.t;
@@ -18,11 +19,11 @@ let create ~width ~height =
     let computer = Node.Id.of_string "computer" in
     let node =
       Pong_node.on_event node
-        (Event.create ~source:player ~step:0 (Player_join `A))
+        (Event.create ~source:player ~step:0 (Player_join A))
     in
     let node =
       Pong_node.on_event node
-        (Event.create ~source:computer ~step:0 (Player_join `B))
+        (Event.create ~source:computer ~step:0 (Player_join B))
     in
     node
   in
