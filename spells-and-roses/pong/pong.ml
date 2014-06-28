@@ -1,4 +1,7 @@
-open Core.Std let _ = _squelch_unused_module_warning_
+open Core.Std
+
+module Event = Pong_node.Event
+open Pong_node.Pong_event
 
 type t = {
   node : Pong_node.t;
@@ -10,6 +13,19 @@ let create ~width ~height =
   let width = Float.of_int width in
   let height = Float.of_int height in
   let node = Pong_node.create ~width ~height in
+  let node =
+    let player = Node.Id.of_string "player" in
+    let computer = Node.Id.of_string "computer" in
+    let node =
+      Pong_node.on_event node
+        (Event.create ~source:player ~step:0 (Player_join `A))
+    in
+    let node =
+      Pong_node.on_event node
+        (Event.create ~source:computer ~step:0 (Player_join `B))
+    in
+    node
+  in
   { node; }
 ;;
 

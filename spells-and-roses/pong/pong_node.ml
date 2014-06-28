@@ -114,7 +114,7 @@ module Ball = struct
   ;;
 
   let create ~width ~height =
-    let ball_dim = Float.min width height /. 10.0 in
+    let ball_dim = Float.min width height /. 15.0 in
     let pos = start_pos ~width ~height ~ball_dim in
     let move_disp =
       let vel = width /. 60.0 /. 5.0 in
@@ -225,6 +225,10 @@ module State = struct
 
     include T
     include Comparable.Make(T)
+
+    let create ~source ~step event =
+      { source; step; event; }
+    ;;
   end
 
   type t = {
@@ -339,6 +343,7 @@ module State = struct
 end
 
 module Node = Node.Make(State)
+module Event = State.Event
 
 type t = Node.t
 
@@ -353,4 +358,9 @@ let to_drawing t =
 
 let step t =
   Node.step t
+;;
+
+let on_event t ev =
+  Node.add_event t ev
+  |> Or_error.ok_exn
 ;;
