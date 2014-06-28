@@ -3,6 +3,7 @@ open Core.Std
 module Direction = struct
   type t = Up | Down with sexp, compare
 end
+open Direction
 
 type xy = {
   x : float;
@@ -84,8 +85,8 @@ module Paddle = struct
   let move t dir =
     let y =
       match dir with
-      | Direction.Up   -> t.pos.y -. t.move_disp
-      | Direction.Down -> t.pos.y -. t.move_disp
+      | Up   -> t.pos.y -. t.move_disp
+      | Down -> t.pos.y -. t.move_disp
     in
     let (y, _) =
       snapback y ~lower:0.0 ~upper:(t.height -. t.dims.y)
