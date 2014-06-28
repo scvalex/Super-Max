@@ -20,10 +20,9 @@ let font = "UbuntuMono-B.ttf";;
 
 module Event = struct
   module T = struct
-    type t =
-      [ `Up | `Down | `Left | `Right
-      ] with sexp, compare
+    type t = [ `Up | `Down | `Left | `Right ] with sexp, compare
   end
+
   include T
   include Comparable.Make(T)
 end
@@ -67,7 +66,7 @@ module Ui(W : World.S) = struct
       focus_j            : int;
       focus_x            : float;
       focus_y            : float;
-      events             : Event.Set.t;
+      active_events      : Event.Set.t;
       entities           : ((W.common, W.event) Entity.t * Position.t) Entity.Id.Map.t;
       width              : float;
       height             : float;
@@ -81,7 +80,7 @@ module Ui(W : World.S) = struct
       let focus_j = 0 in
       let focus_x = 0.0 in
       let focus_y = 0.0 in
-      let events = Event.Set.empty in
+      let active_events = Event.Set.empty in
       let entities = W.World_editor_private.entities in
       let available_entities =
         Array.of_list
@@ -94,7 +93,7 @@ module Ui(W : World.S) = struct
         else 0
       in
       let selected_layer = 0 in
-      { focus_x; focus_y; events; entities;
+      { focus_x; focus_y; active_events; entities;
         width; height; available_entities; selected_entity;
         focus_i; focus_j; selected_layer;
       }
@@ -103,9 +102,9 @@ module Ui(W : World.S) = struct
     let generic_handle_key_event t ~key ~event ev =
       match ev with
       | Sdlevent.KeyDown {Sdlevent. keycode; _} when key = keycode ->
-        Some {t with events = Set.add t.events event; }
+        Some {t with active_events = Set.add t.active_events event; }
       | Sdlevent.KeyUp {Sdlevent. keycode; _} when key = keycode ->
-        Some {t with events = Set.remove t.events event; }
+        Some {t with active_events = Set.remove t.active_events event; }
       | _ ->
         None
     ;;
@@ -174,7 +173,7 @@ module Ui(W : World.S) = struct
           target
         end else begin
           target
-          + match (Set.mem t.events down, Set.mem t.events up) with
+          + match (Set.mem t.active_events down, Set.mem t.active_events up) with
           | (true, false) -> 1
           | (false, true) -> 0 - 1
           | _             -> 0
