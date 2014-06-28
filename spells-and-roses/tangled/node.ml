@@ -41,7 +41,7 @@ module Make(State : State) = struct
       let (events, state) =
         Option.value_exn ~here:_here_ (Map.find t.history after)
       in
-      let state' = apply_events state events in
+      let state' = State.on_step (apply_events state events) in
       let history =
         Map.change t.history (after + 1) (fun history_entry ->
             let (events', _) = Option.value_exn ~here:_here_ history_entry in
@@ -74,7 +74,7 @@ module Make(State : State) = struct
     let (events, state) =
       Option.value_exn ~here:_here_ (Map.find t.history t.step)
     in
-    let state' = apply_events state events in
+    let state' = State.on_step (apply_events state events) in
     let step' = t.step + 1 in
     let history =
       Map.add ~key:step' ~data:(Event.Set.empty, state')
