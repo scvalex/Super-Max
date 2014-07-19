@@ -28,8 +28,8 @@ module Bounding_box = struct
   ;;
 
   let collide a b =
-    not Float.(a.bottom_right.y > b.top_left.y
-               || a.top_left.y < b.bottom_right.y
+    not Float.(a.bottom_right.y < b.top_left.y
+               || a.top_left.y > b.bottom_right.y
                || a.bottom_right.x < b.top_left.x
                || a.top_left.x > b.bottom_right.x)
   ;;
@@ -168,7 +168,7 @@ module Ball = struct
     let collide_b = Bounding_box.collide box b_box in
     let move_disp =
       if collide_a || collide_b
-      then { move_disp with x = 0.0 -. move_disp.y; }
+      then { move_disp with x = 0.0 -. move_disp.x; }
       else move_disp
     in
     { t with pos; move_disp; }
