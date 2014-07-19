@@ -1,9 +1,9 @@
 open Core.Std
 
 module Event = Pong_node.Event
-open Pong_node.Pong_event
-open Pong_node.Player.Id
-open Pong_node.Direction
+module Pong_event = Pong_node.Pong_event
+module Id = Pong_node.Player.Id
+module Dir = Pong_node.Direction
 
 module Input_event = struct
   module T = struct
@@ -35,11 +35,11 @@ let create ~width ~height =
     let computer = Node.Id.of_string "computer" in
     let node =
       Pong_node.on_event node
-        (Event.create ~source:player ~step (Player_join A))
+        (Event.create ~source:player ~step (Pong_event.Player_join Id.A))
     in
     let node =
       Pong_node.on_event node
-        (Event.create ~source:computer ~step (Player_join B))
+        (Event.create ~source:computer ~step (Pong_event.Player_join Id.B))
     in
     node
   in
@@ -60,10 +60,12 @@ let on_step t =
         match ev with
         | `Up ->
           Pong_node.on_event node
-            (Event.create ~source:player ~step:t.step (Move (A, Up)))
+            (Event.create ~source:player ~step:t.step
+               (Pong_event.Move (Id.A, Dir.Up)))
         | `Down ->
           Pong_node.on_event node
-            (Event.create ~source:player ~step:t.step (Move (A, Down))))
+            (Event.create ~source:player ~step:t.step
+               (Pong_event.Move (Id.A, Dir.Down))))
   in
   let node = Pong_node.step node in
   let step = t.step + 1 in

@@ -5,18 +5,21 @@ module Direction = struct
 end
 open Direction
 
-type xy = {
-  x : float;
-  y : float;
-}
+module Xy = struct
+  type t = {
+    x : float;
+    y : float;
+  } with sexp
+end
+open Xy
 
 let font = "UbuntuMono-B.ttf";;
 
 module Bounding_box = struct
   type t = {
-    top_left     : xy;
-    bottom_right : xy;
-  }
+    top_left     : Xy.t;
+    bottom_right : Xy.t;
+  } with sexp
 
   let create ~top_left ~width ~height =
     let bottom_right =
@@ -63,8 +66,8 @@ module Paddle = struct
   type t = {
     width         : float;
     height        : float;
-    pos           : xy;
-    dims          : xy;
+    pos           : Xy.t;
+    dims          : Xy.t;
     move_disp     : float;
     player        : Player_id.t;
   }
@@ -117,9 +120,9 @@ module Ball = struct
   type t = {
     width     : float;
     height    : float;
-    pos       : xy;
+    pos       : Xy.t;
     ball_dim  : float;
-    move_disp : xy;
+    move_disp : Xy.t;
   } with fields
 
   let start_pos ~width ~height ~ball_dim =

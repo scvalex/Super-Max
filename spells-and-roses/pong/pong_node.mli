@@ -1,4 +1,20 @@
+open Core.Std
+
 type t
+
+module Xy : sig
+  type t = {
+    x : float;
+    y : float;
+  } with sexp
+end
+
+module Bounding_box : sig
+  type t = {
+    top_left     : Xy.t;
+    bottom_right : Xy.t;
+  } with sexp
+end
 
 module Direction : sig
   type t = Up | Down with sexp, compare
@@ -7,6 +23,8 @@ end
 module Player : sig
   module Id : sig
     type t = A | B with sexp
+
+    include Comparable.S with type t := t
   end
 end
 
