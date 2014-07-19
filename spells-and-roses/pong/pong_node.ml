@@ -51,6 +51,11 @@ module Player_id = struct
   include T
   include Comparable.Make(T)
   include Sexpable.To_stringable(T)
+
+  let other_player = function
+    | A -> B
+    | B -> A
+  ;;
 end
 open Player_id.T
 
@@ -302,7 +307,7 @@ module State = struct
       | Some player ->
         let ball = Ball.reset ball in
         let score =
-          Map.change t.score player (fun score ->
+          Map.change t.score (Player_id.other_player player) (fun score ->
               Some (1 + Option.value_exn ~here:_here_ score))
         in
         { t with ball; score; }
