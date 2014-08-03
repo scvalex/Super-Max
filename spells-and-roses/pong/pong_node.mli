@@ -53,6 +53,6 @@ val create :
 
 val to_drawing : t -> Drawing.t
 
-val step : t -> t
+val on_step : t -> t
 
 val on_event : t -> Event.t -> t

@@ -376,8 +376,8 @@ let to_drawing t =
   State.to_drawing (Node.state t)
 ;;
 
-let step t =
-  Node.step t
+let on_step t =
+  Node.on_step t
 ;;
 
 let on_event t ev =

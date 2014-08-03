@@ -13,7 +13,7 @@ module Make(State : State) : sig
 
   val add_event : t -> State.Event.t -> t Or_error.t
 
-  val step : t -> t
+  val on_step : t -> t
 
   val state : t -> State.t
 end

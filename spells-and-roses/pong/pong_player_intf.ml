@@ -20,7 +20,7 @@ module type S = sig
     -> playing_as : Id.t
     -> t
 
-  val step : t -> Game_state.t -> (t * Direction.t option)
+  val on_step : t -> Game_state.t -> (t * Direction.t option)
 
   val on_event : t -> Sdlevent.t -> t
 end

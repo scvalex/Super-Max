@@ -67,7 +67,7 @@ let on_step t =
             (Event.create ~source:player ~step:t.step
                (Pong_event.Move (Id.A, Dir.Down))))
   in
-  let node = Pong_node.step node in
+  let node = Pong_node.on_step node in
   let step = t.step + 1 in
   `Continue { t with node; step; }
 ;;
