@@ -1,107 +1,88 @@
 open Core.Std
+open Async.Std
+open Ocaml_plugin.Std
 
 module Event = Pong_node.Event
 module Pong_event = Pong_node.Pong_event
 module Id = Pong_node.Player.Id
 module Dir = Pong_node.Direction
 
-module Input_event = struct
-  module T = struct
-    type t = [ `Up | `Down ] with sexp, compare
-  end
+module Pong_player_compiler = Ocaml_compiler.Make(struct
+  type t = (module Pong_player_intf.S)
+  let t_repr = "Pong_player_intf.S";;
+  let univ_constr = Pong_player_intf.univ_constr;;
+  let univ_constr_repr = "Pong_player_intf.univ_constr";;
+end)
 
-  include T
-  include Comparable.Make(T)
-end
+let load_player ~file =
+  Pong_player_compiler.load_ocaml_src_files [file]
+  |! Deferred.Or_error.ok_exn
+;;
 
-type t = {
-  node          : Pong_node.t;
-  (* CR scvalex: Move event processing to an ocaml plugin file. *)
-  active_events : Input_event.Set.t;
-  step          : int;
-}
+module Make(Pong_player : Pong_player_intf.S) = struct
+  type t = {
+    node     : Pong_node.t;
+    player_a : Pong_player.t;
+    step     : int;
+  }
 
-let steps_per_sec = 60.0;;
+  let steps_per_sec = 60.0;;
 
-let player = Node.Id.of_string "player";;
+  let player_event pong_player step pong_event =
+    Event.create ~source:(Pong_player.source pong_player) ~step pong_event
+  ;;
 
-let create ~width ~height =
-  let width = Float.of_int width in
-  let height = Float.of_int height in
-  let node = Pong_node.create ~width ~height in
-  (* CR scvalex: Crutch. *)
-  let step = 0 in
-  let node =
-    let computer = Node.Id.of_string "computer" in
+  let create ~width ~height =
+    let width = Float.of_int width in
+    let height = Float.of_int height in
+    let node = Pong_node.create ~width ~height in
+    let player_a = Pong_player.create ~width ~height ~playing_as:Id.A in
+    let step = 0 in
     let node =
-      Pong_node.on_event node
-        (Event.create ~source:player ~step (Pong_event.Player_join Id.A))
+      let computer = Node.Id.of_string "computer" in
+      let node =
+        Pong_node.on_event node
+          (player_event player_a step (Pong_event.Player_join Id.A))
+      in
+      let node =
+        Pong_node.on_event node
+          (Event.create ~source:computer ~step (Pong_event.Player_join Id.B))
+      in
+      node
     in
+    { node; player_a; step; }
+  ;;
+
+  let to_drawing t =
+    let open Drawing in
+    many
+      [ Pong_node.to_drawing t.node
+      ]
+  ;;
+
+  let on_step t =
+    let game_state =
+      let paddles = Pong_node.paddles_bounding_boxes t.node in
+      let ball = Pong_node.ball_bounding_box t.node in
+      { Pong_player_intf.Game_state. paddles; ball; }
+    in
+    let (player_a, dir_a) = Pong_player.on_step t.player_a game_state in
     let node =
-      Pong_node.on_event node
-        (Event.create ~source:computer ~step (Pong_event.Player_join Id.B))
+      Option.value_map dir_a ~default:t.node
+        ~f:(fun dir_a ->
+            Pong_node.on_event t.node
+              (player_event player_a t.step (Pong_event.Move (Id.A, dir_a))))
     in
-    node
-  in
-  let active_events = Input_event.Set.empty in
-  { node; active_events; step; }
-;;
+    let node = Pong_node.on_step node in
+    let step = t.step + 1 in
+    `Continue { t with node; player_a; step; }
+  ;;
 
-let to_drawing t =
-  let open Drawing in
-  many
-    [ Pong_node.to_drawing t.node
-    ]
-;;
-
-let on_step t =
-  let node =
-    Set.fold_right t.active_events ~init:t.node ~f:(fun ev node ->
-        match ev with
-        | `Up ->
-          Pong_node.on_event node
-            (Event.create ~source:player ~step:t.step
-               (Pong_event.Move (Id.A, Dir.Up)))
-        | `Down ->
-          Pong_node.on_event node
-            (Event.create ~source:player ~step:t.step
-               (Pong_event.Move (Id.A, Dir.Down))))
-  in
-  let node = Pong_node.on_step node in
-  let step = t.step + 1 in
-  `Continue { t with node; step; }
-;;
-
-let generic_handle_key_event t ~key ~event ev =
-  match ev with
-  | Sdlevent.KeyDown {Sdlevent. keycode; _} when key = keycode ->
-    Some {t with active_events = Set.add t.active_events event; }
-  | Sdlevent.KeyUp {Sdlevent. keycode; _} when key = keycode ->
-    Some {t with active_events = Set.remove t.active_events event; }
-  | _ ->
-    None
-;;
-
-let on_event t ev =
-  let keys_events =
-    [ (Sdlkeycode.Down, `Down)
-    ; (Sdlkeycode.Up, `Up)
-    ]
-  in
-  let handled_t =
-    List.fold_left keys_events ~init:None ~f:(fun acc_t (key, event) ->
-        match acc_t with
-        | Some t -> Some t
-        | None   -> generic_handle_key_event t ~key ~event ev)
-  in
-  match handled_t with
-  | Some t ->
-    `Continue t
-  | None ->
-    match ev with
-    | Sdlevent.Quit _
-    | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
+  let on_event t ev =
+    match Pong_player.on_event t.player_a ev with
+    | `Quit ->
       `Quit
-    | _ ->
-      `Continue t
-;;
+    | `Continue player_a ->
+      `Continue { t with player_a; }
+  ;;
+end

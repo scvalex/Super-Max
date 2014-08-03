@@ -99,7 +99,8 @@ Library pong
   Modules:
     Pong,
     Pong_node,
-    Pong_player_intf
+    Pong_player_intf,
+    Pong_player_manual
 
 Library ocaml_plugin_archive
   Path:               plugin

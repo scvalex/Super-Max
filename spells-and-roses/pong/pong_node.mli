@@ -56,3 +56,7 @@ val to_drawing : t -> Drawing.t
 val on_step : t -> t
 
 val on_event : t -> Event.t -> t
+
+val ball_bounding_box : t -> Bounding_box.t
+
+val paddles_bounding_boxes : t -> Bounding_box.t Player.Id.Map.t

@@ -637,6 +637,10 @@ let dispatch = function
             ; "lib/world_intf.cmi"
             ; "spells_and_roses/demo_entities.cmi"
             ; "spells_and_roses/tests.cmi"
+            ; "tangled/node.cmi"
+            ; "tangled/node_intf.cmi"
+            ; "pong/pong_node.cmi"
+            ; "pong/pong_player_intf.cmi"
             ; "bin/script_intf.cmi"
             ]
       ~prod:"plugin/ocaml_archive.c"
@@ -647,6 +651,7 @@ let dispatch = function
                  A "-pa-cmxs"; P (loc "type_conv" / "pa_type_conv.cmxs");
                  A "-pa-cmxs"; P (loc "sexplib" / "pa_sexp_conv.cmxs");
                  A "-pa-cmxs"; P (loc "fieldslib" / "pa_fields_conv.cmxs");
+                 A "-pa-cmxs"; P (loc "comparelib" / "pa_compare.cmxs");
                  A "-cc"; A (Command.search_in_path "ocamlopt.opt");
                  A (stdlib / "pervasives.cmi");
                  A (stdlib / "printf.cmi");
@@ -654,6 +659,7 @@ let dispatch = function
                  A (loc "core" / "core.cmi");
                  A (loc "async" / "async.cmi");
                  A (loc "fieldslib" / "fieldslib.cmi");
+                 A (loc "comparelib" / "comparelib_dummy.cmi");
                  A (loc "sexplib" / "sexplib.cmi");
                  A (loc "sdl2" / "sdlevent.cmi");
                  A (loc "sdl2" / "sdlkeycode.cmi");
@@ -665,8 +671,12 @@ let dispatch = function
                  A "lib/mlog.cmi";
                  A "lib/world.cmi";
                  A "lib/world_intf.cmi";
+                 A "tangled/node.cmi";
+                 A "tangled/node_intf.cmi";
                  A "spells_and_roses/demo_entities.cmi";
                  A "spells_and_roses/tests.cmi";
+                 A "pong/pong_node.cmi";
+                 A "pong/pong_player_intf.cmi";
                  A "bin/script_intf.cmi";
                  A "-o"; A "plugin/ocaml_archive.c"]))
   | _ ->

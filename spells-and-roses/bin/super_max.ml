@@ -8,6 +8,10 @@ module Flag = struct
     flag "data-dir" (optional_with_default "resources" file)
       ~doc:"DIR location of game resources"
   ;;
+
+  let player_file =
+    anon ("PLAYER-FILE" %: file)
+  ;;
 end
 
 let test_command ~summary f =
@@ -72,8 +76,14 @@ let main () =
        ; ("pong",
           Command.async_basic
             ~summary:"Play pong"
-            Flag.(empty +> data_dir)
-            (fun data_dir () ->
+            Flag.(empty +> data_dir +> player_file)
+            (fun data_dir player_file () ->
+               Pong.load_player ~file:player_file
+               >>= fun player ->
+               let module Pong_player = (val player : Pong_player_intf.S) in
+               let module Pong =
+                 (val (module Pong.Make(Pong_player) : Game.S) : Game.S)
+               in
                Game.run (module Pong) ~data_dir))
        ])
 ;;

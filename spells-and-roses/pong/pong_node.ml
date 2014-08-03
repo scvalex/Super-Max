@@ -148,6 +148,10 @@ module Ball = struct
     { t with pos; }
   ;;
 
+  let bounding_box t =
+    Bounding_box.create ~top_left:t.pos ~width:t.ball_dim ~height:t.ball_dim
+  ;;
+
   let step t ~a_box ~b_box =
     let x = t.pos.x +. t.move_disp.x in
     let (y, snap) =
@@ -360,6 +364,17 @@ module State = struct
       ; score
       ]
   ;;
+
+  let ball_bounding_box t =
+    Ball.bounding_box t.ball
+  ;;
+
+  let paddles_bounding_boxes t =
+    Player.Id.Map.of_alist_exn
+      [ (A, Paddle.bounding_box (Player.paddle (Map.find_exn t.players A)))
+      ; (B, Paddle.bounding_box (Player.paddle (Map.find_exn t.players B)))
+      ]
+  ;;
 end
 
 module Node = Node.Make(State)
@@ -383,4 +398,12 @@ let on_step t =
 let on_event t ev =
   Node.add_event t ev
   |> Or_error.ok_exn
+;;
+
+let ball_bounding_box t =
+  State.ball_bounding_box (Node.state t)
+;;
+
+let paddles_bounding_boxes t =
+  State.paddles_bounding_boxes (Node.state t)
 ;;
