@@ -1,3 +1,5 @@
+open Core.Std let _ = _squelch_unused_module_warning_
+
 module Bounding_box = Pong_node.Bounding_box
 module Id = Pong_node.Player.Id
 module Direction = Pong_node.Direction
@@ -18,5 +20,7 @@ module type S = sig
     -> playing_as : Id.t
     -> t
 
-  val step : Game_state.t -> Direction.t option
+  val step : t -> Game_state.t -> (t * Direction.t option)
+
+  val on_event : t -> Sdlevent.t -> t
 end
