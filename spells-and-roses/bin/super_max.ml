@@ -32,7 +32,7 @@ let run_pong_game ~data_dir ~player_file mode =
   let module Pong_player = (val player : Pong_player_intf.S) in
   let module Args = (struct let mode = mode;; end) in
   let module Pong =
-    (val (module Pong.Make(Pong_player)(Args) : Game.S) : Game.S)
+    (val (module Pong.Make(Pong_player)(Args) : Game.Pure) : Game.Pure)
   in
   Game.run (module Pong) ~data_dir
 ;;
