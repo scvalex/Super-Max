@@ -74,17 +74,22 @@ let main () =
             (fun data_dir () ->
                Game.run (module Demo) ~data_dir))
        ; ("pong",
-          Command.async_basic
+          Command.group
             ~summary:"Play pong"
-            Flag.(empty +> data_dir +> player_file)
-            (fun data_dir player_file () ->
-               Pong.load_player ~file:player_file
-               >>= fun player ->
-               let module Pong_player = (val player : Pong_player_intf.S) in
-               let module Pong =
-                 (val (module Pong.Make(Pong_player) : Game.S) : Game.S)
-               in
-               Game.run (module Pong) ~data_dir))
+            [ ("host",
+               Command.async_basic
+                 ~summary:"Host a pong game"
+                 Flag.(empty +> data_dir +> player_file)
+                 (fun data_dir player_file () ->
+                    Pong.load_player ~file:player_file
+                    >>= fun player ->
+                    let module Pong_player = (val player : Pong_player_intf.S) in
+                    let module Args = (struct let mode = `Host;; end) in
+                    let module Pong =
+                      (val (module Pong.Make(Pong_player)(Args) : Game.S) : Game.S)
+                    in
+                    Game.run (module Pong) ~data_dir))
+            ])
        ])
 ;;
 

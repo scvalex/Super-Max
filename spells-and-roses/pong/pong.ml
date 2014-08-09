@@ -19,11 +19,16 @@ let load_player ~file =
   |! Deferred.Or_error.ok_exn
 ;;
 
-module Make(Pong_player : Pong_player_intf.S) = struct
+module type Args = sig
+  val mode : [`Host | `Connect_to of string]
+end
+
+module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
   type t = {
-    node     : Pong_node.t;
-    player_a : Pong_player.t;
-    step     : int;
+    node       : Pong_node.t;
+    player     : Pong_player.t;
+    playing_as : Id.t;
+    step       : int;
   }
 
   let steps_per_sec = 60.0;;
@@ -36,13 +41,18 @@ module Make(Pong_player : Pong_player_intf.S) = struct
     let width = Float.of_int width in
     let height = Float.of_int height in
     let node = Pong_node.create ~width ~height in
-    let player_a = Pong_player.create ~width ~height ~playing_as:Id.A in
+    let playing_as =
+      match Args.mode with
+      | `Host         -> Id.A
+      | `Connect_to _ -> Id.B
+    in
+    let player = Pong_player.create ~width ~height ~playing_as in
     let step = 0 in
     let node =
       let computer = Node.Id.of_string "computer" in
       let node =
         Pong_node.on_event node
-          (player_event player_a step (Pong_event.Player_join Id.A))
+          (player_event player step (Pong_event.Player_join playing_as))
       in
       let node =
         Pong_node.on_event node
@@ -50,7 +60,7 @@ module Make(Pong_player : Pong_player_intf.S) = struct
       in
       node
     in
-    { node; player_a; step; }
+    { node; player; playing_as; step; }
   ;;
 
   let to_drawing t =
@@ -66,23 +76,23 @@ module Make(Pong_player : Pong_player_intf.S) = struct
       let ball = Pong_node.ball_bounding_box t.node in
       { Pong_player_intf.Game_state. paddles; ball; }
     in
-    let (player_a, dir_a) = Pong_player.on_step t.player_a game_state in
+    let (player, dir_a) = Pong_player.on_step t.player game_state in
     let node =
       Option.value_map dir_a ~default:t.node
         ~f:(fun dir_a ->
             Pong_node.on_event t.node
-              (player_event player_a t.step (Pong_event.Move (Id.A, dir_a))))
+              (player_event player t.step (Pong_event.Move (t.playing_as, dir_a))))
     in
     let node = Pong_node.on_step node in
     let step = t.step + 1 in
-    `Continue { t with node; player_a; step; }
+    `Continue { t with node; player; step; }
   ;;
 
   let on_event t ev =
-    match Pong_player.on_event t.player_a ev with
+    match Pong_player.on_event t.player ev with
     | `Quit ->
       `Quit
-    | `Continue player_a ->
-      `Continue { t with player_a; }
+    | `Continue player ->
+      `Continue { t with player; }
   ;;
 end
