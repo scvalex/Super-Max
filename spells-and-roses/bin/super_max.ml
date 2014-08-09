@@ -12,6 +12,11 @@ module Flag = struct
   let player_file =
     anon ("PLAYER-FILE" %: file)
   ;;
+
+  let host =
+    flag "server" (required (Command.Spec.Arg_type.create Host_and_port.of_string))
+      ~doc:"HOST pong server address"
+  ;;
 end
 
 let test_command ~summary f =
@@ -19,6 +24,17 @@ let test_command ~summary f =
     Flag.(empty +> data_dir)
     (fun data_dir () ->
        f ~data_dir)
+;;
+
+let run_pong_game ~data_dir ~player_file mode =
+  Pong.load_player ~file:player_file
+  >>= fun player ->
+  let module Pong_player = (val player : Pong_player_intf.S) in
+  let module Args = (struct let mode = mode;; end) in
+  let module Pong =
+    (val (module Pong.Make(Pong_player)(Args) : Game.S) : Game.S)
+  in
+  Game.run (module Pong) ~data_dir
 ;;
 
 let main () =
@@ -81,14 +97,13 @@ let main () =
                  ~summary:"Host a pong game"
                  Flag.(empty +> data_dir +> player_file)
                  (fun data_dir player_file () ->
-                    Pong.load_player ~file:player_file
-                    >>= fun player ->
-                    let module Pong_player = (val player : Pong_player_intf.S) in
-                    let module Args = (struct let mode = `Host;; end) in
-                    let module Pong =
-                      (val (module Pong.Make(Pong_player)(Args) : Game.S) : Game.S)
-                    in
-                    Game.run (module Pong) ~data_dir))
+                    run_pong_game ~data_dir ~player_file `Host))
+            ; ("connect-to",
+               Command.async_basic
+                 ~summary:"Connect to a pong game"
+                 Flag.(empty +> data_dir +> player_file +> host)
+                 (fun data_dir player_file host () ->
+                    run_pong_game ~data_dir ~player_file (`Connect_to host)))
             ])
        ])
 ;;

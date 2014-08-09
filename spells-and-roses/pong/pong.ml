@@ -20,7 +20,7 @@ let load_player ~file =
 ;;
 
 module type Args = sig
-  val mode : [`Host | `Connect_to of string]
+  val mode : [`Host | `Connect_to of Host_and_port.t]
 end
 
 module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
