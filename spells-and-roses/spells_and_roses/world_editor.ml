@@ -331,9 +331,9 @@ module Ui(W : World.S) = struct
         let focused = `Editor in
         let t = { editor; focused; width; height; } in
         let initial_state = t in
-        let steps_per_sec = 60.0 in
+        let steps_per_second = 60.0 in
         Game.main_loop ~initial_state ~on_event ~on_step
-          ~steps_per_sec ~to_drawing ~ctx)
+          ~steps_per_second ~to_drawing ~ctx)
   ;;
 end
 

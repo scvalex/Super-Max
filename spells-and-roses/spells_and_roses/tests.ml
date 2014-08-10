@@ -14,10 +14,10 @@ let simple_animation ~to_drawing ~data_dir =
       let on_step (`Step step) =
         `Continue (`Step (step + 1))
       in
-      let steps_per_sec = 60.0 in
+      let steps_per_second = 60.0 in
       let to_drawing = to_drawing ~width ~height in
       Game.main_loop ~initial_state ~on_event ~on_step
-        ~steps_per_sec ~to_drawing ~ctx)
+        ~steps_per_second ~to_drawing ~ctx)
 ;;
 
 module Moving_rectangle = struct
@@ -93,7 +93,7 @@ module Static_text = struct
           let position_y = state.position_y +. acceleration in
           `Continue {state with acceleration; position_y; }
         in
-        let steps_per_sec = 60.0 in
+        let steps_per_second = 60.0 in
         let to_drawing state =
           Drawing.
             (centered_normalized_scene ~width ~height
@@ -103,7 +103,7 @@ module Static_text = struct
                      hamlet's_soliloquy)))
         in
         Game.main_loop ~initial_state ~on_event ~on_step
-          ~steps_per_sec ~to_drawing ~ctx)
+          ~steps_per_second ~to_drawing ~ctx)
   ;;
 end
 

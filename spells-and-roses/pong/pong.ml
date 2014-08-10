@@ -31,7 +31,7 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
     step       : int;
   }
 
-  let steps_per_sec = 60.0;;
+  let steps_per_second = 60.0;;
 
   let player_event pong_player step pong_event =
     Event.create ~source:(Pong_player.source pong_player) ~step pong_event

@@ -18,5 +18,5 @@ module type S = sig
 
   val to_drawing : t -> Drawing.t
 
-  val steps_per_sec : float
+  val steps_per_second : float
 end

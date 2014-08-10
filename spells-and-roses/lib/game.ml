@@ -3,9 +3,9 @@ open Async.Std
 
 include Game_intf
 
-let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
+let main_loop ~initial_state ~on_event ~on_step ~steps_per_second
     ~to_drawing ~ctx =
-  let slice = Float.iround_exn (1000.0 /. steps_per_sec) in
+  let slice = Float.iround_exn (1000.0 /. steps_per_second) in
   let rec event_loop ~state ~history ~step =
     match Sdlevent.poll_event () with
     | None ->
@@ -59,7 +59,7 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_sec
   Printf.eprintf "Game loop finished at step %d with history %d long\n%!"
     step (List.length history);
   Printf.eprintf "Skipped frames: %d (%.2f/s)\n%!"
-    skipped_frames Float.(of_int skipped_frames /. (of_int step /. steps_per_sec));
+    skipped_frames Float.(of_int skipped_frames /. (of_int step /. steps_per_second));
 ;;
 
 let with_sdl ~f ~data_dir =
@@ -101,7 +101,7 @@ let run game ~data_dir =
         ~initial_state:(G.create ~width ~height)
         ~on_event:G.on_event
         ~on_step:G.on_step
-        ~steps_per_sec:G.steps_per_sec
+        ~steps_per_second:G.steps_per_second
         ~to_drawing:G.to_drawing
         ~ctx)
 ;;

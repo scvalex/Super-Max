@@ -52,7 +52,7 @@ module World_editor_private = struct
   ;;
 end
 
-let steps_per_sec = 60.0;;
+let steps_per_second = 60.0;;
 
 let create ~width ~height =
   let entities = World_editor_private.entities in
