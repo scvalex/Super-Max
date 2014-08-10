@@ -3,6 +3,9 @@ open Core.Std
 include module type of Node_intf
 
 module Make(State : State) : sig
+  (** The [Node.t] is the container for the logic of the game.  It is
+      a pure finite state machine that takes events as input and
+      mutates the state in a predictable way. *)
   type t
 
   val create :

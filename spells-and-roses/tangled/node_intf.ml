@@ -15,6 +15,10 @@ module type State = sig
     val step : t -> int
   end
 
+  (** The [State.t] of a [Node.t] is a pure representation of a
+      snapshot of the game state.  It must be pure because the node
+      makes copies of it, applies different events to different
+      copies, and sends it over the wire. *)
   type t
 
   include Binable.S with type t := t
