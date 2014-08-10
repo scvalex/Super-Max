@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 2e09576e4a72f35fcdc52a0493162d06) *)
+(* DO NOT EDIT (digest: 612468f1d749dd90b215e5febb8c68dd) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -597,7 +597,6 @@ let package_default =
   {
      MyOCamlbuildBase.lib_ocaml =
        [
-          ("tangled", ["tangled"], []);
           ("lib", ["lib"], []);
           ("spells_and_roses", ["spells_and_roses"], []);
           ("pong", ["pong"], []);
@@ -608,15 +607,15 @@ let package_default =
      includes =
        [
           ("spells_and_roses", ["lib"]);
-          ("pong", ["lib"; "tangled"]);
-          ("bin", ["lib"; "plugin"; "pong"; "spells_and_roses"; "tangled"])
+          ("pong", ["lib"]);
+          ("bin", ["lib"; "plugin"; "pong"; "spells_and_roses"])
        ]
   }
   ;;
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 
-# 620 "myocamlbuild.ml"
+# 619 "myocamlbuild.ml"
 (* OASIS_STOP *)
 
 let dispatch = function
@@ -631,15 +630,15 @@ let dispatch = function
             ; "lib/entity.cmi"
             ; "lib/game.cmi"
             ; "lib/game_intf.cmi"
+            ; "lib/logic_world.cmi"
+            ; "lib/logic_world_intf.cmi"
             ; "lib/mat.cmi"
             ; "lib/mlog.cmi"
             ; "lib/world.cmi"
             ; "lib/world_intf.cmi"
             ; "spells_and_roses/demo_entities.cmi"
             ; "spells_and_roses/tests.cmi"
-            ; "tangled/node.cmi"
-            ; "tangled/node_intf.cmi"
-            ; "pong/pong_node.cmi"
+            ; "pong/pong_logic.cmi"
             ; "pong/pong_player_intf.cmi"
             ; "bin/script_intf.cmi"
             ]
@@ -667,15 +666,15 @@ let dispatch = function
                  A "lib/entity.cmi";
                  A "lib/game.cmi";
                  A "lib/game_intf.cmi";
+                 A "lib/logic_world.cmi";
+                 A "lib/logic_world_intf.cmi";
                  A "lib/mat.cmi";
                  A "lib/mlog.cmi";
                  A "lib/world.cmi";
                  A "lib/world_intf.cmi";
-                 A "tangled/node.cmi";
-                 A "tangled/node_intf.cmi";
                  A "spells_and_roses/demo_entities.cmi";
                  A "spells_and_roses/tests.cmi";
-                 A "pong/pong_node.cmi";
+                 A "pong/pong_logic.cmi";
                  A "pong/pong_player_intf.cmi";
                  A "bin/script_intf.cmi";
                  A "-o"; A "plugin/ocaml_archive.c"]))

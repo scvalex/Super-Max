@@ -1,12 +1,12 @@
 open Core.Std
 
-include Node_intf
+include Logic_world_intf
 
 exception Event_not_in_range of (int * int) with sexp
 exception Step_not_in_history of int with sexp
 
-module Make(State : State) = struct
-  module Event = State.Event
+module Make(Logic_state : Logic_state) = struct
+  module Event = Logic_state.Event
 
   (* History semantics:
        (state_i, events_i), (state_i+1, _), ...
@@ -14,7 +14,7 @@ module Make(State : State) = struct
   type t = {
     step                   : int;
     history_rewrite_cutoff : int;
-    history                : (Event.Set.t *  State.t) Int.Map.t;
+    history                : (Event.Set.t *  Logic_state.t) Int.Map.t;
   }
 
   let create ~step ~state ~history_rewrite_cutoff =
@@ -30,7 +30,7 @@ module Make(State : State) = struct
       state
     else
       List.fold_left ~init:state (Set.to_list events) ~f:(fun state ev ->
-          State.on_event state ev)
+          Logic_state.on_event state ev)
   ;;
 
   let rec recompute_history t ~after =
@@ -41,7 +41,7 @@ module Make(State : State) = struct
       let (events, state) =
         Option.value_exn ~here:_here_ (Map.find t.history after)
       in
-      let state' = State.on_step (apply_events state events) in
+      let state' = Logic_state.on_step (apply_events state events) in
       let history =
         Map.change t.history (after + 1) (fun history_entry ->
             let (events', _) = Option.value_exn ~here:_here_ history_entry in
@@ -74,7 +74,7 @@ module Make(State : State) = struct
     let (events, state) =
       Option.value_exn ~here:_here_ (Map.find t.history t.step)
     in
-    let state' = State.on_step (apply_events state events) in
+    let state' = Logic_state.on_step (apply_events state events) in
     let step' = t.step + 1 in
     let history =
       (* CR scvalex: Prune history that's too old to be interesting.

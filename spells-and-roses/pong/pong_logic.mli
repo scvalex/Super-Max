@@ -47,7 +47,7 @@ module Event : sig
   type t with sexp
 
   val create :
-    source : Node.Id.t
+    source : Logic_world.Source_id.t
     -> step : int
     -> Pong_event.t
     -> t

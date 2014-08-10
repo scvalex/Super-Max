@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 129c639924a5a73a09e204f2b638e4b8)
+# DO NOT EDIT (digest: f2c7cc29578a430a70ae9219629368c2)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -13,14 +13,6 @@
 ".git": not_hygienic
 "_darcs": -traverse
 "_darcs": not_hygienic
-# Library tangled
-"tangled/tangled.cmxs": use_tangled
-<tangled/*.ml{,i}>: package(core)
-<tangled/*.ml{,i}>: package(herelib)
-<tangled/*.ml{,i}>: package(herelib.syntax)
-<tangled/*.ml{,i}>: package(sexplib)
-<tangled/*.ml{,i}>: package(sexplib.syntax)
-<tangled/*.ml{,i}>: package(threads)
 # Library lib
 "lib/lib.cmxs": use_lib
 <lib/*.ml{,i}>: package(async)
@@ -29,6 +21,8 @@
 <lib/*.ml{,i}>: package(core)
 <lib/*.ml{,i}>: package(fieldslib)
 <lib/*.ml{,i}>: package(fieldslib.syntax)
+<lib/*.ml{,i}>: package(herelib)
+<lib/*.ml{,i}>: package(herelib.syntax)
 <lib/*.ml{,i}>: package(ocaml_plugin)
 <lib/*.ml{,i}>: package(sdl2)
 <lib/*.ml{,i}>: package(sdl2_img)
@@ -46,6 +40,8 @@
 <spells_and_roses/*.ml{,i}>: package(core)
 <spells_and_roses/*.ml{,i}>: package(fieldslib)
 <spells_and_roses/*.ml{,i}>: package(fieldslib.syntax)
+<spells_and_roses/*.ml{,i}>: package(herelib)
+<spells_and_roses/*.ml{,i}>: package(herelib.syntax)
 <spells_and_roses/*.ml{,i}>: package(ocaml_plugin)
 <spells_and_roses/*.ml{,i}>: package(sdl2)
 <spells_and_roses/*.ml{,i}>: package(sdl2_img)
@@ -74,7 +70,6 @@
 <pong/*.ml{,i}>: package(sexplib.syntax)
 <pong/*.ml{,i}>: package(threads)
 <pong/*.ml{,i}>: use_lib
-<pong/*.ml{,i}>: use_tangled
 # Library ocaml_plugin_archive
 "plugin/ocaml_plugin_archive.cmxs": use_ocaml_plugin_archive
 <plugin/ocaml_plugin_archive.{cma,cmxa}>: use_libocaml_plugin_archive_stubs
@@ -109,7 +104,6 @@
 <bin/super_max.{native,byte}>: use_ocaml_plugin_archive
 <bin/super_max.{native,byte}>: use_pong
 <bin/super_max.{native,byte}>: use_spells_and_roses
-<bin/super_max.{native,byte}>: use_tangled
 <bin/*.ml{,i}>: package(async)
 <bin/*.ml{,i}>: package(bin_prot)
 <bin/*.ml{,i}>: package(bin_prot.syntax)
@@ -132,6 +126,5 @@
 <bin/*.ml{,i}>: use_ocaml_plugin_archive
 <bin/*.ml{,i}>: use_pong
 <bin/*.ml{,i}>: use_spells_and_roses
-<bin/*.ml{,i}>: use_tangled
 # OASIS_STOP
-<{bin,lib,plugin,spells_and_roses,tangled,pong}/*.ml{,i}>: syntax_camlp4o
+<{bin,lib,plugin,spells_and_roses,pong}/*.ml{,i}>: syntax_camlp4o

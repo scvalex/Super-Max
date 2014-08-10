@@ -2,10 +2,10 @@ open Core.Std
 open Async.Std
 open Ocaml_plugin.Std
 
-module Event = Pong_node.Event
-module Pong_event = Pong_node.Pong_event
-module Id = Pong_node.Player.Id
-module Dir = Pong_node.Direction
+module Event = Pong_logic.Event
+module Pong_event = Pong_logic.Pong_event
+module Id = Pong_logic.Player.Id
+module Dir = Pong_logic.Direction
 
 module Pong_player_compiler = Ocaml_compiler.Make(struct
   type t = (module Pong_player_intf.S)
@@ -33,7 +33,7 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
   end
 
   type t = {
-    node       : Pong_node.t;
+    node       : Pong_logic.t;
     player     : Pong_player.t;
     playing_as : Id.t;
     step       : int;
@@ -49,7 +49,7 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
     let width = Float.of_int width in
     let height = Float.of_int height in
     let node =
-      Pong_node.create ~width ~height
+      Pong_logic.create ~width ~height
         ~history_rewrite_cutoff:(Float.iround_exn steps_per_second)
     in
     let playing_as =
@@ -60,13 +60,13 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
     let player = Pong_player.create ~width ~height ~playing_as in
     let step = 0 in
     let node =
-      let computer = Node.Id.of_string "computer" in
+      let computer = Logic_world.Source_id.of_string "computer" in
       let node =
-        Pong_node.on_event node
+        Pong_logic.on_event node
           (player_event player step (Pong_event.Player_join playing_as))
       in
       let node =
-        Pong_node.on_event node
+        Pong_logic.on_event node
           (Event.create ~source:computer ~step (Pong_event.Player_join Id.B))
       in
       node
@@ -77,24 +77,24 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
   let to_drawing t =
     let open Drawing in
     many
-      [ Pong_node.to_drawing t.node
+      [ Pong_logic.to_drawing t.node
       ]
   ;;
 
   let on_step t =
     let game_state =
-      let paddles = Pong_node.paddles_bounding_boxes t.node in
-      let ball = Pong_node.ball_bounding_box t.node in
+      let paddles = Pong_logic.paddles_bounding_boxes t.node in
+      let ball = Pong_logic.ball_bounding_box t.node in
       { Pong_player_intf.Game_state. paddles; ball; }
     in
     let (player, dir_a) = Pong_player.on_step t.player game_state in
     let node =
       Option.value_map dir_a ~default:t.node
         ~f:(fun dir_a ->
-            Pong_node.on_event t.node
+            Pong_logic.on_event t.node
               (player_event player t.step (Pong_event.Move (t.playing_as, dir_a))))
     in
-    let node = Pong_node.on_step node in
+    let node = Pong_logic.on_step node in
     let step = t.step + 1 in
     `Continue { t with node; player; step; }
   ;;

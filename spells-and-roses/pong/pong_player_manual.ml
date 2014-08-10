@@ -1,5 +1,5 @@
 open Core.Std let _ = _squelch_unused_module_warning_
-open Pong_node.Direction
+open Pong_logic.Direction
 
 module Input_event = struct
   module T = struct
@@ -69,5 +69,5 @@ let on_event t ev =
 ;;
 
 let source _t =
-  Node.Id.of_string (Unix.getlogin ())
+  Logic_world.Source_id.of_string (Unix.getlogin ())
 ;;

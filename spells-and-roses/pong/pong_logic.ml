@@ -232,7 +232,7 @@ module State = struct
   module Event = struct
     module T = struct
       type t = {
-        source : Node.Id.t;
+        source : Logic_world.Source_id.t;
         step   : int;
         event  : Pong_event.t;
       } with fields, sexp, compare
@@ -377,41 +377,41 @@ module State = struct
   ;;
 end
 
-module Node = Node.Make(State)
+module Logic_world = Logic_world.Make(State)
 module Event = State.Event
 
-type t = Node.t
+type t = Logic_world.t
 
 let create ~width ~height ~history_rewrite_cutoff =
-  Node.create ~step:0 ~history_rewrite_cutoff
+  Logic_world.create ~step:0 ~history_rewrite_cutoff
     ~state:(State.create ~width ~height)
 ;;
 
 let create_with_state state ~history_rewrite_cutoff =
-  Node.create ~step:0 ~history_rewrite_cutoff ~state
+  Logic_world.create ~step:0 ~history_rewrite_cutoff ~state
 ;;
 
 let state t =
-  Node.state t
+  Logic_world.state t
 ;;
 
 let to_drawing t =
-  State.to_drawing (Node.state t)
+  State.to_drawing (Logic_world.state t)
 ;;
 
 let on_step t =
-  Node.on_step t
+  Logic_world.on_step t
 ;;
 
 let on_event t ev =
-  Node.add_event t ev
+  Logic_world.add_event t ev
   |> Or_error.ok_exn
 ;;
 
 let ball_bounding_box t =
-  State.ball_bounding_box (Node.state t)
+  State.ball_bounding_box (Logic_world.state t)
 ;;
 
 let paddles_bounding_boxes t =
-  State.paddles_bounding_boxes (Node.state t)
+  State.paddles_bounding_boxes (Logic_world.state t)
 ;;

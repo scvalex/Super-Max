@@ -1,9 +1,9 @@
 open Core.Std let _ = _squelch_unused_module_warning_
 open Ocaml_plugin.Std
 
-module Bounding_box = Pong_node.Bounding_box
-module Id = Pong_node.Player.Id
-module Direction = Pong_node.Direction
+module Bounding_box = Pong_logic.Bounding_box
+module Id = Pong_logic.Player.Id
+module Direction = Pong_logic.Direction
 
 module Game_state = struct
   type t = {
@@ -25,7 +25,7 @@ module type S = sig
 
   val on_event : t -> Sdlevent.t -> [`Continue of t | `Quit]
 
-  val source : t -> Node.Id.t
+  val source : t -> Logic_world.Source_id.t
 end
 
 let univ_constr : (module S) Ocaml_dynloader.Univ_constr.t =
