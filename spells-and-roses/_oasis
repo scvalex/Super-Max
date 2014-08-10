@@ -104,6 +104,7 @@ Library ocaml_plugin_archive
   Modules:            Script_plugin_dummy
   Pack:               false
   BuildDepends:
+    bin_prot,
     ocaml_plugin,
     sexplib,
     threads,
@@ -116,9 +117,13 @@ Executable super_max
   Install:            true
   BuildDepends:
     async,
+    bin_prot,
+    bin_prot.syntax,
     core,
     ocaml_plugin_archive,
     pong,
+    sexplib,
+    sexplib.syntax,
     spells_and_roses,
     super_max,
     threads

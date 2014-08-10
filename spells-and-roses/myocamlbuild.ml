@@ -661,6 +661,7 @@ let dispatch = function
                  A (loc "fieldslib" / "fieldslib.cmi");
                  A (loc "comparelib" / "comparelib_dummy.cmi");
                  A (loc "sexplib" / "sexplib.cmi");
+                 A (loc "bin_prot" / "bin_prot.cmi");
                  A (loc "sdl2" / "sdlevent.cmi");
                  A (loc "sdl2" / "sdlkeycode.cmi");
                  A "lib/drawing.cmi";
