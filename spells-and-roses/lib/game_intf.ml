@@ -4,7 +4,7 @@ module Resp = struct
   type 'a t = [`Continue of 'a | `Quit]
 end
 
-module type Pure = sig
+module type S = sig
   type t
 
   val create :

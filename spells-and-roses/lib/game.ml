@@ -95,7 +95,7 @@ let with_sdl ~f ~data_dir =
 ;;
 
 let run game ~data_dir =
-  let module G = (val game : Pure) in
+  let module G = (val game : S) in
   with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
       main_loop
         ~initial_state:(G.create ~width ~height)

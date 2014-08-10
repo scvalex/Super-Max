@@ -20,6 +20,6 @@ val with_sdl :
   -> unit Deferred.t
 
 val run :
-     (module Pure)
+     (module S)
   -> data_dir : string
   -> unit Deferred.t
