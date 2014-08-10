@@ -1,0 +1,3 @@
+[submodule "spells-and-roses/packages/jenga"]
+	path = spells-and-roses/packages/jenga
+	url = https://github.com/janestreet/jenga
