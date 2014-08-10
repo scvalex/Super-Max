@@ -6,7 +6,8 @@ include module type of Game_intf
     fixed number of [steps_per_second] regardless of rendering time.
     Since the Async scheduler is running, it is possible to run Async
     jobs in the event handlers, but they are not allowed to block the
-    event loop. *)
+    event loop.  In other words, the event handlers may be impure but
+    non-blocking. *)
 val main_loop :
      initial_state : 'a
   -> on_event : ('a -> Sdlevent.t -> 'a Resp.t)

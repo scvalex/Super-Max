@@ -80,6 +80,14 @@ let on_step t =
   `Continue t
 ;;
 
+let on_update_query t _query =
+  (t, `Reject)
+;;
+
+let on_update t _update =
+  t
+;;
+
 let on_event t ev =
   match ev with
   | Sdlevent.Quit _

@@ -106,4 +106,12 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
     | `Continue player ->
       `Continue { t with player; }
   ;;
+
+  let on_update_query t _query =
+    (t, `Reject)
+  ;;
+
+  let on_update t _update =
+    t
+  ;;
 end
