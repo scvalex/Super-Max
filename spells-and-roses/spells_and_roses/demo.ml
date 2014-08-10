@@ -1,4 +1,4 @@
-open Core.Std let _ = _squelch_unused_module_warning_
+open Core.Std
 
 module D = Demo_entities
 module Pos = World.Position
@@ -50,6 +50,14 @@ module World_editor_private = struct
     in
     acc
   ;;
+end
+
+module Update = struct
+  module Query = struct
+    type t = unit with bin_io, sexp
+  end
+
+  type t = unit with bin_io, sexp
 end
 
 let steps_per_second = 60.0;;

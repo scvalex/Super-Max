@@ -1,10 +1,24 @@
-open Core.Std let _ = _squelch_unused_module_warning_
+open Core.Std
 
 module Resp = struct
   type 'a t = [`Continue of 'a | `Quit]
 end
 
 module type S = sig
+  module Update : sig
+    module Query : sig
+      type t
+
+      include Binable.S with type t := t
+      include Sexpable.S with type t := t
+    end
+
+    type t
+
+    include Binable.S with type t := t
+    include Sexpable.S with type t := t
+  end
+
   type t
 
   val create :

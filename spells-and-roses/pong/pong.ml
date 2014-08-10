@@ -24,6 +24,14 @@ module type Args = sig
 end
 
 module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
+  module Update = struct
+    module Query = struct
+      type t = unit with bin_io, sexp
+    end
+
+    type t = unit with bin_io, sexp
+  end
+
   type t = {
     node       : Pong_node.t;
     player     : Pong_player.t;

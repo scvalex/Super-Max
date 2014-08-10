@@ -71,9 +71,13 @@ Library spells_and_roses
   Pack:               false
   BuildDepends:
     async,
+    bin_prot,
+    bin_prot.syntax,
     core,
     ocaml_plugin,
     sdl2,
+    sexplib,
+    sexplib.syntax,
     super_max,
     threads
   Modules:
