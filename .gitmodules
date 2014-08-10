@@ -1,3 +1,81 @@
 [submodule "spells-and-roses/packages/jenga"]
 	path = spells-and-roses/packages/jenga
 	url = https://github.com/janestreet/jenga
+[submodule "spells-and-roses/packages/ocaml_plugin"]
+	path = spells-and-roses/packages/ocaml_plugin
+	url = https://github.com/janestreet/ocaml_plugin
+[submodule "spells-and-roses/packages/async"]
+	path = spells-and-roses/packages/async
+	url = https://github.com/janestreet/async
+[submodule "spells-and-roses/packages/async_extra"]
+	path = spells-and-roses/packages/async_extra
+	url = https://github.com/janestreet/async_extra
+[submodule "spells-and-roses/packages/async_find"]
+	path = spells-and-roses/packages/async_find
+	url = https://github.com/janestreet/async_find
+[submodule "spells-and-roses/packages/async_inotify"]
+	path = spells-and-roses/packages/async_inotify
+	url = https://github.com/janestreet/async_inotify
+[submodule "spells-and-roses/packages/async_kernel"]
+	path = spells-and-roses/packages/async_kernel
+	url = https://github.com/janestreet/async_kernel
+[submodule "spells-and-roses/packages/async_parallel"]
+	path = spells-and-roses/packages/async_parallel
+	url = https://github.com/janestreet/async_parallel
+[submodule "spells-and-roses/packages/async_unix"]
+	path = spells-and-roses/packages/async_unix
+	url = https://github.com/janestreet/async_unix
+[submodule "spells-and-roses/packages/bin_prot"]
+	path = spells-and-roses/packages/bin_prot
+	url = https://github.com/janestreet/bin_prot
+[submodule "spells-and-roses/packages/comparelib"]
+	path = spells-and-roses/packages/comparelib
+	url = https://github.com/janestreet/comparelib
+[submodule "spells-and-roses/packages/core"]
+	path = spells-and-roses/packages/core
+	url = https://github.com/janestreet/core
+[submodule "spells-and-roses/packages/core_kernel"]
+	path = spells-and-roses/packages/core_kernel
+	url = https://github.com/janestreet/core_kernel
+[submodule "spells-and-roses/packages/custom_printf"]
+	path = spells-and-roses/packages/custom_printf
+	url = https://github.com/janestreet/custom_printf
+[submodule "spells-and-roses/packages/enumerate"]
+	path = spells-and-roses/packages/enumerate
+	url = https://github.com/janestreet/enumerate
+[submodule "spells-and-roses/packages/fieldslib"]
+	path = spells-and-roses/packages/fieldslib
+	url = https://github.com/janestreet/fieldslib
+[submodule "spells-and-roses/packages/herelib"]
+	path = spells-and-roses/packages/herelib
+	url = https://github.com/janestreet/herelib
+[submodule "spells-and-roses/packages/pa_bench"]
+	path = spells-and-roses/packages/pa_bench
+	url = https://github.com/janestreet/pa_bench
+[submodule "spells-and-roses/packages/pa_ounit"]
+	path = spells-and-roses/packages/pa_ounit
+	url = https://github.com/janestreet/pa_ounit
+[submodule "spells-and-roses/packages/pa_test"]
+	path = spells-and-roses/packages/pa_test
+	url = https://github.com/janestreet/pa_test
+[submodule "spells-and-roses/packages/pipebang"]
+	path = spells-and-roses/packages/pipebang
+	url = https://github.com/janestreet/pipebang
+[submodule "spells-and-roses/packages/sexplib"]
+	path = spells-and-roses/packages/sexplib
+	url = https://github.com/janestreet/sexplib
+[submodule "spells-and-roses/packages/type_conv"]
+	path = spells-and-roses/packages/type_conv
+	url = https://github.com/janestreet/type_conv
+[submodule "spells-and-roses/packages/typerep"]
+	path = spells-and-roses/packages/typerep
+	url = https://github.com/janestreet/typerep
+[submodule "spells-and-roses/packages/variantslib"]
+	path = spells-and-roses/packages/variantslib
+	url = https://github.com/janestreet/variantslib
+[submodule "spells-and-roses/packages/ocaml-inotify"]
+	path = spells-and-roses/packages/ocaml-inotify
+	url = https://github.com/vincenthz/ocaml-inotify
+[submodule "spells-and-roses/packages/ounit"]
+	path = spells-and-roses/packages/ounit
+	url = https://github.com/warrenharris/ounit
