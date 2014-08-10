@@ -11,7 +11,7 @@ module Make(State : State) : sig
   val create :
        step : int
     -> state : State.t
-    -> history_length : int
+    -> history_rewrite_cutoff : int
     -> t
 
   val add_event : t -> State.Event.t -> t Or_error.t

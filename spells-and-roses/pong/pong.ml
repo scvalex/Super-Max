@@ -40,7 +40,10 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
   let create ~width ~height =
     let width = Float.of_int width in
     let height = Float.of_int height in
-    let node = Pong_node.create ~width ~height in
+    let node =
+      Pong_node.create ~width ~height
+        ~history_rewrite_cutoff:(Float.iround_exn steps_per_second)
+    in
     let playing_as =
       match Args.mode with
       | `Host         -> Id.A

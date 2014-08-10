@@ -382,13 +382,13 @@ module Event = State.Event
 
 type t = Node.t
 
-let create ~width ~height =
-  Node.create ~step:0 ~history_length:60
+let create ~width ~height ~history_rewrite_cutoff =
+  Node.create ~step:0 ~history_rewrite_cutoff
     ~state:(State.create ~width ~height)
 ;;
 
-let create_with_state state =
-  Node.create ~step:0 ~history_length:60 ~state
+let create_with_state state ~history_rewrite_cutoff =
+  Node.create ~step:0 ~history_rewrite_cutoff ~state
 ;;
 
 let state t =

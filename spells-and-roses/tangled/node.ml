@@ -12,16 +12,16 @@ module Make(State : State) = struct
        (state_i, events_i), (state_i+1, _), ...
        state_i+1 = apply_events(state_i, events_i) *)
   type t = {
-    step           : int;
-    history_length : int;
-    history        : (Event.Set.t *  State.t) Int.Map.t;
+    step                   : int;
+    history_rewrite_cutoff : int;
+    history                : (Event.Set.t *  State.t) Int.Map.t;
   }
 
-  let create ~step ~state ~history_length =
+  let create ~step ~state ~history_rewrite_cutoff =
     let history =
       Map.add Int.Map.empty ~key:step ~data:(Event.Set.empty, state)
     in
-    { step; history_length; history; }
+    { step; history_rewrite_cutoff; history; }
   ;;
 
   let apply_events state events =
@@ -53,7 +53,7 @@ module Make(State : State) = struct
 
   let add_event t ev =
     (* We only accept events at steps in interval [[lo, hi]]. *)
-    let (lo, hi) = (t.step - t.history_length, t.step) in
+    let (lo, hi) = (t.step - t.history_rewrite_cutoff, t.step) in
     let ev_step = Event.step ev in
     if Int.(ev_step < lo || hi < ev_step)
     then begin
@@ -77,8 +77,9 @@ module Make(State : State) = struct
     let state' = State.on_step (apply_events state events) in
     let step' = t.step + 1 in
     let history =
-      Map.add ~key:step' ~data:(Event.Set.empty, state')
-        (Map.remove t.history (t.step - t.history_length))
+      (* CR scvalex: Prune history that's too old to be interesting.
+         Maybe 10 x history_rewrite_cutoff is old enough. *)
+      Map.add t.history ~key:step' ~data:(Event.Set.empty, state')
     in
     { t with step = step'; history; }
   ;;

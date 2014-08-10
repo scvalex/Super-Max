@@ -56,9 +56,13 @@ end
 val create :
      width : float
   -> height : float
+  -> history_rewrite_cutoff : int
   -> t
 
-val create_with_state : State.t -> t
+val create_with_state :
+     State.t
+  -> history_rewrite_cutoff : int
+  -> t
 
 val state : t -> State.t
 
