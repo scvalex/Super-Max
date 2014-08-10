@@ -1,5 +1,12 @@
 open Core.Std
 
+module type Binable_and_sexpable = sig
+  type t
+
+  include Binable.S with type t := t
+  include Sexpable.S with type t := t
+end
+
 module Event_handled = struct
   type ('state, 'update) t =
     [ `Continue of ('state * 'update option)
@@ -7,13 +14,22 @@ module Event_handled = struct
     ]
 end
 
+module Client_id =
+  String_id.Make(struct let module_name = "Client_id" end)
+
+module Query_response = struct
+  type t =
+    [ `Accept of Client_id.t
+    | `Reject of string
+    ] with sexp
+end
+
 module type S = sig
   module Update : sig
     module Query : sig
       type t
 
-      include Binable.S with type t := t
-      include Sexpable.S with type t := t
+      include Binable_and_sexpable with type t := t
     end
 
     (** An [Update.t] is sent from [Node.t] to [Node.t] over the
@@ -21,8 +37,7 @@ module type S = sig
         one instance of the game to another. *)
     type t
 
-    include Binable.S with type t := t
-    include Sexpable.S with type t := t
+    include Binable_and_sexpable with type t := t
   end
 
   type t
@@ -39,7 +54,7 @@ module type S = sig
   val on_update_query :
        t
     -> Update.Query.t
-    -> (t * [`Accept | `Reject of string])
+    -> (t * Query_response.t)
 
   val on_update : t -> Update.t -> t
 
