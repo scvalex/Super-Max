@@ -1,7 +1,7 @@
 open Core.Std
 
 module Direction = struct
-  type t = Up | Down with sexp, compare
+  type t = Up | Down with bin_io, sexp, compare
 end
 open Direction
 
@@ -9,7 +9,7 @@ module Xy = struct
   type t = {
     x : float;
     y : float;
-  } with sexp
+  } with bin_io, sexp
 end
 open Xy
 
@@ -48,11 +48,11 @@ let snapback ~lower ~upper x =
 
 module Player_id = struct
   module T = struct
-    type t = A | B with sexp, compare
+    type t = A | B with bin_io, sexp, compare
   end
 
   include T
-  include Comparable.Make(T)
+  include Comparable.Make_binable(T)
   include Sexpable.To_stringable(T)
 
   let other_player = function
@@ -70,7 +70,7 @@ module Paddle = struct
     dims          : Xy.t;
     move_disp     : float;
     player        : Player_id.t;
-  }
+  } with bin_io, sexp
 
   let create ~width ~height player =
     let dims =
@@ -123,7 +123,7 @@ module Ball = struct
     pos       : Xy.t;
     ball_dim  : float;
     move_disp : Xy.t;
-  } with fields
+  } with bin_io, sexp, fields
 
   let start_pos ~width ~height ~ball_dim =
     let x = (width -. ball_dim) /. 2.0 in
@@ -197,7 +197,7 @@ module Player = struct
     paddle : Paddle.t;
     score  : int;
     moving : Direction.t option;
-  } with fields
+  } with bin_io, sexp, fields
 
   let create id ~height ~width =
     let paddle = Paddle.create ~width ~height id in
@@ -253,7 +253,7 @@ module State = struct
     score             : int Player.Id.Map.t;
     players_connected : Player.Id.Set.t;
     ball              : Ball.t;
-  }
+  } with bin_io, sexp
 
   let with_players t ~f =
     let player_a = Map.find_exn t.players A in
@@ -385,6 +385,14 @@ type t = Node.t
 let create ~width ~height =
   Node.create ~step:0 ~history_length:60
     ~state:(State.create ~width ~height)
+;;
+
+let create_with_state state =
+  Node.create ~step:0 ~history_length:60 ~state
+;;
+
+let state t =
+  Node.state t
 ;;
 
 let to_drawing t =

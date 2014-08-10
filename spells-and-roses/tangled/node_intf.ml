@@ -17,6 +17,9 @@ module type State = sig
 
   type t
 
+  include Binable.S with type t := t
+  include Sexpable.S with type t := t
+
   val on_step : t -> t
 
   val on_event : t -> Event.t -> t

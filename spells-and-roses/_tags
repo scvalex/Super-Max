@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: e591e90fc26ab39e6479c1ff97771533)
+# DO NOT EDIT (digest: cc6d9ddd3f1d9a72b5d08b9a96681a35)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -55,6 +55,8 @@
 # Library pong
 "pong/pong.cmxs": use_pong
 <pong/*.ml{,i}>: package(async)
+<pong/*.ml{,i}>: package(bin_prot)
+<pong/*.ml{,i}>: package(bin_prot.syntax)
 <pong/*.ml{,i}>: package(comparelib)
 <pong/*.ml{,i}>: package(comparelib.syntax)
 <pong/*.ml{,i}>: package(core)
@@ -84,6 +86,8 @@
 "plugin/ocaml_archive.c": package(type_conv)
 # Executable super_max
 <bin/super_max.{native,byte}>: package(async)
+<bin/super_max.{native,byte}>: package(bin_prot)
+<bin/super_max.{native,byte}>: package(bin_prot.syntax)
 <bin/super_max.{native,byte}>: package(comparelib)
 <bin/super_max.{native,byte}>: package(comparelib.syntax)
 <bin/super_max.{native,byte}>: package(core)
@@ -105,6 +109,8 @@
 <bin/super_max.{native,byte}>: use_spells_and_roses
 <bin/super_max.{native,byte}>: use_tangled
 <bin/*.ml{,i}>: package(async)
+<bin/*.ml{,i}>: package(bin_prot)
+<bin/*.ml{,i}>: package(bin_prot.syntax)
 <bin/*.ml{,i}>: package(comparelib)
 <bin/*.ml{,i}>: package(comparelib.syntax)
 <bin/*.ml{,i}>: package(core)

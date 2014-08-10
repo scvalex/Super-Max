@@ -1,5 +1,12 @@
 open Core.Std
 
+module State : sig
+  type t
+
+  include Binable.S with type t := t
+  include Sexpable.S with type t := t
+end
+
 type t
 
 module Xy : sig
@@ -50,6 +57,10 @@ val create :
      width : float
   -> height : float
   -> t
+
+val create_with_state : State.t -> t
+
+val state : t -> State.t
 
 val to_drawing : t -> Drawing.t
 
