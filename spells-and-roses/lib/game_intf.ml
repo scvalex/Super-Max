@@ -1,9 +1,10 @@
 open Core.Std
 
-(* CR scvalex: This should be named Event_handled and should be more
-   extensible. *)
-module Resp = struct
-  type 'a t = [`Continue of 'a | `Quit]
+module Event_handled = struct
+  type ('state, 'update) t =
+    [ `Continue of ('state * 'update option)
+    | `Quit of 'update option
+    ]
 end
 
 module type S = sig
@@ -31,11 +32,14 @@ module type S = sig
     -> height : int
     -> t
 
-  val on_event : t -> Sdlevent.t -> t Resp.t
+  val on_event : t -> Sdlevent.t -> (t, Update.t) Event_handled.t
 
-  val on_step : t -> t Resp.t
+  val on_step : t -> (t, Update.t) Event_handled.t
 
-  val on_update_query : t -> Update.Query.t -> (t * [`Accept | `Reject])
+  val on_update_query :
+       t
+    -> Update.Query.t
+    -> (t * [`Accept | `Reject of string])
 
   val on_update : t -> Update.t -> t
 

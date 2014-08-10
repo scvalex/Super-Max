@@ -649,6 +649,7 @@ let dispatch = function
                  A "-pp"; P (Command.search_in_path "camlp4o.opt");
                  A "-pa-cmxs"; P (loc "type_conv" / "pa_type_conv.cmxs");
                  A "-pa-cmxs"; P (loc "sexplib" / "pa_sexp_conv.cmxs");
+                 A "-pa-cmxs"; P (loc "bin_prot" / "pa_bin_prot.cmxs");
                  A "-pa-cmxs"; P (loc "fieldslib" / "pa_fields_conv.cmxs");
                  A "-pa-cmxs"; P (loc "comparelib" / "pa_compare.cmxs");
                  A "-cc"; A (Command.search_in_path "ocamlopt.opt");

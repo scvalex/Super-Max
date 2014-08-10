@@ -3,8 +3,15 @@ open Async.Std
 
 include Game_intf
 
-let main_loop ~initial_state ~on_event ~on_step ~steps_per_second
-    ~to_drawing ~ctx =
+(* CR scvalex: Actually broadcast updates. *)
+(** [main_loop] runs the game's event loop.  It tries to run at a
+    fixed number of [steps_per_second] regardless of rendering time.
+    Since the Async scheduler is running, it is possible to run Async
+    jobs in the event handlers, but they are not allowed to block the
+    event loop.  In other words, the event handlers may be impure but
+    non-blocking. *)
+let main_loop ~initial_state ~on_event ~on_step ~on_update_query:_
+    ~on_update:_ ~steps_per_second ~to_drawing ~ctx =
   let slice = Float.iround_exn (1000.0 /. steps_per_second) in
   let rec event_loop ~state ~history ~step =
     match Sdlevent.poll_event () with
@@ -13,9 +20,9 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_second
     | Some ev ->
       let history = (step, ev) :: history in
       match on_event state ev with
-      | `Quit ->
+      | `Quit _update ->
         `Quit history
-      | `Continue state ->
+      | `Continue (state, _update) ->
         event_loop ~state ~history ~step
   in
   let rec step_loop ~state ~step ~game_ticks ~now =
@@ -24,9 +31,9 @@ let main_loop ~initial_state ~on_event ~on_step ~steps_per_second
       let game_ticks = game_ticks + slice in
       let step = step + 1 in
       match on_step state with
-      | `Quit ->
+      | `Quit _update ->
         `Quit step
-      | `Continue state ->
+      | `Continue (state, _update) ->
         step_loop ~state ~step ~game_ticks ~now
     end else begin
       `Continue (state, step, game_ticks)
@@ -101,6 +108,8 @@ let run game ~data_dir =
         ~initial_state:(G.create ~width ~height)
         ~on_event:G.on_event
         ~on_step:G.on_step
+        ~on_update_query:G.on_update_query
+        ~on_update:G.on_update
         ~steps_per_second:G.steps_per_second
         ~to_drawing:G.to_drawing
         ~ctx)

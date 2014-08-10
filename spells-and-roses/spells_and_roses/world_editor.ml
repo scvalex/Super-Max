@@ -286,22 +286,22 @@ module Ui(W : World.S) = struct
     match ev with
     | Sdlevent.Quit _
     | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-      `Continue (show_quit_dialog t)
+      `Continue (show_quit_dialog t, None)
     | _ ->
       match t.focused with
       | `Editor ->
         let editor = Map_editor.on_event t.editor ev in
-        `Continue { t with editor; }
+        `Continue ({ t with editor; }, None)
       | `Quit_dialog quit_dialog ->
         match Dialog.Simple_query.on_event quit_dialog ev with
-        | None    -> `Continue t
-        | Some `N -> `Continue (hide_quit_dialog t)
-        | Some `Y -> `Quit
+        | None    -> `Continue (t, None)
+        | Some `N -> `Continue (hide_quit_dialog t, None)
+        | Some `Y -> `Quit None
   ;;
 
   let on_step t =
     let editor = Map_editor.on_step t.editor in
-    `Continue { t with editor; }
+    `Continue ({ t with editor; }, None)
   ;;
 
   let to_drawing t =
@@ -323,17 +323,44 @@ module Ui(W : World.S) = struct
          ])
   ;;
 
+  module World_editor_game = struct
+    module Update = struct
+      module Query = struct
+        type t = unit with bin_io, sexp
+      end
+
+      type t = unit with bin_io, sexp
+    end
+
+    type nonrec t = t
+
+    let create ~width ~height =
+      let width = Float.of_int width in
+      let height = Float.of_int height in
+      let editor = Map_editor.create ~width ~height in
+      let focused = `Editor in
+      { editor; focused; width; height; }
+    ;;
+
+    let steps_per_second = 60.0;;
+
+    let on_event = on_event;;
+
+    let on_step = on_step;;
+
+    let to_drawing = to_drawing;;
+
+    let on_update_query t _ =
+      (t, `Reject "multiplayer not supported")
+    ;;
+
+    let on_update t _ =
+      t
+    ;;
+  end
+
   let run ~data_dir =
-    Game.with_sdl ~data_dir ~f:(fun ~ctx ~width ~height ->
-        let width = Float.of_int width in
-        let height = Float.of_int height in
-        let editor = Map_editor.create ~width ~height in
-        let focused = `Editor in
-        let t = { editor; focused; width; height; } in
-        let initial_state = t in
-        let steps_per_second = 60.0 in
-        Game.main_loop ~initial_state ~on_event ~on_step
-          ~steps_per_second ~to_drawing ~ctx)
+    Game.run (module World_editor_game) ~data_dir
   ;;
 end
 

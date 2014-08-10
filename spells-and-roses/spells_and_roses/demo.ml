@@ -77,11 +77,11 @@ let to_drawing t =
 ;;
 
 let on_step t =
-  `Continue t
+  `Continue (t, None)
 ;;
 
 let on_update_query t _query =
-  (t, `Reject)
+  (t, `Reject "multiplayer not supported")
 ;;
 
 let on_update t _update =
@@ -92,7 +92,7 @@ let on_event t ev =
   match ev with
   | Sdlevent.Quit _
   | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-    `Quit
+    `Quit None
   | _ ->
-    `Continue t
+    `Continue (t, None)
 ;;

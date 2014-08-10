@@ -96,19 +96,19 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
     in
     let node = Pong_logic.on_step node in
     let step = t.step + 1 in
-    `Continue { t with node; player; step; }
+    `Continue ({ t with node; player; step; }, None)
   ;;
 
   let on_event t ev =
     match Pong_player.on_event t.player ev with
     | `Quit ->
-      `Quit
+      `Quit None
     | `Continue player ->
-      `Continue { t with player; }
+      `Continue ({ t with player; }, None)
   ;;
 
   let on_update_query t _query =
-    (t, `Reject)
+    (t, `Reject "multiplayer not implemented")
   ;;
 
   let on_update t _update =
