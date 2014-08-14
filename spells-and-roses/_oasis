@@ -43,6 +43,7 @@ Library lib
   Modules:
     Broadcast_hub,
     Drawing,
+    Engine,
     Entity,
     Game,
     Game_intf,
