@@ -28,26 +28,27 @@ module Simple_animation(A : Simple_animation_intf) = struct
     { width; height; step; }
   ;;
 
-  let on_event t ev =
+  let on_event t ~engine ev =
     match ev with
     | Sdlevent.Quit _
     | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-      `Quit None
+      Engine.quit engine;
+      t
     | _ ->
-      `Continue (t, None)
+      t
   ;;
 
-  let on_step t =
+  let on_step t ~engine:_ =
     let t = { t with step = t.step + 1; } in
-    `Continue (t, None)
-  ;;
-
-  let on_update_query t _ =
-    (t, `Reject "multiplayer not supported")
-  ;;
-
-  let on_update t _ =
     t
+  ;;
+
+  let on_update_query _t ~engine:_ query =
+    Nothing.unreachable_code query
+  ;;
+
+  let on_update _t ~engine:_ update =
+    Nothing.unreachable_code update
   ;;
 
   let to_drawing t =
@@ -123,24 +124,25 @@ module Static_text = struct
         hamlet's_soliloquy; width; height; }
     ;;
 
-    let on_event t ev =
+    let on_event t ~engine ev =
       match ev with
       | Sdlevent.Quit _
       | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-        `Quit None
+        Engine.quit engine;
+        t
       | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Down; _}
       | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.J; _} ->
-        `Continue ({ t with direction = Some `Up; }, None)
+        { t with direction = Some `Up; }
       | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Up; _}
       | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.K; _}->
-        `Continue ({ t with direction = Some `Down; }, None)
+        { t with direction = Some `Down; }
       | Sdlevent.KeyUp _ ->
-        `Continue ({ t with direction = None; }, None)
+        { t with direction = None; }
       | _ ->
-        `Continue (t, None)
+        t
     ;;
 
-    let on_step t =
+    let on_step t ~engine:_ =
       let acceleration =
         t.acceleration
         +. (match t.direction with
@@ -152,7 +154,7 @@ module Static_text = struct
               0.005)
       in
       let position_y = t.position_y +. acceleration in
-      `Continue ({ t with acceleration; position_y; }, None)
+      { t with acceleration; position_y; }
     ;;
 
     let steps_per_second = 60.0;;
@@ -166,12 +168,12 @@ module Static_text = struct
                  t.hamlet's_soliloquy)))
     ;;
 
-    let on_update_query t _ =
-      (t, `Reject "multiplayer not supported")
+    let on_update_query _t ~engine:_ query =
+      Nothing.unreachable_code query
     ;;
 
-    let on_update t _ =
-      t
+    let on_update _t ~engine:_ update =
+      Nothing.unreachable_code update
     ;;
   end
 

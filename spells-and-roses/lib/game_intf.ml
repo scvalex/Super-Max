@@ -7,13 +7,6 @@ module type Binable_and_sexpable = sig
   include Sexpable.S with type t := t
 end
 
-module Event_handled = struct
-  type ('state, 'update) t =
-    [ `Continue of ('state * 'update option)
-    | `Quit of 'update option
-    ]
-end
-
 module Client_id =
   String_id.Make(struct let module_name = "Client_id" end)
 
@@ -47,16 +40,28 @@ module type S = sig
     -> height : int
     -> t
 
-  val on_event : t -> Sdlevent.t -> (t, Update.t) Event_handled.t
+  val on_event :
+       t
+    -> engine : Update.t Engine.t
+    -> Sdlevent.t
+    -> t
 
-  val on_step : t -> (t, Update.t) Event_handled.t
+  val on_step :
+       t
+    -> engine : Update.t Engine.t
+    -> t
 
   val on_update_query :
        t
+    -> engine : Update.t Engine.t
     -> Update.Query.t
     -> (t * Query_response.t)
 
-  val on_update : t -> Update.t -> t
+  val on_update :
+       t
+    -> engine : Update.t Engine.t
+    -> Update.t ->
+    t
 
   val to_drawing : t -> Drawing.t
 

@@ -627,6 +627,7 @@ let dispatch = function
     rule "ocaml_plugin standalone archive"
       ~deps:[ "myocamlbuild.ml"
             ; "lib/drawing.cmi"
+            ; "lib/engine.cmi"
             ; "lib/entity.cmi"
             ; "lib/game.cmi"
             ; "lib/game_intf.cmi"
@@ -665,6 +666,7 @@ let dispatch = function
                  A (loc "sdl2" / "sdlevent.cmi");
                  A (loc "sdl2" / "sdlkeycode.cmi");
                  A "lib/drawing.cmi";
+                 A "lib/engine.cmi";
                  A "lib/entity.cmi";
                  A "lib/game.cmi";
                  A "lib/game_intf.cmi";

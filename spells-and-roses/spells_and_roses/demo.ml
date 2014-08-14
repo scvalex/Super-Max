@@ -76,23 +76,24 @@ let to_drawing t =
     ~camera:(`X t.camera_x, `Y t.camera_y)
 ;;
 
-let on_step t =
-  `Continue (t, None)
-;;
-
-let on_update_query t _query =
-  (t, `Reject "multiplayer not supported")
-;;
-
-let on_update t _update =
+let on_step t ~engine:_ =
   t
 ;;
 
-let on_event t ev =
+let on_update_query t ~engine:_ _query =
+  (t, `Reject "multiplayer not supported")
+;;
+
+let on_update t ~engine:_ _update =
+  t
+;;
+
+let on_event t ~engine ev =
   match ev with
   | Sdlevent.Quit _
   | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-    `Quit None
+    Engine.quit engine;
+    t
   | _ ->
-    `Continue (t, None)
+    t
 ;;

@@ -13,43 +13,41 @@ include Game_intf
 let main_loop ~initial_state ~on_event ~on_step ~on_update_query:_
     ~on_update:_ ~steps_per_second ~to_drawing ~ctx =
   let slice = Float.iround_exn (1000.0 /. steps_per_second) in
-  let rec event_loop ~state ~history ~step =
+  let rec event_loop ~state ~history ~step ~engine =
     match Sdlevent.poll_event () with
     | None ->
-      `Continue (state, history)
+      `Continue (state, history, engine)
     | Some ev ->
       let history = (step, ev) :: history in
-      match on_event state ev with
-      | `Quit _update ->
-        `Quit history
-      | `Continue (state, _update) ->
-        event_loop ~state ~history ~step
+      let state = on_event state ~engine ev in
+      if Engine.Internal.quitting engine
+      then `Quit (history, engine)
+      else event_loop ~state ~history ~step ~engine
   in
-  let rec step_loop ~state ~step ~game_ticks ~now =
+  let rec step_loop ~state ~step ~game_ticks ~now ~engine =
     if Int.(game_ticks < now)
     then begin
       let game_ticks = game_ticks + slice in
       let step = step + 1 in
-      match on_step state with
-      | `Quit _update ->
-        `Quit step
-      | `Continue (state, _update) ->
-        step_loop ~state ~step ~game_ticks ~now
+      let state = on_step state ~engine in
+      if Engine.Internal.quitting engine
+      then `Quit (step, engine)
+      else step_loop ~state ~step ~game_ticks ~now ~engine
     end else begin
-      `Continue (state, step, game_ticks)
+      `Continue (state, step, game_ticks, engine)
     end
   in
-  let rec loop ~state ~step ~history ~game_ticks ~skipped_frames =
-    match event_loop ~state ~history ~step with
-    | `Quit history ->
+  let rec loop ~state ~step ~history ~game_ticks ~skipped_frames ~engine =
+    match event_loop ~state ~history ~step ~engine with
+    | `Quit (history, _engine) ->
       Deferred.return (`Step step, history, `Skipped_frames skipped_frames)
-    | `Continue (state, history) ->
+    | `Continue (state, history, engine) ->
       let now = Sdltimer.get_ticks () in
       let old_step = step in
-      match step_loop ~state ~step ~game_ticks ~now with
-      | `Quit step ->
+      match step_loop ~state ~step ~game_ticks ~now ~engine with
+      | `Quit (step, _engine) ->
         Deferred.return (`Step step, history, `Skipped_frames skipped_frames)
-      | `Continue (state, step, game_ticks) ->
+      | `Continue (state, step, game_ticks, engine) ->
         let drawing = to_drawing state in
         Drawing.render drawing ~ctx
         >>= fun () ->
@@ -58,10 +56,11 @@ let main_loop ~initial_state ~on_event ~on_step ~on_update_query:_
         in
         Clock.after (Time.Span.of_ms (Float.of_int (game_ticks - now)))
         >>= fun () ->
-        loop ~state ~step ~history ~game_ticks ~skipped_frames
+        loop ~state ~step ~history ~game_ticks ~skipped_frames ~engine
   in
+  let engine = Engine.Internal.create () in
   loop ~state:initial_state ~step:0 ~history:[] ~game_ticks:(Sdltimer.get_ticks ())
-    ~skipped_frames:0
+    ~skipped_frames:0 ~engine
   >>| fun (`Step step, history, `Skipped_frames skipped_frames) ->
   Printf.eprintf "Game loop finished at step %d with history %d long\n%!"
     step (List.length history);

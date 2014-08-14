@@ -81,7 +81,7 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
       ]
   ;;
 
-  let on_step t =
+  let on_step t ~engine:_ =
     let game_state =
       let paddles = Pong_logic.paddles_bounding_boxes t.node in
       let ball = Pong_logic.ball_bounding_box t.node in
@@ -96,22 +96,23 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
     in
     let node = Pong_logic.on_step node in
     let step = t.step + 1 in
-    `Continue ({ t with node; player; step; }, None)
+    { t with node; player; step; }
   ;;
 
-  let on_event t ev =
+  let on_event t ~engine ev =
     match Pong_player.on_event t.player ev with
     | `Quit ->
-      `Quit None
+      Engine.quit engine;
+      t
     | `Continue player ->
-      `Continue ({ t with player; }, None)
+      { t with player; }
   ;;
 
-  let on_update_query t _query =
-    (t, `Reject "multiplayer not implemented")
+  let on_update_query _t ~engine:_ query =
+    Nothing.unreachable_code query
   ;;
 
-  let on_update t _update =
-    t
+  let on_update _t ~engine:_ update =
+    Nothing.unreachable_code update
   ;;
 end

@@ -282,26 +282,26 @@ module Ui(W : World.S) = struct
     { t with focused = `Editor; }
   ;;
 
-  let on_event t ev =
+  let on_event t ~engine ev =
     match ev with
     | Sdlevent.Quit _
     | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-      `Continue (show_quit_dialog t, None)
+      show_quit_dialog t
     | _ ->
       match t.focused with
       | `Editor ->
         let editor = Map_editor.on_event t.editor ev in
-        `Continue ({ t with editor; }, None)
+        { t with editor; }
       | `Quit_dialog quit_dialog ->
         match Dialog.Simple_query.on_event quit_dialog ev with
-        | None    -> `Continue (t, None)
-        | Some `N -> `Continue (hide_quit_dialog t, None)
-        | Some `Y -> `Quit None
+        | None    -> t
+        | Some `N -> hide_quit_dialog t
+        | Some `Y -> Engine.quit engine; t
   ;;
 
-  let on_step t =
+  let on_step t ~engine:_ =
     let editor = Map_editor.on_step t.editor in
-    `Continue ({ t with editor; }, None)
+    { t with editor; }
   ;;
 
   let to_drawing t =
@@ -350,12 +350,12 @@ module Ui(W : World.S) = struct
 
     let to_drawing = to_drawing;;
 
-    let on_update_query t _ =
-      (t, `Reject "multiplayer not supported")
+    let on_update_query _t ~engine:_ query =
+      Nothing.unreachable_code query
     ;;
 
-    let on_update t _ =
-      t
+    let on_update _t ~engine:_ update =
+      Nothing.unreachable_code update
     ;;
   end
 
