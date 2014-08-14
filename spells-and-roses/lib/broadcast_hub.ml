@@ -47,4 +47,8 @@ module Make(Query : Binable_and_sexpable)(Update : Binable_and_sexpable) = struc
     let _ = implementations in
     Deferred.return { clients; broadcasts; }
   ;;
+
+  let broadcast _t _updates =
+    ()
+  ;;
 end

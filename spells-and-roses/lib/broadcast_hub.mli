@@ -15,6 +15,8 @@ module Make(Query : Binable_and_sexpable)(Update : Binable_and_sexpable) : sig
 
   val create : unit -> t Deferred.t
 
+  val broadcast : t -> Update.t Queue.t -> unit
+
   val broadcasts : t -> Broadcast.t Pipe.Reader.t
 
   val updates_rpc : (Query.t, Update.t, Error.t) Rpc.Pipe_rpc.t
