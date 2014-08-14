@@ -11,10 +11,10 @@ end
 module Simple_animation(A : Simple_animation_intf) = struct
   module Update = struct
     module Query = struct
-      type t = unit with bin_io, sexp
+      type t = Nothing.t with bin_io, sexp
     end
 
-    type t = unit with bin_io, sexp
+    type t = Nothing.t with bin_io, sexp
   end
 
   type t = {
@@ -96,10 +96,10 @@ module Static_text = struct
   module Animation(Args : Args) = struct
     module Update = struct
       module Query = struct
-        type t = unit with bin_io, sexp
+        type t = Nothing.t with bin_io, sexp
       end
 
-      type t = unit with bin_io, sexp
+      type t = Nothing.t with bin_io, sexp
     end
 
     type t = {

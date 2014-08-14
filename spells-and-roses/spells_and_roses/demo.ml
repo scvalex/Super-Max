@@ -54,10 +54,10 @@ end
 
 module Update = struct
   module Query = struct
-    type t = unit with bin_io, sexp
+    type t = Nothing.t with bin_io, sexp
   end
 
-  type t = unit with bin_io, sexp
+  type t = Nothing.t with bin_io, sexp
 end
 
 let steps_per_second = 60.0;;

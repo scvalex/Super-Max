@@ -26,10 +26,10 @@ end
 module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
   module Update = struct
     module Query = struct
-      type t = unit with bin_io, sexp
+      type t = Nothing.t with bin_io, sexp
     end
 
-    type t = unit with bin_io, sexp
+    type t = Nothing.t with bin_io, sexp
   end
 
   type t = {

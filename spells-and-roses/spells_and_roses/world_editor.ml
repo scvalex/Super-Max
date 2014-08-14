@@ -326,10 +326,10 @@ module Ui(W : World.S) = struct
   module World_editor_game = struct
     module Update = struct
       module Query = struct
-        type t = unit with bin_io, sexp
+        type t = Nothing.t with bin_io, sexp
       end
 
-      type t = unit with bin_io, sexp
+      type t = Nothing.t with bin_io, sexp
     end
 
     type nonrec t = t
