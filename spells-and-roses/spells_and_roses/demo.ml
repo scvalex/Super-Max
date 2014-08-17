@@ -57,6 +57,10 @@ module Update = struct
     type t = Nothing.t with bin_io, sexp
   end
 
+  module Snapshot = struct
+    type t = Nothing.t with bin_io, sexp
+  end
+
   type t = Nothing.t with bin_io, sexp
 end
 

@@ -12,7 +12,7 @@ module type Main = sig
 end
 
 module Make(G : S) = struct
-  module Broadcast_hub = Broadcast_hub.Make(G.Update.Query)(G.Update)
+  module Broadcast_hub = Broadcast_hub.Make(G.Update.Query)(G.Update)(G.Update.Snapshot)
 
   (* CR scvalex: Actually broadcast updates. *)
   (** [main_loop] runs the game's event loop.  It tries to run at a

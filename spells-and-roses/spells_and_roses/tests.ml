@@ -8,14 +8,30 @@ module type Simple_animation_intf = sig
     -> Drawing.t
 end
 
-module Simple_animation(A : Simple_animation_intf) = struct
+module No_multiplayer = struct
   module Update = struct
     module Query = struct
       type t = Nothing.t with bin_io, sexp
     end
 
+    module Snapshot = struct
+      type t = Nothing.t with bin_io, sexp
+    end
+
     type t = Nothing.t with bin_io, sexp
   end
+
+  let on_update_query _t ~engine:_ query =
+    Nothing.unreachable_code query
+  ;;
+
+  let on_update _t ~engine:_ update =
+    Nothing.unreachable_code update
+  ;;
+end
+
+module Simple_animation(A : Simple_animation_intf) = struct
+  include No_multiplayer
 
   type t = {
     width  : int;
@@ -41,14 +57,6 @@ module Simple_animation(A : Simple_animation_intf) = struct
   let on_step t ~engine:_ =
     let t = { t with step = t.step + 1; } in
     t
-  ;;
-
-  let on_update_query _t ~engine:_ query =
-    Nothing.unreachable_code query
-  ;;
-
-  let on_update _t ~engine:_ update =
-    Nothing.unreachable_code update
   ;;
 
   let to_drawing t =
@@ -95,13 +103,7 @@ module Static_text = struct
   end
 
   module Animation(Args : Args) = struct
-    module Update = struct
-      module Query = struct
-        type t = Nothing.t with bin_io, sexp
-      end
-
-      type t = Nothing.t with bin_io, sexp
-    end
+    include No_multiplayer
 
     type t = {
       direction          : [`Up | `Down] option;
@@ -166,14 +168,6 @@ module Static_text = struct
               (text ~font:"UbuntuMono-B.ttf" ~size_pt:32
                  ~position:(`X `Centre, `Y `Top)
                  t.hamlet's_soliloquy)))
-    ;;
-
-    let on_update_query _t ~engine:_ query =
-      Nothing.unreachable_code query
-    ;;
-
-    let on_update _t ~engine:_ update =
-      Nothing.unreachable_code update
     ;;
   end
 
