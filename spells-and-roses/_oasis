@@ -26,6 +26,8 @@ Library lib
   Pack:               false
   BuildDepends:
     async,
+    bin_prot,
+    bin_prot.syntax,
     comparelib,
     comparelib.syntax,
     core,

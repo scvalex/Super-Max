@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: addbe2bad0a6241fd5ede6737dea8b14)
+# DO NOT EDIT (digest: 63ba6a986abc116d4d77da46d70760bf)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -16,6 +16,8 @@
 # Library lib
 "lib/lib.cmxs": use_lib
 <lib/*.ml{,i}>: package(async)
+<lib/*.ml{,i}>: package(bin_prot)
+<lib/*.ml{,i}>: package(bin_prot.syntax)
 <lib/*.ml{,i}>: package(comparelib)
 <lib/*.ml{,i}>: package(comparelib.syntax)
 <lib/*.ml{,i}>: package(core)

@@ -5,7 +5,7 @@ open Game_intf
 module Make(Query : Binable_and_sexpable)
     (Update : Binable_and_sexpable)
     (Snapshot : Binable_and_sexpable) : sig
-  module Broadcast : sig
+  module Event : sig
     type t =
       [ `Query of (Query.t * Client_id.t * Snapshot.t Query_response.t Ivar.t)
       | `Update of Update.t
@@ -19,8 +19,11 @@ module Make(Query : Binable_and_sexpable)
 
   val broadcast : t -> Update.t Queue.t -> unit
 
-  (** [broadcasts] is the pipe of events received from other nodes. *)
-  val broadcasts : t -> Broadcast.t Pipe.Reader.t
+  (** [events] is the pipe of events received from other nodes. *)
+  val events : t -> Event.t Pipe.Reader.t
 
-  val updates_rpc : (Query.t, Update.t, Error.t) Rpc.Pipe_rpc.t
+  val connect_to :
+       t
+    -> hostname : string
+    -> unit
 end
