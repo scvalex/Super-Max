@@ -12,7 +12,7 @@ module Client_id =
 
 module Query_response = struct
   type 's t =
-    [ `Accept of ('s * Client_id.t)
+    [ `Accept of 's
     | `Reject of string
     ] with sexp
 end
@@ -60,12 +60,14 @@ module type S = sig
   val on_update_query :
        t
     -> engine : Update.t Engine.t
+    -> client_id : Client_id.t
     -> Update.Query.t
     -> (t * Update.Snapshot.t Query_response.t)
 
   val on_update :
        t
     -> engine : Update.t Engine.t
+    -> client_id : Client_id.t
     -> Update.t
     -> t
 

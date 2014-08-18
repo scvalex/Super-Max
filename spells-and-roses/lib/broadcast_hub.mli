@@ -7,7 +7,7 @@ module Make(Query : Binable_and_sexpable)
     (Snapshot : Binable_and_sexpable) : sig
   module Broadcast : sig
     type t =
-      [ `Query of (Query.t * Snapshot.t Query_response.t Ivar.t)
+      [ `Query of (Query.t * Client_id.t * Snapshot.t Query_response.t Ivar.t)
       | `Update of Update.t
       | `Disconnected of Client_id.t
       ]

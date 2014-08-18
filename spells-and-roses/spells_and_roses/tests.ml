@@ -21,11 +21,11 @@ module No_multiplayer = struct
     type t = Nothing.t with bin_io, sexp
   end
 
-  let on_update_query _t ~engine:_ query =
+  let on_update_query _t ~engine:_ ~client_id:_ query =
     Nothing.unreachable_code query
   ;;
 
-  let on_update _t ~engine:_ update =
+  let on_update _t ~engine:_ ~client_id:_ update =
     Nothing.unreachable_code update
   ;;
 end

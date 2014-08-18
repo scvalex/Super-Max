@@ -84,11 +84,11 @@ let on_step t ~engine:_ =
   t
 ;;
 
-let on_update_query t ~engine:_ _query =
+let on_update_query t ~engine:_ ~client_id:_ _query =
   (t, `Reject "multiplayer not supported")
 ;;
 
-let on_update t ~engine:_ _update =
+let on_update t ~engine:_ ~client_id:_ _update =
   t
 ;;
 

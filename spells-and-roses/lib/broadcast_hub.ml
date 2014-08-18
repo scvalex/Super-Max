@@ -8,7 +8,7 @@ module Make(Query : Binable_and_sexpable)
 = struct
   module Broadcast = struct
     type t =
-      [ `Query of (Query.t * Snapshot.t Query_response.t Ivar.t)
+      [ `Query of (Query.t * Client_id.t * Snapshot.t Query_response.t Ivar.t)
       | `Update of Update.t
       | `Disconnected of Client_id.t
       ]

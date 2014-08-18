@@ -112,11 +112,11 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
       { t with player; }
   ;;
 
-  let on_update_query _t ~engine:_ query =
+  let on_update_query _t ~engine:_ ~client_id:_ query =
     Nothing.unreachable_code query
   ;;
 
-  let on_update _t ~engine:_ update =
+  let on_update _t ~engine:_ ~client_id:_ update =
     Nothing.unreachable_code update
   ;;
 end
