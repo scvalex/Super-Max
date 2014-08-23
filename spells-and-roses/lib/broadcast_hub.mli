@@ -12,6 +12,7 @@ sig
     type t =
       [ `Query of (Query.t * Peer_id.t * Snapshot.t Query_response.t Ivar.t)
       | `Update of Update.t
+      | `Snapshot of Snapshot.t
       | `Disconnected of Peer_id.t
       | `Unjoined
       ]
@@ -21,7 +22,7 @@ sig
 
   val create : unit -> t Deferred.t
 
-  val broadcast : t -> Update.t Queue.t -> unit
+  val broadcast_updates : t -> Update.t Queue.t -> unit
 
   (** [events] is the pipe of events received from other nodes. *)
   val events : t -> Event.t Pipe.Reader.t

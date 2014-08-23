@@ -62,7 +62,8 @@ module Make(G : S) = struct
           Deferred.return (`Step step, history, `Skipped_frames skipped_frames)
         | `Continue (state, step, game_ticks, engine) ->
           let drawing = G.to_drawing state in
-          Broadcast_hub.broadcast hub (Engine.Internal.drain_updates engine);
+          Broadcast_hub.broadcast_updates hub
+            (Engine.Internal.drain_updates engine);
           Drawing.render drawing ~ctx
           >>= fun () ->
           let skipped_frames =

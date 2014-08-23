@@ -22,6 +22,7 @@ struct
     type t =
       [ `Query of (Query.t * Peer_id.t * Snapshot.t Query_response.t Ivar.t)
       | `Update of Update.t
+      | `Snapshot of Snapshot.t
       | `Disconnected of Peer_id.t
       | `Unjoined
       ]
@@ -33,6 +34,7 @@ struct
       | Update of Update.t
     with bin_io
   end
+  open Update_ext
 
   type t = {
     mutable parent : string option;
@@ -123,13 +125,31 @@ struct
   ;;
 
   let broadcast t updates =
-    let updates =
-      (Queue.map updates ~f:(fun update ->
-         Update_ext.Update update))
-    in
     Hashtbl.iter t.children ~f:(fun ~key:_ ~data:update_writer ->
       if not (Pipe.is_closed update_writer) then
         Pipe.write_without_pushback' update_writer (Queue.copy updates))
+  ;;
+
+  let broadcast_updates t updates =
+    let updates =
+      (Queue.map updates ~f:(fun update ->
+         Update update))
+    in
+    broadcast t updates
+  ;;
+
+  let broadcast_snapshot t snapshot =
+    broadcast t (Queue.singleton (Snapshot snapshot))
+  ;;
+
+  let handle_update t update_ext =
+    match update_ext with
+    | Update update ->
+      event t (`Update update);
+      broadcast_updates t (Queue.singleton update)
+    | Snapshot snapshot ->
+      event t (`Snapshot snapshot);
+      broadcast_snapshot t snapshot
   ;;
 
   let join t ~host query =
@@ -158,6 +178,8 @@ struct
         >>= fun (update_reader, _) ->
         upon (Pipe.closed update_reader) (fun () ->
           t.parent <- None);
+        don't_wait_for
+          (Pipe.iter_without_pushback update_reader ~f:(handle_update t));
         event t `Unjoined;
         Deferred.Or_error.return ()
   ;;
