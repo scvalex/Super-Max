@@ -30,7 +30,7 @@ module Make(Logic_state : Logic_state) = struct
       state
     else
       List.fold_left ~init:state (Set.to_list events) ~f:(fun state ev ->
-          Logic_state.on_event state ev)
+        Logic_state.on_event state ev)
   ;;
 
   let rec recompute_history t ~after =
@@ -44,8 +44,8 @@ module Make(Logic_state : Logic_state) = struct
       let state' = Logic_state.on_step (apply_events state events) in
       let history =
         Map.change t.history (after + 1) (fun history_entry ->
-            let (events', _) = Option.value_exn ~here:_here_ history_entry in
-            Some (events', state'))
+          let (events', _) = Option.value_exn ~here:_here_ history_entry in
+          Some (events', state'))
       in
       recompute_history { t with history; } ~after:(after + 1)
     end

@@ -93,30 +93,30 @@ let with_sdl ~f ~data_dir =
       (In_thread.Helper_thread.create ~name:"sdl-rendering-thread" ())
   in
   In_thread.run ~thread (fun () ->
-      Sdl.init [`VIDEO];
-      Sdlttf.init ();
-      Sdlimage.init [`PNG; `JPG];
-      let window =
-        Sdlwindow.create ~dims:(0, 0) ~pos:(`undefined, `undefined)
-          ~title:"Something romantic"
-          ~flags:[Sdlwindow.FullScreen_Desktop]
-      in
-      let renderer =
-        Sdlrender.create_renderer ~win:window ~index:(0 - 1)
-          ~flags:[Sdlrender.Accelerated; Sdlrender.PresentVSync]
-      in
-      let (width, height) = Sdlwindow.get_size window in
-      (renderer, (`Width width, `Height height)))
+    Sdl.init [`VIDEO];
+    Sdlttf.init ();
+    Sdlimage.init [`PNG; `JPG];
+    let window =
+      Sdlwindow.create ~dims:(0, 0) ~pos:(`undefined, `undefined)
+        ~title:"Something romantic"
+        ~flags:[Sdlwindow.FullScreen_Desktop]
+    in
+    let renderer =
+      Sdlrender.create_renderer ~win:window ~index:(0 - 1)
+        ~flags:[Sdlrender.Accelerated; Sdlrender.PresentVSync]
+    in
+    let (width, height) = Sdlwindow.get_size window in
+    (renderer, (`Width width, `Height height)))
   >>= fun (renderer, (`Width width, `Height height)) ->
   let ctx = Drawing.Context.create ~renderer ~thread ~data_dir in
   Printf.eprintf "Window size is (%d, %d)\n" width height;
   Monitor.protect (fun () -> f ~ctx ~width ~height)
     ~finally:(fun () ->
-        Printf.eprintf "%s\n%!" (Drawing.Context.stats ctx);
-        In_thread.run ~thread (fun () ->
-            Sdlimage.quit ();
-            Sdlttf.quit ();
-            Sdl.quit ()))
+      Printf.eprintf "%s\n%!" (Drawing.Context.stats ctx);
+      In_thread.run ~thread (fun () ->
+        Sdlimage.quit ();
+        Sdlttf.quit ();
+        Sdl.quit ()))
 ;;
 
 let run game ~data_dir =

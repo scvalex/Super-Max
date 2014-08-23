@@ -150,8 +150,7 @@ end = struct
   ;;
 
   let stats t =
-    sprintf
-      ("Drawing stats:\n - fonts: %d\n - textures: %d")
+    sprintf "Drawing stats:\n - fonts: %d\n - textures: %d"
       (Hashtbl.length t.fonts) (Hashtbl.length t.textures)
   ;;
 end
@@ -250,22 +249,22 @@ let render_rectangle ~ctx ~trans ~colour ~width ~height ~filled =
 let render_text ~ctx ~trans ~colour text =
   let line_textures =
     List.map text.str ~f:(fun str ->
-        Context.get_or_create_texture ctx
-          (sprintf "text-%s-%d-%s" text.font text.size_pt str)
-          ~create:(fun ~data_dir:_ ->
-              let font = Context.get_font ctx text.font text.size_pt in
-              let (r, g, b, a) = rgba_of_colour colour in
-              let color = {Sdlttf. r; g; b; a} in
-              let surface =
-                Sdlttf.render_text_solid font ~text:str ~color
-              in
-              let w = Sdlsurface.get_width surface in
-              let h = Sdlsurface.get_height surface in
-              let texture =
-                Sdltexture.create_from_surface (Context.renderer ctx) surface
-              in
-              Sdlsurface.free surface;
-              (texture, `Width w, `Height h)))
+      Context.get_or_create_texture ctx
+        (sprintf "text-%s-%d-%s" text.font text.size_pt str)
+        ~create:(fun ~data_dir:_ ->
+          let font = Context.get_font ctx text.font text.size_pt in
+          let (r, g, b, a) = rgba_of_colour colour in
+          let color = {Sdlttf. r; g; b; a} in
+          let surface =
+            Sdlttf.render_text_solid font ~text:str ~color
+          in
+          let w = Sdlsurface.get_width surface in
+          let h = Sdlsurface.get_height surface in
+          let texture =
+            Sdltexture.create_from_surface (Context.renderer ctx) surface
+          in
+          Sdlsurface.free surface;
+          (texture, `Width w, `Height h)))
   in
   let xy = Trans.apply trans {x = 0.0; y = 0.0;} in
   let h_and_a_half h =
@@ -274,7 +273,7 @@ let render_text ~ctx ~trans ~colour text =
   let (max_w, total_h) =
     List.fold_left ~init:(0, 0) line_textures
       ~f:(fun (max_w, total_h) (_, `Width w, `Height h) ->
-          (Int.max max_w w, total_h + h_and_a_half h))
+        (Int.max max_w w, total_h + h_and_a_half h))
   in
   let (x, y) =
     let x =
@@ -296,10 +295,10 @@ let render_text ~ctx ~trans ~colour text =
   let (_ : (int * int)) =
     List.fold_left ~init:(x, y) line_textures
       ~f:(fun (x, y) (texture, `Width w, `Height h) ->
-          let src_rect = Sdlrect.make4 ~x:0 ~y:0 ~w ~h in
-          let dst_rect = Sdlrect.make4 ~x ~y ~w ~h in
-          Sdlrender.copy (Context.renderer ctx) ~texture ~src_rect ~dst_rect ();
-          (x, y + h_and_a_half h))
+        let src_rect = Sdlrect.make4 ~x:0 ~y:0 ~w ~h in
+        let dst_rect = Sdlrect.make4 ~x ~y ~w ~h in
+        Sdlrender.copy (Context.renderer ctx) ~texture ~src_rect ~dst_rect ();
+        (x, y + h_and_a_half h))
   in
   ()
 ;;
@@ -309,24 +308,24 @@ let render_image ~ctx ~trans ~colour:_ image =
     Context.get_or_create_texture ctx
       (sprintf "image-%s" image.image)
       ~create:(fun ~data_dir ->
-          let rwop =
-            Sdlrwops.from_file ~mode:"rb"
-              ~filename:(data_dir ^/ image.image)
-          in
-          let surface =
-            match Filename.split_extension image.image with
-            | (_, Some "png") -> Sdlimage.load_png_rw rwop
-            | (_, Some "jpg") -> Sdlimage.load_jpg_rw rwop
-            | _               -> failwithf "Unknown format: %s" image.image ()
-          in
-          Sdlrwops.close rwop;
-          let w = Sdlsurface.get_width surface in
-          let h = Sdlsurface.get_height surface in
-          let texture =
-            Sdltexture.create_from_surface (Context.renderer ctx) surface
-          in
-          Sdlsurface.free surface;
-          (texture, `Width w, `Height h))
+        let rwop =
+          Sdlrwops.from_file ~mode:"rb"
+            ~filename:(data_dir ^/ image.image)
+        in
+        let surface =
+          match Filename.split_extension image.image with
+          | (_, Some "png") -> Sdlimage.load_png_rw rwop
+          | (_, Some "jpg") -> Sdlimage.load_jpg_rw rwop
+          | _               -> failwithf "Unknown format: %s" image.image ()
+        in
+        Sdlrwops.close rwop;
+        let w = Sdlsurface.get_width surface in
+        let h = Sdlsurface.get_height surface in
+        let texture =
+          Sdltexture.create_from_surface (Context.renderer ctx) surface
+        in
+        Sdlsurface.free surface;
+        (texture, `Width w, `Height h))
   in
   let src_rect =
     match image.clip with

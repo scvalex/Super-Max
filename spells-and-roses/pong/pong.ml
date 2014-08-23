@@ -95,8 +95,8 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
     let node =
       Option.value_map dir_a ~default:t.node
         ~f:(fun dir_a ->
-            Pong_logic.on_event t.node
-              (player_event player t.step (Pong_event.Move (t.playing_as, dir_a))))
+          Pong_logic.on_event t.node
+            (player_event player t.step (Pong_event.Move (t.playing_as, dir_a))))
     in
     let node = Pong_logic.on_step node in
     let step = t.step + 1 in

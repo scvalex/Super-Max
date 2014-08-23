@@ -4,7 +4,8 @@ open Game_intf
 
 module Make(Query : Binable_and_sexpable)
     (Update : Binable_and_sexpable)
-    (Snapshot : Binable_and_sexpable) : sig
+    (Snapshot : Binable_and_sexpable) :
+sig
   module Event : sig
     type t =
       [ `Query of (Query.t * Client_id.t * Snapshot.t Query_response.t Ivar.t)

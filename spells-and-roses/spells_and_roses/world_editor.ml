@@ -119,9 +119,9 @@ module Ui(W : World.S) = struct
       in
       let handled_t =
         List.fold_left keys_events ~init:None ~f:(fun acc_t (key, event) ->
-            match acc_t with
-            | Some t -> Some t
-            | None   -> generic_handle_key_event t ~key ~event ev)
+          match acc_t with
+          | Some t -> Some t
+          | None   -> generic_handle_key_event t ~key ~event ev)
       in
       match handled_t with
       | Some t ->
@@ -217,8 +217,8 @@ module Ui(W : World.S) = struct
       in
       let layout_vertically ~x ~y_step drawings =
         List.mapi drawings ~f:(fun idx drawing ->
-            translate ~x ~y:(Float.of_int idx *. y_step)
-              drawing)
+          translate ~x ~y:(Float.of_int idx *. y_step)
+            drawing)
       in
       let tools =
         let coordinates =

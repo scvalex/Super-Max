@@ -315,7 +315,7 @@ module State = struct
         let ball = Ball.reset ball in
         let score =
           Map.change t.score (Player_id.other_player player) (fun score ->
-              Some (1 + Option.value_exn ~here:_here_ score))
+            Some (1 + Option.value_exn ~here:_here_ score))
         in
         { t with ball; score; }
     end else begin
@@ -342,7 +342,7 @@ module State = struct
       {t with players_connected; }
     | Pong_event.Move (id, dir) ->
       with_player t ~id ~f:(fun player ->
-          Player.move player dir)
+        Player.move player dir)
   ;;
 
   let to_drawing t =

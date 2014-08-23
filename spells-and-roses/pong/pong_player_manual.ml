@@ -45,16 +45,16 @@ let generic_handle_key_event t ~key ~event ev =
 ;;
 
 let on_event t ev =
-    let keys_events =
+  let keys_events =
     [ (Sdlkeycode.Down, `Down)
     ; (Sdlkeycode.Up, `Up)
     ]
   in
   let handled_t =
     List.fold_left keys_events ~init:None ~f:(fun acc_t (key, event) ->
-        match acc_t with
-        | Some t -> Some t
-        | None   -> generic_handle_key_event t ~key ~event ev)
+      match acc_t with
+      | Some t -> Some t
+      | None   -> generic_handle_key_event t ~key ~event ev)
   in
   match handled_t with
   | Some t ->

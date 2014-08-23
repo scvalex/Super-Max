@@ -64,7 +64,7 @@ let main () =
             Flag.
               ( empty
                 +> flag "check-only" no_arg
-                  ~doc:" Check that a script is loadable without running it"
+                     ~doc:" Check that a script is loadable without running it"
                 +> anon ("FILE" %: file)
                 +> anon (sequence ("ARG" %: string)))
             (fun check_only file args () ->
