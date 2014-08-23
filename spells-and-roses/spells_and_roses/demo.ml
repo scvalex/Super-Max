@@ -52,17 +52,7 @@ module World_editor_private = struct
   ;;
 end
 
-module Update = struct
-  module Query = struct
-    type t = Nothing.t with bin_io, sexp
-  end
-
-  module Snapshot = struct
-    type t = Nothing.t with bin_io, sexp
-  end
-
-  type t = Nothing.t with bin_io, sexp
-end
+include Game.No_multiplayer
 
 let steps_per_second = 60.0;;
 
@@ -83,15 +73,6 @@ let to_drawing t =
 let on_step t ~engine:_ =
   t
 ;;
-
-let on_update_query t ~engine:_ ~client_id:_ _query =
-  (t, `Reject "multiplayer not supported")
-;;
-
-let on_update t ~engine:_ ~client_id:_ _update =
-  t
-;;
-
 let on_event t ~engine ev =
   match ev with
   | Sdlevent.Quit _

@@ -2,15 +2,18 @@ open Core.Std
 open Async.Std
 open Game_intf
 
+val port : int
+
 module Make(Query : Binable_and_sexpable)
     (Update : Binable_and_sexpable)
     (Snapshot : Binable_and_sexpable) :
 sig
   module Event : sig
     type t =
-      [ `Query of (Query.t * Client_id.t * Snapshot.t Query_response.t Ivar.t)
+      [ `Query of (Query.t * Peer_id.t * Snapshot.t Query_response.t Ivar.t)
       | `Update of Update.t
-      | `Disconnected of Client_id.t
+      | `Disconnected of Peer_id.t
+      | `Unjoined
       ]
   end
 
@@ -23,8 +26,10 @@ sig
   (** [events] is the pipe of events received from other nodes. *)
   val events : t -> Event.t Pipe.Reader.t
 
-  val connect_to :
+  (** [join] subscribes to updates from the given host. *)
+  val join :
        t
-    -> hostname : string
-    -> unit
+    -> host : string
+    -> Query.t
+    -> unit Deferred.Or_error.t
 end

@@ -7,8 +7,8 @@ module type Binable_and_sexpable = sig
   include Sexpable.S with type t := t
 end
 
-module Client_id =
-  String_id.Make(struct let module_name = "Client_id" end)
+module Peer_id =
+  String_id.Make(struct let module_name = "Peer_id" end)
 
 module Query_response = struct
   type 's t =
@@ -60,14 +60,14 @@ module type S = sig
   val on_update_query :
        t
     -> engine : Update.t Engine.t
-    -> client_id : Client_id.t
+    -> peer_id : Peer_id.t
     -> Update.Query.t
     -> (t * Update.Snapshot.t Query_response.t)
 
   val on_update :
        t
     -> engine : Update.t Engine.t
-    -> client_id : Client_id.t
+    -> peer_id : Peer_id.t
     -> Update.t
     -> t
 
@@ -89,11 +89,11 @@ module No_multiplayer = struct
     type t = Nothing.t with bin_io, sexp
   end
 
-  let on_update_query _t ~engine:_ ~client_id:_ query =
+  let on_update_query _t ~engine:_ ~peer_id:_ query =
     Nothing.unreachable_code query
   ;;
 
-  let on_update _t ~engine:_ ~client_id:_ update =
+  let on_update _t ~engine:_ ~peer_id:_ update =
     Nothing.unreachable_code update
   ;;
 end
