@@ -75,3 +75,25 @@ module type S = sig
 
   val steps_per_second : float
 end
+
+module No_multiplayer = struct
+  module Update = struct
+    module Query = struct
+      type t = Nothing.t with bin_io, sexp
+    end
+
+    module Snapshot = struct
+      type t = Nothing.t with bin_io, sexp
+    end
+
+    type t = Nothing.t with bin_io, sexp
+  end
+
+  let on_update_query _t ~engine:_ ~client_id:_ query =
+    Nothing.unreachable_code query
+  ;;
+
+  let on_update _t ~engine:_ ~client_id:_ update =
+    Nothing.unreachable_code update
+  ;;
+end

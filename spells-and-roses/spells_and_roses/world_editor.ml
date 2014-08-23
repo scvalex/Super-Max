@@ -324,17 +324,7 @@ module Ui(W : World.S) = struct
   ;;
 
   module World_editor_game = struct
-    module Update = struct
-      module Query = struct
-        type t = Nothing.t with bin_io, sexp
-      end
-
-      module Snapshot = struct
-        type t = Nothing.t with bin_io, sexp
-      end
-
-      type t = Nothing.t with bin_io, sexp
-    end
+    include Game.No_multiplayer
 
     type nonrec t = t
 
@@ -353,14 +343,6 @@ module Ui(W : World.S) = struct
     let on_step = on_step;;
 
     let to_drawing = to_drawing;;
-
-    let on_update_query _t ~engine:_ ~client_id:_ query =
-      Nothing.unreachable_code query
-    ;;
-
-    let on_update _t ~engine:_ ~client_id:_ update =
-      Nothing.unreachable_code update
-    ;;
   end
 
   let run ~data_dir =

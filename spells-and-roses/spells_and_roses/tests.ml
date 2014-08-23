@@ -8,30 +8,8 @@ module type Simple_animation_intf = sig
     -> Drawing.t
 end
 
-module No_multiplayer = struct
-  module Update = struct
-    module Query = struct
-      type t = Nothing.t with bin_io, sexp
-    end
-
-    module Snapshot = struct
-      type t = Nothing.t with bin_io, sexp
-    end
-
-    type t = Nothing.t with bin_io, sexp
-  end
-
-  let on_update_query _t ~engine:_ ~client_id:_ query =
-    Nothing.unreachable_code query
-  ;;
-
-  let on_update _t ~engine:_ ~client_id:_ update =
-    Nothing.unreachable_code update
-  ;;
-end
-
 module Simple_animation(A : Simple_animation_intf) = struct
-  include No_multiplayer
+  include Game.No_multiplayer
 
   type t = {
     width  : int;
@@ -103,7 +81,7 @@ module Static_text = struct
   end
 
   module Animation(Args : Args) = struct
-    include No_multiplayer
+    include Game.No_multiplayer
 
     type t = {
       direction          : [`Up | `Down] option;
