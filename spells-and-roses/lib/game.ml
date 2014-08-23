@@ -26,6 +26,10 @@ module Make(G : S) = struct
     >>= fun hub ->
     let slice = Float.iround_exn (1000.0 /. G.steps_per_second) in
     let game = G.create ~width ~height in
+    don't_wait_for
+      (Pipe.iter (Broadcast_hub.events hub) ~f:(fun _event ->
+         (* CR scvalex: Pass events to game here. *)
+         failwith "Not implemented"));
     let rec event_loop ~history ~step ~engine =
       match Sdlevent.poll_event () with
       | None ->
