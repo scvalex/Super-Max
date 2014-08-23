@@ -148,6 +148,7 @@ struct
       event t (`Update update);
       broadcast_updates t (Queue.singleton update)
     | Snapshot snapshot ->
+      Mlog.m "Snapshot from parent";
       event t (`Snapshot snapshot);
       broadcast_snapshot t snapshot
   ;;
