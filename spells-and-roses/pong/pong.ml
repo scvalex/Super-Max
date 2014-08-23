@@ -94,9 +94,10 @@ module Make(Pong_player : Pong_player_intf.S)(Args : Args) = struct
     let (player, dir_a) = Pong_player.on_step t.player game_state in
     t.player <- player;
     Option.iter dir_a ~f:(fun dir_a ->
-      t.logic <- Pong_logic.on_event t.logic
-                   (player_event player t.step (Pong_event.Move (t.playing_as, dir_a)));
-      t.logic <- Pong_logic.on_step t.logic);
+      t.logic <-
+        Pong_logic.on_event t.logic
+          (player_event player t.step (Pong_event.Move (t.playing_as, dir_a))));
+    t.logic <- Pong_logic.on_step t.logic;
     t.step <- t.step + 1;
   ;;
 
