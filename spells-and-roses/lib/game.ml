@@ -25,43 +25,44 @@ module Make(G : S) = struct
     Broadcast_hub.create ()
     >>= fun hub ->
     let slice = Float.iround_exn (1000.0 /. G.steps_per_second) in
-    let rec event_loop ~state ~history ~step ~engine =
+    let game = G.create ~width ~height in
+    let rec event_loop ~history ~step ~engine =
       match Sdlevent.poll_event () with
       | None ->
-        `Continue (state, history, engine)
+        `Continue (history, engine)
       | Some ev ->
         let history = (step, ev) :: history in
-        let state = G.on_event state ~engine ev in
+        G.on_event game ~engine ev;
         if Engine.Internal.quitting engine
         then `Quit (history, engine)
-        else event_loop ~state ~history ~step ~engine
+        else event_loop ~history ~step ~engine
     in
-    let rec step_loop ~state ~step ~game_ticks ~now ~engine =
+    let rec step_loop ~step ~game_ticks ~now ~engine =
       if Int.(game_ticks < now)
       then begin
         let game_ticks = game_ticks + slice in
         let step = step + 1 in
-        let state = G.on_step state ~engine in
+        G.on_step game ~engine;
         if Engine.Internal.quitting engine
         then `Quit (step, engine)
-        else step_loop ~state ~step ~game_ticks ~now ~engine
+        else step_loop ~step ~game_ticks ~now ~engine
       end else begin
-        `Continue (state, step, game_ticks, engine)
+        `Continue (step, game_ticks, engine)
       end
     in
-    let rec loop ~state ~step ~history ~game_ticks ~skipped_frames =
+    let rec loop ~step ~history ~game_ticks ~skipped_frames =
       let engine = Engine.Internal.create () in
-      match event_loop ~state ~history ~step ~engine with
+      match event_loop ~history ~step ~engine with
       | `Quit (history, _engine) ->
         Deferred.return (`Step step, history, `Skipped_frames skipped_frames)
-      | `Continue (state, history, engine) ->
+      | `Continue (history, engine) ->
         let now = Sdltimer.get_ticks () in
         let old_step = step in
-        match step_loop ~state ~step ~game_ticks ~now ~engine with
+        match step_loop ~step ~game_ticks ~now ~engine with
         | `Quit (step, _engine) ->
           Deferred.return (`Step step, history, `Skipped_frames skipped_frames)
-        | `Continue (state, step, game_ticks, engine) ->
-          let drawing = G.to_drawing state in
+        | `Continue (step, game_ticks, engine) ->
+          let drawing = G.to_drawing game in
           Broadcast_hub.broadcast_updates hub
             (Engine.Internal.drain_updates engine);
           Drawing.render drawing ~ctx
@@ -71,10 +72,9 @@ module Make(G : S) = struct
           in
           Clock.after (Time.Span.of_ms (Float.of_int (game_ticks - now)))
           >>= fun () ->
-          loop ~state ~step ~history ~game_ticks ~skipped_frames
+          loop ~step ~history ~game_ticks ~skipped_frames
     in
     loop
-      ~state:(G.create ~width ~height)
       ~step:0
       ~history:[]
       ~game_ticks:(Sdltimer.get_ticks ())

@@ -70,15 +70,14 @@ let to_drawing t =
     ~camera:(`X t.camera_x, `Y t.camera_y)
 ;;
 
-let on_step t ~engine:_ =
-  t
+let on_step _t ~engine:_ =
+  ()
 ;;
-let on_event t ~engine ev =
+let on_event _t ~engine ev =
   match ev with
   | Sdlevent.Quit _
   | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-    Engine.quit engine;
-    t
+    Engine.quit engine
   | _ ->
-    t
+    ()
 ;;

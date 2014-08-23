@@ -50,26 +50,26 @@ module type S = sig
        t
     -> engine : Update.t Engine.t
     -> Sdlevent.t
-    -> t
+    -> unit
 
   val on_step :
        t
     -> engine : Update.t Engine.t
-    -> t
+    -> unit
 
   val on_update_query :
        t
     -> engine : Update.t Engine.t
     -> peer_id : Peer_id.t
     -> Update.Query.t
-    -> (t * Update.Snapshot.t Query_response.t)
+    -> Update.Snapshot.t Query_response.t
 
   val on_update :
        t
     -> engine : Update.t Engine.t
     -> peer_id : Peer_id.t
     -> Update.t
-    -> t
+    -> unit
 
   val to_drawing : t -> Drawing.t
 

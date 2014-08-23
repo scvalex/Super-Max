@@ -62,17 +62,17 @@ module Ui(W : World.S) = struct
 
   module Map_editor = struct
     type t = {
-      focus_i            : int;
-      focus_j            : int;
-      focus_x            : float;
-      focus_y            : float;
-      active_events      : Event.Set.t;
-      entities           : ((W.common, W.event) Entity.t * Position.t) Entity.Id.Map.t;
-      width              : float;
-      height             : float;
-      available_entities : (string * Drawing.t) array;
-      selected_entity    : int;
-      selected_layer     : int;
+      mutable focus_i         : int;
+      mutable focus_j         : int;
+      mutable focus_x         : float;
+      mutable focus_y         : float;
+      mutable active_events   : Event.Set.t;
+      mutable entities        : ((W.common, W.event) Entity.t * Position.t) Entity.Id.Map.t;
+      width                   : float;
+      height                  : float;
+      available_entities      : (string * Drawing.t) array;
+      mutable selected_entity : int;
+      mutable selected_layer  : int;
     }
 
     let create ~width ~height =
@@ -102,11 +102,13 @@ module Ui(W : World.S) = struct
     let generic_handle_key_event t ~key ~event ev =
       match ev with
       | Sdlevent.KeyDown {Sdlevent. keycode; _} when key = keycode ->
-        Some {t with active_events = Set.add t.active_events event; }
+        t.active_events <- Set.add t.active_events event;
+        true
       | Sdlevent.KeyUp {Sdlevent. keycode; _} when key = keycode ->
-        Some {t with active_events = Set.remove t.active_events event; }
+        t.active_events <- Set.remove t.active_events event;
+        true
       | _ ->
-        None
+        false
     ;;
 
     let on_event t ev =
@@ -117,35 +119,32 @@ module Ui(W : World.S) = struct
         ; (Sdlkeycode.Right, `Right)
         ]
       in
-      let handled_t =
-        List.fold_left keys_events ~init:None ~f:(fun acc_t (key, event) ->
-          match acc_t with
-          | Some t -> Some t
-          | None   -> generic_handle_key_event t ~key ~event ev)
+      let handled =
+        List.fold_left keys_events ~init:false ~f:(fun handled (key, event) ->
+          if handled
+          then true
+          else generic_handle_key_event t ~key ~event ev)
       in
-      match handled_t with
-      | Some t ->
-        t
-      | None ->
+      if not handled then begin
         match ev with
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Tab; _} ->
           let selected_entity =
             let total_entities = Map.length W.entity_creators in
             Int.((t.selected_entity + 1) mod total_entities)
           in
-          { t with selected_entity; }
+          t.selected_entity <- selected_entity
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.PageUp; _} ->
           let selected_layer =
             let len = Array.length w_layers in
             Int.((t.selected_layer + 1) mod len)
           in
-          { t with selected_layer; }
+          t.selected_layer <- selected_layer
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.PageDown; _} ->
           let selected_layer =
             let len = Array.length w_layers in
             Int.((t.selected_layer + len - 1) mod len)
           in
-          { t with selected_layer; }
+          t.selected_layer <- selected_layer
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Space; _} ->
           let entities =
             let (kind, _) = t.available_entities.(t.selected_entity) in
@@ -154,16 +153,14 @@ module Ui(W : World.S) = struct
               ~loc_i:t.focus_i ~loc_j:t.focus_j ~layer:t.selected_layer
               creator
           in
-          { t with entities; }
+          t.entities <- entities
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Delete; _}
         | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Backspace; _} ->
-          let entities =
-            Entity_manager.remove ~entities:t.entities
-              ~loc_i:t.focus_i ~loc_j:t.focus_j ~layer:t.selected_layer
-          in
-          { t with entities; }
+          t.entities <- Entity_manager.remove ~entities:t.entities
+                          ~loc_i:t.focus_i ~loc_j:t.focus_j ~layer:t.selected_layer
         | _ ->
-          t
+          ()
+      end
     ;;
 
     let on_step t =
@@ -182,24 +179,12 @@ module Ui(W : World.S) = struct
       let updated_focus ~target ~size ~focus =
         focus +. ((Float.of_int target *. size) -. focus) /. 8.0
       in
-      let focus_j =
-        handle_pan ~target:t.focus_j ~size:s_width ~focus:t.focus_x
-          ~down:`Right ~up:`Left
-      in
-      let focus_x =
-        updated_focus ~target:focus_j ~size:s_width ~focus:t.focus_x
-      in
-      let focus_i =
-        handle_pan ~target:t.focus_i ~size:s_height ~focus:t.focus_y
-          ~down:`Down ~up:`Up
-      in
-      let focus_y =
-        updated_focus ~target:focus_i ~size:s_height ~focus:t.focus_y
-      in
-      let t =
-        { t with focus_i; focus_j; focus_x; focus_y; }
-      in
-      t
+      t.focus_j <- handle_pan ~target:t.focus_j ~size:s_width ~focus:t.focus_x
+                     ~down:`Right ~up:`Left;
+      t.focus_x <- updated_focus ~target:t.focus_j ~size:s_width ~focus:t.focus_x;
+      t.focus_i <- handle_pan ~target:t.focus_i ~size:s_height ~focus:t.focus_y
+                     ~down:`Down ~up:`Up;
+      t.focus_y <- updated_focus ~target:t.focus_i ~size:s_height ~focus:t.focus_y
     ;;
 
     let to_drawing t =
@@ -268,18 +253,18 @@ module Ui(W : World.S) = struct
   end
 
   type t = {
-    editor      : Map_editor.t;
-    focused     : [ `Editor | `Quit_dialog of Quit_dialog.t];
-    width       : float;
-    height      : float;
+    editor          : Map_editor.t;
+    mutable focused : [ `Editor | `Quit_dialog of Quit_dialog.t];
+    width           : float;
+    height          : float;
   }
 
   let show_quit_dialog t =
-    { t with focused = `Quit_dialog (Quit_dialog.create ()); }
+    t.focused <- `Quit_dialog (Quit_dialog.create ())
   ;;
 
   let hide_quit_dialog t =
-    { t with focused = `Editor; }
+    t.focused <- `Editor
   ;;
 
   let on_event t ~engine ev =
@@ -290,18 +275,16 @@ module Ui(W : World.S) = struct
     | _ ->
       match t.focused with
       | `Editor ->
-        let editor = Map_editor.on_event t.editor ev in
-        { t with editor; }
+        Map_editor.on_event t.editor ev
       | `Quit_dialog quit_dialog ->
         match Dialog.Simple_query.on_event quit_dialog ev with
-        | None    -> t
+        | None    -> ()
         | Some `N -> hide_quit_dialog t
-        | Some `Y -> Engine.quit engine; t
+        | Some `Y -> Engine.quit engine
   ;;
 
   let on_step t ~engine:_ =
-    let editor = Map_editor.on_step t.editor in
-    { t with editor; }
+    Map_editor.on_step t.editor
   ;;
 
   let to_drawing t =

@@ -12,9 +12,9 @@ module Simple_animation(A : Simple_animation_intf) = struct
   include Game.No_multiplayer
 
   type t = {
-    width  : int;
-    height : int;
-    step   : int;
+    width        : int;
+    height       : int;
+    mutable step : int;
   }
 
   let create ~width ~height =
@@ -22,19 +22,17 @@ module Simple_animation(A : Simple_animation_intf) = struct
     { width; height; step; }
   ;;
 
-  let on_event t ~engine ev =
+  let on_event _t ~engine ev =
     match ev with
     | Sdlevent.Quit _
     | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-      Engine.quit engine;
-      t
+      Engine.quit engine
     | _ ->
-      t
+      ()
   ;;
 
   let on_step t ~engine:_ =
-    let t = { t with step = t.step + 1; } in
-    t
+    t.step <- t.step + 1
   ;;
 
   let to_drawing t =
@@ -84,12 +82,12 @@ module Static_text = struct
     include Game.No_multiplayer
 
     type t = {
-      direction          : [`Up | `Down] option;
-      acceleration       : float;
-      position_y         : float;
-      hamlet's_soliloquy : string list;
-      width              : int;
-      height             : int;
+      mutable direction    : [`Up | `Down] option;
+      mutable acceleration : float;
+      mutable position_y   : float;
+      hamlet's_soliloquy   : string list;
+      width                : int;
+      height               : int;
     }
 
     let create ~width ~height =
@@ -108,18 +106,17 @@ module Static_text = struct
       match ev with
       | Sdlevent.Quit _
       | Sdlevent.KeyUp {Sdlevent. keycode = Sdlkeycode.Q; _} ->
-        Engine.quit engine;
-        t
+        Engine.quit engine
       | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Down; _}
       | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.J; _} ->
-        { t with direction = Some `Up; }
+        t.direction <- Some `Up
       | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.Up; _}
       | Sdlevent.KeyDown {Sdlevent. keycode = Sdlkeycode.K; _}->
-        { t with direction = Some `Down; }
+        t.direction <- Some `Down
       | Sdlevent.KeyUp _ ->
-        { t with direction = None; }
+        t.direction <- None
       | _ ->
-        t
+        ()
     ;;
 
     let on_step t ~engine:_ =
@@ -133,8 +130,8 @@ module Static_text = struct
             | Some `Down ->
               0.005)
       in
-      let position_y = t.position_y +. acceleration in
-      { t with acceleration; position_y; }
+      t.acceleration <- acceleration;
+      t.position_y <- t.position_y +. t.acceleration
     ;;
 
     let steps_per_second = 60.0;;
