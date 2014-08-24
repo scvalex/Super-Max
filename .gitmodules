@@ -1,81 +1,81 @@
-[submodule "spells-and-roses/packages/jenga"]
-	path = spells-and-roses/packages/jenga
+[submodule "packages/jenga"]
+	path = packages/jenga
 	url = https://github.com/janestreet/jenga
-[submodule "spells-and-roses/packages/ocaml_plugin"]
-	path = spells-and-roses/packages/ocaml_plugin
+[submodule "packages/ocaml_plugin"]
+	path = packages/ocaml_plugin
 	url = https://github.com/janestreet/ocaml_plugin
-[submodule "spells-and-roses/packages/async"]
-	path = spells-and-roses/packages/async
+[submodule "packages/async"]
+	path = packages/async
 	url = https://github.com/janestreet/async
-[submodule "spells-and-roses/packages/async_extra"]
-	path = spells-and-roses/packages/async_extra
+[submodule "packages/async_extra"]
+	path = packages/async_extra
 	url = https://github.com/janestreet/async_extra
-[submodule "spells-and-roses/packages/async_find"]
-	path = spells-and-roses/packages/async_find
+[submodule "packages/async_find"]
+	path = packages/async_find
 	url = https://github.com/janestreet/async_find
-[submodule "spells-and-roses/packages/async_inotify"]
-	path = spells-and-roses/packages/async_inotify
+[submodule "packages/async_inotify"]
+	path = packages/async_inotify
 	url = https://github.com/janestreet/async_inotify
-[submodule "spells-and-roses/packages/async_kernel"]
-	path = spells-and-roses/packages/async_kernel
+[submodule "packages/async_kernel"]
+	path = packages/async_kernel
 	url = https://github.com/janestreet/async_kernel
-[submodule "spells-and-roses/packages/async_parallel"]
-	path = spells-and-roses/packages/async_parallel
+[submodule "packages/async_parallel"]
+	path = packages/async_parallel
 	url = https://github.com/janestreet/async_parallel
-[submodule "spells-and-roses/packages/async_unix"]
-	path = spells-and-roses/packages/async_unix
+[submodule "packages/async_unix"]
+	path = packages/async_unix
 	url = https://github.com/janestreet/async_unix
-[submodule "spells-and-roses/packages/bin_prot"]
-	path = spells-and-roses/packages/bin_prot
+[submodule "packages/bin_prot"]
+	path = packages/bin_prot
 	url = https://github.com/janestreet/bin_prot
-[submodule "spells-and-roses/packages/comparelib"]
-	path = spells-and-roses/packages/comparelib
+[submodule "packages/comparelib"]
+	path = packages/comparelib
 	url = https://github.com/janestreet/comparelib
-[submodule "spells-and-roses/packages/core"]
-	path = spells-and-roses/packages/core
+[submodule "packages/core"]
+	path = packages/core
 	url = https://github.com/janestreet/core
-[submodule "spells-and-roses/packages/core_kernel"]
-	path = spells-and-roses/packages/core_kernel
+[submodule "packages/core_kernel"]
+	path = packages/core_kernel
 	url = https://github.com/janestreet/core_kernel
-[submodule "spells-and-roses/packages/custom_printf"]
-	path = spells-and-roses/packages/custom_printf
+[submodule "packages/custom_printf"]
+	path = packages/custom_printf
 	url = https://github.com/janestreet/custom_printf
-[submodule "spells-and-roses/packages/enumerate"]
-	path = spells-and-roses/packages/enumerate
+[submodule "packages/enumerate"]
+	path = packages/enumerate
 	url = https://github.com/janestreet/enumerate
-[submodule "spells-and-roses/packages/fieldslib"]
-	path = spells-and-roses/packages/fieldslib
+[submodule "packages/fieldslib"]
+	path = packages/fieldslib
 	url = https://github.com/janestreet/fieldslib
-[submodule "spells-and-roses/packages/herelib"]
-	path = spells-and-roses/packages/herelib
+[submodule "packages/herelib"]
+	path = packages/herelib
 	url = https://github.com/janestreet/herelib
-[submodule "spells-and-roses/packages/pa_bench"]
-	path = spells-and-roses/packages/pa_bench
+[submodule "packages/pa_bench"]
+	path = packages/pa_bench
 	url = https://github.com/janestreet/pa_bench
-[submodule "spells-and-roses/packages/pa_ounit"]
-	path = spells-and-roses/packages/pa_ounit
+[submodule "packages/pa_ounit"]
+	path = packages/pa_ounit
 	url = https://github.com/janestreet/pa_ounit
-[submodule "spells-and-roses/packages/pa_test"]
-	path = spells-and-roses/packages/pa_test
+[submodule "packages/pa_test"]
+	path = packages/pa_test
 	url = https://github.com/janestreet/pa_test
-[submodule "spells-and-roses/packages/pipebang"]
-	path = spells-and-roses/packages/pipebang
+[submodule "packages/pipebang"]
+	path = packages/pipebang
 	url = https://github.com/janestreet/pipebang
-[submodule "spells-and-roses/packages/sexplib"]
-	path = spells-and-roses/packages/sexplib
+[submodule "packages/sexplib"]
+	path = packages/sexplib
 	url = https://github.com/janestreet/sexplib
-[submodule "spells-and-roses/packages/type_conv"]
-	path = spells-and-roses/packages/type_conv
+[submodule "packages/type_conv"]
+	path = packages/type_conv
 	url = https://github.com/janestreet/type_conv
-[submodule "spells-and-roses/packages/typerep"]
-	path = spells-and-roses/packages/typerep
+[submodule "packages/typerep"]
+	path = packages/typerep
 	url = https://github.com/janestreet/typerep
-[submodule "spells-and-roses/packages/variantslib"]
-	path = spells-and-roses/packages/variantslib
+[submodule "packages/variantslib"]
+	path = packages/variantslib
 	url = https://github.com/janestreet/variantslib
-[submodule "spells-and-roses/packages/ocaml-inotify"]
-	path = spells-and-roses/packages/ocaml-inotify
+[submodule "packages/ocaml-inotify"]
+	path = packages/ocaml-inotify
 	url = https://github.com/vincenthz/ocaml-inotify
-[submodule "spells-and-roses/packages/ounit"]
-	path = spells-and-roses/packages/ounit
+[submodule "packages/ounit"]
+	path = packages/ounit
 	url = https://github.com/warrenharris/ounit
