@@ -1,5 +1,0 @@
-#!/bin/sh
-
-DIR=$(dirname $0)
-
-LD_LIBRARY_PATH="${DIR}" SPELLSLINGER_DIR="${DIR}" "${DIR}/spellslinger-x64"
