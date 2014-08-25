@@ -130,6 +130,7 @@ struct
         Pipe.write_without_pushback' update_writer (Queue.copy updates))
   ;;
 
+  (* CR scvalex: We also need to broadcast to parent somehow. *)
   let broadcast_updates t updates =
     let updates =
       (Queue.map updates ~f:(fun update ->
