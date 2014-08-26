@@ -29,6 +29,14 @@ struct
       ]
   end
 
+  module Query_ext = struct
+    type t =
+      | Parent_snapshot_and_updates of Query.t
+      | Child_updates
+    with bin_io, sexp
+  end
+  open Query_ext
+
   module Update_ext = struct
     type t =
       | Snapshot of Snapshot.t
@@ -46,11 +54,25 @@ struct
     events_writer  : Event.t Pipe.Writer.t;
   } with fields
 
+  (** Join Protocol from Child to Parent:
+
+      C                                         P
+      |                                         |
+      |   Parent_snapshot_and_updates Query.t   |
+      | --------------------------------------> |
+      |              Child_updates              |
+      | <-------------------------------------- |
+      |           Snapshot Snapshot.t           |
+      | <-------------------------------------- |
+      |              Update_ext.t*              |
+      | <-------------------------------------> |
+      v                                         v
+  *)
   let updates_rpc =
     Rpc.Pipe_rpc.create
       ~name:"Super_max_lib.Broadcast_hub.Updates"
       ~version:1
-      ~bin_query:Query.bin_t
+      ~bin_query:Query_ext.bin_t
       ~bin_response:Update_ext.bin_t
       ~bin_error:Error.bin_t
       ()
@@ -70,37 +92,64 @@ struct
     ksprintf with_message fmt
   ;;
 
+  let subscribe_to_updates ~host ~port query =
+    Mlog.m "Connecting to %s" host;
+    Rpc.Connection.client ~host ~port ()
+    >>= function
+    | Error exn ->
+      Deferred.return (Or_error.of_exn exn)
+    | Ok client ->
+      Rpc.Pipe_rpc.dispatch updates_rpc client query
+      >>| function
+      | Error err | Ok (Error err) ->
+        don't_wait_for (Rpc.Connection.close client);
+        Error err
+      | Ok (Ok (update_reader, _)) ->
+        upon (Pipe.closed update_reader) (fun () ->
+          don't_wait_for (Rpc.Connection.close client));
+        Ok update_reader
+  ;;
+
+  let handle_updates_rpc (t, address) query_ext ~aborted =
+    let peer_id = make_peer_id () in
+    Mlog.m "Incoming updates RPC from %s (%s): %s"
+      (Peer_id.to_string peer_id)
+      (Socket.Address.to_string address)
+      (Sexp.to_string_mach (Query_ext.sexp_of_t query_ext));
+    match query_ext with
+    | Child_updates ->
+      failwith "not implemented"
+    | Parent_snapshot_and_updates query ->
+      let response = Ivar.create () in
+      event t (`Query (query, peer_id, response));
+      Ivar.read response
+      >>| function
+      | `Reject reason ->
+        Error (Error.of_string reason)
+      | `Accept snapshot ->
+        (* CR scvalex: Subscribe to child updates here. *)
+        let (update_reader, update_writer) = Pipe.create () in
+        upon aborted (fun () ->
+          Pipe.close_read update_reader);
+        upon (Pipe.closed update_writer) (fun () ->
+          (* CR scvalex: This isn't quite right because there might
+             be more peers on this connection. *)
+          event t (`Disconnected peer_id);
+          Hashtbl.remove t.children peer_id);
+        warn_on_pushback update_writer ~stop:aborted
+          "Child %s pushing back" (Peer_id.to_string peer_id);
+        Pipe.write_without_pushback update_writer
+          (Update_ext.Snapshot snapshot);
+        Hashtbl.set t.children ~key:peer_id ~data:update_writer;
+        Ok update_reader
+  ;;
+
   let implementations =
     let on_unknown_rpc ~rpc_tag ~version =
       Mlog.m "Unknown RPC: %s v%d" rpc_tag version
     in
     let implementations =
-      [ Rpc.Pipe_rpc.implement updates_rpc (fun (t, address) query ~aborted ->
-         let peer_id = make_peer_id () in
-         Mlog.m "Incoming updates RPC from %s (%s)"
-           (Peer_id.to_string peer_id)
-           (Socket.Address.to_string address);
-         let response = Ivar.create () in
-         event t (`Query (query, peer_id, response));
-         Ivar.read response
-         >>| function
-         | `Reject reason ->
-           Error (Error.of_string reason)
-         | `Accept snapshot ->
-           let (update_reader, update_writer) = Pipe.create () in
-           upon aborted (fun () ->
-             Pipe.close_read update_reader);
-           upon (Pipe.closed update_writer) (fun () ->
-             (* CR scvalex: This isn't quite right because there might
-                be more peers on this connection. *)
-             event t (`Disconnected peer_id);
-             Hashtbl.remove t.children peer_id);
-           warn_on_pushback update_writer ~stop:aborted
-             "Child %s pushing back" (Peer_id.to_string peer_id);
-           Pipe.write_without_pushback update_writer
-             (Update_ext.Snapshot snapshot);
-           Hashtbl.set t.children ~key:peer_id ~data:update_writer;
-           Ok update_reader)
+      [ Rpc.Pipe_rpc.implement updates_rpc handle_updates_rpc
       ]
     in
     Rpc.Implementations.create_exn
@@ -127,13 +176,14 @@ struct
     t
   ;;
 
+  (* CR scvalex: Don't broadcast back to source. *)
   let broadcast t updates =
     Hashtbl.iter t.children ~f:(fun ~key:_ ~data:update_writer ->
       if not (Pipe.is_closed update_writer) then
         Pipe.write_without_pushback' update_writer (Queue.copy updates))
   ;;
 
-  (* CR scvalex: We also need to broadcast to parent somehow. *)
+  (* CR scvalex: Don't broadcast back to source. *)
   let broadcast_updates t updates =
     let updates =
       (Queue.map updates ~f:(fun update ->
@@ -164,35 +214,26 @@ struct
         (Or_error.of_exn
            (Already_connected_to (parent_host, `requested host)))
     | None ->
-      Mlog.m "Connecting to %s" host;
       t.parent <- Some host;
-      Rpc.Connection.client ~host ~port ()
+      subscribe_to_updates ~host ~port (Parent_snapshot_and_updates query)
       >>= function
-      | Error exn ->
+      | Error err ->
         t.parent <- None;
-        Deferred.return (Or_error.of_exn exn)
-      | Ok client ->
-        upon (Rpc.Connection.close_finished client) (fun () ->
+        Deferred.return (Error err)
+      | Ok update_reader ->
+        upon (Pipe.closed update_reader) (fun () ->
           t.parent <- None);
-        Rpc.Pipe_rpc.dispatch updates_rpc client query
-        >>= function
-        | Error err | Ok (Error err) ->
-          don't_wait_for (Rpc.Connection.close client);
-          Deferred.return (Error err)
-        | Ok (Ok (update_reader, _)) ->
-          upon (Pipe.closed update_reader) (fun () ->
-            don't_wait_for (Rpc.Connection.close client));
-          Pipe.read update_reader
-          >>= function
-          | `Eof ->
-            Deferred.Or_error.of_exn (Pipe_closed_before_snapshot host)
-          | `Ok (Snapshot snapshot) ->
-            don't_wait_for
-              (Pipe.iter_without_pushback update_reader ~f:(handle_update t));
-            event t `Unjoined;
-            Deferred.Or_error.return snapshot
-          | `Ok update_ext ->
-            Pipe.close_read update_reader;
-            Deferred.Or_error.of_exn (Didn't_get_snapshot (host, update_ext))
+        Pipe.read update_reader
+        >>| function
+        | `Eof ->
+          Or_error.of_exn (Pipe_closed_before_snapshot host)
+        | `Ok (Snapshot snapshot) ->
+          don't_wait_for
+            (Pipe.iter_without_pushback update_reader ~f:(handle_update t));
+          event t `Unjoined;
+          Ok snapshot
+        | `Ok update_ext ->
+          Pipe.close_read update_reader;
+          Or_error.of_exn (Didn't_get_snapshot (host, update_ext))
   ;;
 end
