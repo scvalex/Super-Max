@@ -165,29 +165,34 @@ struct
            (Already_connected_to (parent_host, `requested host)))
     | None ->
       Mlog.m "Connecting to %s" host;
+      t.parent <- Some host;
       Rpc.Connection.client ~host ~port ()
       >>= function
       | Error exn ->
+        t.parent <- None;
         Deferred.return (Or_error.of_exn exn)
       | Ok client ->
-        t.parent <- Some host;
+        upon (Rpc.Connection.close_finished client) (fun () ->
+          t.parent <- None);
         Rpc.Pipe_rpc.dispatch updates_rpc client query
         >>= function
         | Error err | Ok (Error err) ->
+          don't_wait_for (Rpc.Connection.close client);
           Deferred.return (Error err)
         | Ok (Ok (update_reader, _)) ->
+          upon (Pipe.closed update_reader) (fun () ->
+            don't_wait_for (Rpc.Connection.close client));
           Pipe.read update_reader
           >>= function
           | `Eof ->
             Deferred.Or_error.of_exn (Pipe_closed_before_snapshot host)
           | `Ok (Snapshot snapshot) ->
-            upon (Pipe.closed update_reader) (fun () ->
-              t.parent <- None);
             don't_wait_for
               (Pipe.iter_without_pushback update_reader ~f:(handle_update t));
             event t `Unjoined;
             Deferred.Or_error.return snapshot
           | `Ok update_ext ->
+            Pipe.close_read update_reader;
             Deferred.Or_error.of_exn (Didn't_get_snapshot (host, update_ext))
   ;;
 end
