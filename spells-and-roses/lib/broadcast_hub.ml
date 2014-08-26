@@ -3,6 +3,7 @@ open Async.Std
 open Game_intf
 
 exception Already_connected_to of (string * [`requested of string]) with sexp
+exception Pipe_closed_before_snapshot of string with sexp
 
 let peer_id_counter = ref 0;;
 
@@ -32,9 +33,11 @@ struct
     type t =
       | Snapshot of Snapshot.t
       | Update of Update.t
-    with bin_io
+    with bin_io, sexp
   end
   open Update_ext
+
+  exception Didn't_get_snapshot of (string * Update_ext.t) with sexp
 
   type t = {
     mutable parent : string option;
@@ -157,14 +160,9 @@ struct
   let join t ~host query =
     match t.parent with
     | Some parent_host ->
-      if String.(parent_host = host)
-      then begin
-        Mlog.m "Already connected to %s" host;
-        Deferred.Or_error.return ()
-      end else begin
-        let exn = Already_connected_to (parent_host, `requested host) in
-        Deferred.return (Or_error.of_exn exn)
-      end
+      Deferred.return
+        (Or_error.of_exn
+           (Already_connected_to (parent_host, `requested host)))
     | None ->
       Mlog.m "Connecting to %s" host;
       Rpc.Connection.client ~host ~port ()
@@ -173,16 +171,23 @@ struct
         Deferred.return (Or_error.of_exn exn)
       | Ok client ->
         t.parent <- Some host;
-        let open Deferred.Or_error.Monad_infix in
         Rpc.Pipe_rpc.dispatch updates_rpc client query
-        >>= fun result ->
-        Deferred.return result
-        >>= fun (update_reader, _) ->
-        upon (Pipe.closed update_reader) (fun () ->
-          t.parent <- None);
-        don't_wait_for
-          (Pipe.iter_without_pushback update_reader ~f:(handle_update t));
-        event t `Unjoined;
-        Deferred.Or_error.return ()
+        >>= function
+        | Error err | Ok (Error err) ->
+          Deferred.return (Error err)
+        | Ok (Ok (update_reader, _)) ->
+          Pipe.read update_reader
+          >>= function
+          | `Eof ->
+            Deferred.Or_error.of_exn (Pipe_closed_before_snapshot host)
+          | `Ok (Snapshot snapshot) ->
+            upon (Pipe.closed update_reader) (fun () ->
+              t.parent <- None);
+            don't_wait_for
+              (Pipe.iter_without_pushback update_reader ~f:(handle_update t));
+            event t `Unjoined;
+            Deferred.Or_error.return snapshot
+          | `Ok update_ext ->
+            Deferred.Or_error.of_exn (Didn't_get_snapshot (host, update_ext))
   ;;
 end

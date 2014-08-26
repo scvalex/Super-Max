@@ -32,5 +32,5 @@ sig
        t
     -> host : string
     -> Query.t
-    -> unit Deferred.Or_error.t
+    -> Snapshot.t Deferred.Or_error.t
 end
