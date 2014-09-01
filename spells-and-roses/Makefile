@@ -28,6 +28,7 @@ p:
 	             myocamlbuild.ml \
 	             _oasis \
 	             lib/*.ml* \
+	             renderer/*.ml* \
 	             spells_and_roses/*.ml* \
 	             bin/*.ml* \
 	             pong/*.ml*

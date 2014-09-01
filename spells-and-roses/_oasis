@@ -56,6 +56,27 @@ Library lib
     World,
     World_intf
 
+Library renderer
+  Path:               renderer
+  FindlibName:        renderer
+  Install:            false
+  Pack:               false
+  BuildDepends:
+    comparelib,
+    comparelib.syntax,
+    core,
+    fieldslib,
+    fieldslib.syntax,
+    herelib,
+    herelib.syntax,
+    sexplib,
+    sexplib.syntax,
+    threads
+  Modules:
+    Image,
+    Ppm,
+    Types
+
 Library spells_and_roses
   Path:               spells_and_roses
   FindlibName:        spells_and_roses
@@ -126,6 +147,7 @@ Executable super_max
     core,
     ocaml_plugin_archive,
     pong,
+    renderer,
     sexplib,
     sexplib.syntax,
     spells_and_roses,

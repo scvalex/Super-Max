@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 63ba6a986abc116d4d77da46d70760bf)
+# DO NOT EDIT (digest: eb4b7079c215944d70e7c12b58d1c1ec)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -32,6 +32,18 @@
 <lib/*.ml{,i}>: package(sexplib)
 <lib/*.ml{,i}>: package(sexplib.syntax)
 <lib/*.ml{,i}>: package(threads)
+# Library renderer
+"renderer/renderer.cmxs": use_renderer
+<renderer/*.ml{,i}>: package(comparelib)
+<renderer/*.ml{,i}>: package(comparelib.syntax)
+<renderer/*.ml{,i}>: package(core)
+<renderer/*.ml{,i}>: package(fieldslib)
+<renderer/*.ml{,i}>: package(fieldslib.syntax)
+<renderer/*.ml{,i}>: package(herelib)
+<renderer/*.ml{,i}>: package(herelib.syntax)
+<renderer/*.ml{,i}>: package(sexplib)
+<renderer/*.ml{,i}>: package(sexplib.syntax)
+<renderer/*.ml{,i}>: package(threads)
 # Library spells_and_roses
 "spells_and_roses/spells_and_roses.cmxs": use_spells_and_roses
 <spells_and_roses/*.ml{,i}>: package(async)
@@ -107,6 +119,7 @@
 <bin/super_max.{native,byte}>: use_lib
 <bin/super_max.{native,byte}>: use_ocaml_plugin_archive
 <bin/super_max.{native,byte}>: use_pong
+<bin/super_max.{native,byte}>: use_renderer
 <bin/super_max.{native,byte}>: use_spells_and_roses
 <bin/*.ml{,i}>: package(async)
 <bin/*.ml{,i}>: package(bin_prot)
@@ -129,6 +142,7 @@
 <bin/*.ml{,i}>: use_lib
 <bin/*.ml{,i}>: use_ocaml_plugin_archive
 <bin/*.ml{,i}>: use_pong
+<bin/*.ml{,i}>: use_renderer
 <bin/*.ml{,i}>: use_spells_and_roses
 # OASIS_STOP
-<{bin,lib,plugin,spells_and_roses,pong}/*.ml{,i}>: syntax_camlp4o
+<{bin,lib,plugin,spells_and_roses,pong,renderer}/*.ml{,i}>: syntax_camlp4o

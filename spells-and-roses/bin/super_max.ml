@@ -57,6 +57,17 @@ let main () =
              ; ( "psychedelic-cat",
                  test_command Tests.Psy_cat.run
                    ~summary:"Display a very special cat" )
+             ; ( "image",
+                 Command.basic
+                   ~summary:"Write a checkerboard image"
+                   Flag.(
+                     empty
+                     +> flag "device-gamma" (required float)
+                          ~doc:"FLOAT gamma value to use when encoding image"
+                     +> anon ("OUTPUT" %: file))
+                   (fun device_gamma filename () ->
+                      Image.save_ppm (Image.Test.checkerboard ())
+                        ~filename ~device_gamma ()))
              ])
        ; ("script",
           Command.async_basic
