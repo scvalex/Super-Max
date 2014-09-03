@@ -73,3 +73,68 @@ module Ray = struct
 
   let create = Fields.create;;
 end
+
+module Bsdf = struct
+  type t = unit with compare, sexp
+end
+
+module Triangle = struct
+  module T = struct
+    type t = {
+      vertices : (Point3.t * Point3.t * Point3.t);
+      normals  : (Vector3.t * Vector3.t * Vector3.t);
+      bsdf     : Bsdf.t;
+    } with compare, sexp, fields
+  end
+
+  include T
+  include Comparable.Make(T)
+  include Sexpable.To_stringable(T)
+
+  let create = Fields.create;;
+end
+
+module Light = struct
+  module T = struct
+    type t = {
+      position : Point3.t;
+      power    : Power3.t
+    } with compare, sexp, fields
+  end
+
+  include T
+  include Comparable.Make(T)
+  include Sexpable.To_stringable(T)
+
+  let create = Fields.create;;
+end
+
+module Scene = struct
+  module T = struct
+    type t = {
+      triangles : Triangle.Set.t;
+      lights    : Light.Set.t;
+    } with sexp, fields
+  end
+
+  include T
+  include Sexpable.To_stringable(T)
+
+  let create = Fields.create;;
+end
+
+module Camera = struct
+  module T = struct
+    type t = {
+      z_near          : float;
+      z_far           : float;
+      field_of_view_x : float;
+    } with compare, sexp, fields
+  end
+
+  include T
+  include Comparable.Make(T)
+  include Sexpable.To_stringable(T)
+
+  let create = Fields.create;;
+end
