@@ -37,11 +37,23 @@ module Vector3 : sig
   val z : t -> float
 
   val xyz : t -> (float * float * float)
+
+  val scale : t -> float -> t
+
+  val magnitude : t -> float
+
+  val direction : t -> t
+
+  val (+) : t -> t -> t
 end
 
 module Point2 : module type of Vector2
 
-module Point3 : module type of Vector3
+module Point3 : sig
+  include module type of Vector3
+
+  val of_vector : Vector3.t -> t
+end
 
 module Color3 : sig
   type t
@@ -63,9 +75,15 @@ module Color3 : sig
   val b : t -> float
 
   val rgb : t -> (float * float * float)
+
+  val of_vector : Vector3.t -> t
 end
 
-module Radiance3 : module type of Color3
+module Radiance3 : sig
+  include module type of Color3
+
+  val of_color : Color3.t -> t
+end
 
 module Power3 : module type of Color3
 

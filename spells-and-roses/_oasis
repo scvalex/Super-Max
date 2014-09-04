@@ -75,6 +75,7 @@ Library renderer
   Modules:
     Image,
     Ppm,
+    Ray_tracer,
     Types
 
 Library spells_and_roses

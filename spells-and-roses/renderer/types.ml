@@ -31,6 +31,24 @@ module Vector3 = struct
   let create = Fields.create;;
 
   let xyz t = (t.x, t.y, t.z);;
+
+  let scale t s =
+    { x = t.x *. s; y = t.y *. s; z = t.z *. s; }
+  ;;
+
+  let magnitude t =
+    sqrt (t.x *. t.x +. t.y *. t.y +. t.z *. t.z)
+  ;;
+
+  let direction t =
+    scale t (1.0 /. magnitude t)
+  ;;
+
+  let (+) a b =
+    { x = a.x +. b.x; y = a.y +. b.y; z = a.z +. b.z; }
+  ;;
+
+  let of_vector t = t;;
 end
 
 module Point2 = Vector2
@@ -53,6 +71,12 @@ module Color3 = struct
   let create = Fields.create;;
 
   let rgb t = (t.r, t.g, t.b);;
+
+  let of_vector v3 =
+    { r = Vector3.x v3; g = Vector3.y v3; b = Vector3.z v3; }
+  ;;
+
+  let of_color t = t;;
 end
 
 module Radiance3 = Color3
