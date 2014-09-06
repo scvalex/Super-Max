@@ -53,6 +53,8 @@ module Point3 : sig
   include module type of Vector3
 
   val of_vector : Vector3.t -> t
+
+  val add_vector : t -> Vector3.t -> t
 end
 
 module Color3 : sig

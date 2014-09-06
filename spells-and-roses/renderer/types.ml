@@ -53,7 +53,11 @@ end
 
 module Point2 = Vector2
 
-module Point3 = Vector3
+module Point3 = struct
+  include Vector3
+
+  let add_vector = (+);;
+end
 
 module Color3 = struct
   module T = struct
@@ -95,7 +99,10 @@ module Ray = struct
   include Comparable.Make(T)
   include Sexpable.To_stringable(T)
 
-  let create = Fields.create;;
+  let create ~origin ~direction =
+    let direction = Vector3.direction direction in
+    { origin; direction; }
+  ;;
 end
 
 module Bsdf = struct
