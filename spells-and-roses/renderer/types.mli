@@ -106,6 +106,8 @@ end
 
 module Bsdf : sig
   type t
+
+  val test : t
 end
 
 module Triangle : sig

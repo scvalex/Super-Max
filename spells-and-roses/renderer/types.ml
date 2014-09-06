@@ -100,6 +100,8 @@ end
 
 module Bsdf = struct
   type t = unit with compare, sexp
+
+  let test = ();;
 end
 
 module Triangle = struct

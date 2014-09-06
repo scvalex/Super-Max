@@ -37,6 +37,46 @@ let run_pong_game ~data_dir ~player_file mode =
   Game.run (module Pong) ~data_dir
 ;;
 
+let ray_trace_scene ~device_gamma ~filename =
+  let open Types in
+  let image = Image.create ~width:400 ~height:200 () in
+  let camera =
+    Camera.create ~z_near:(-0.1) ~z_far:(-100.0)
+      ~field_of_view_x:(3.14159 /. 2.0)
+  in
+  let triangle =
+    let p3 x y z = Point3.create ~x ~y ~z in
+    let vertices =
+      ( p3 0.0 1.0 (-2.0)
+      , p3 (-1.0) (-1.0) (-2.0)
+      , p3 1.6 (-0.5) (-2.0))
+    in
+    let normals =
+      let v3 x y z = Vector3.create ~x ~y ~z in
+      let n3 x y z = Vector3.direction (v3 x y z) in
+      ( n3 0.0 0.6 1.0
+      , n3 (-0.4) (-0.4) 1.0
+      , n3 0.4 (-0.4) 1.0
+      )
+    in
+    Triangle.create
+      ~vertices ~normals ~bsdf:Bsdf.test
+  in
+  let light =
+    Light.create
+      ~position:(Point3.create ~x:1.0 ~y:3.0 ~z:1.0)
+      ~power:(Power3.create ~r:10.0 ~g:10.0 ~b:10.0)
+  in
+  let scene =
+    Scene.create
+      ~triangles:(Triangle.Set.singleton triangle)
+      ~lights:(Light.Set.singleton light)
+  in
+  Ray_tracer.ray_trace ~image ~scene ~camera
+    ~x0:0 ~x1:(Image.width image) ~y0:0 ~y1:(Image.height image);
+  Image.save_ppm image ~filename ~device_gamma ()
+;;
+
 let main () =
   Command.run
     (Command.group ~summary:"Spells and Roses"
@@ -57,17 +97,16 @@ let main () =
              ; ( "psychedelic-cat",
                  test_command Tests.Psy_cat.run
                    ~summary:"Display a very special cat" )
-             ; ( "image",
+             ; ( "ray-trace",
                  Command.basic
-                   ~summary:"Write a checkerboard image"
+                   ~summary:"Ray-trace a scene"
                    Flag.(
                      empty
-                     +> flag "device-gamma" (required float)
+                     +> flag "device-gamma" (optional_with_default 2.2 float)
                           ~doc:"FLOAT gamma value to use when encoding image"
                      +> anon ("OUTPUT" %: file))
                    (fun device_gamma filename () ->
-                      Image.save_ppm (Image.Test.checkerboard ())
-                        ~filename ~device_gamma ()))
+                      ray_trace_scene ~device_gamma ~filename) )
              ])
        ; ("script",
           Command.async_basic
