@@ -1,5 +1,7 @@
 open Core.Std
 
+val m_pi : float
+
 module Vector2 : sig
   type t
 
@@ -87,15 +89,25 @@ module Color3 : sig
   val rgb : t -> (float * float * float)
 
   val of_vector : Vector3.t -> t
+
+  val scale : t -> float -> t
+
+  val (+) : t -> t -> t
 end
 
 module Radiance3 : sig
   include module type of Color3
 
   val of_color : Color3.t -> t
+
+  val ( * ) : t -> t -> t
 end
 
-module Power3 : module type of Color3
+module Power3 : sig
+  include module type of Color3
+
+  val to_radiance : t -> Radiance3.t
+end
 
 module Ray : sig
   type t
@@ -117,7 +129,19 @@ end
 module Bsdf : sig
   type t
 
-  val test : t
+  include Comparable.S with type t := t
+  include Sexpable.S with type t := t
+  include Stringable.S with type t := t
+
+  val lambertian_reflectance :
+    k_l : Radiance3.t
+    -> t
+
+  val evaluate_finite_scattering_density :
+    t
+    -> w_i : Vector3.t
+    -> w_o : Vector3.t
+    -> Radiance3.t
 end
 
 module Triangle : sig

@@ -42,7 +42,7 @@ let ray_trace_scene ~device_gamma ~filename =
   let image = Image.create ~width:400 ~height:200 () in
   let camera =
     Camera.create ~z_near:(-0.1) ~z_far:(-100.0)
-      ~field_of_view_x:(3.14159 /. 2.0)
+      ~field_of_view_x:(m_pi /. 2.0)
   in
   let triangle =
     let p3 x y z = Point3.create ~x ~y ~z in
@@ -60,7 +60,8 @@ let ray_trace_scene ~device_gamma ~filename =
       )
     in
     Triangle.create
-      ~vertices ~normals ~bsdf:Bsdf.test
+      ~vertices ~normals
+      ~bsdf:(Bsdf.lambertian_reflectance ~k_l:(Radiance3.create ~r:0.0 ~g:1.0 ~b:0.0))
   in
   let light =
     Light.create

@@ -1,5 +1,7 @@
 open Core.Std
 
+let m_pi = 3.14159;;
+
 module Vector2 = struct
   module T = struct
     type t = {
@@ -97,7 +99,21 @@ module Color3 = struct
     { r = Vector3.x v3; g = Vector3.y v3; b = Vector3.z v3; }
   ;;
 
+  let scale t s =
+    { r = t.r *. s; g = t.g *. s; b = t.b *. s; }
+  ;;
+
+  let (+) a b =
+    { r = a.r +. b.r; g = a.g +. b.g; b = a.b +. b.b; }
+  ;;
+
+  let ( * ) a b =
+    { r = a.r *. b.r; g = a.g *. b.g; b = a.b *. b.b; }
+  ;;
+
   let of_color t = t;;
+
+  let to_radiance t = t;;
 end
 
 module Radiance3 = Color3
@@ -123,9 +139,37 @@ module Ray = struct
 end
 
 module Bsdf = struct
-  type t = unit with compare, sexp
+  module Lambertian_reflectance = struct
+    type t = {
+      k_l : Radiance3.t
+    } with fields, compare, sexp
 
-  let test = ();;
+    let evaluate_finite_scattering_density t ~w_i:_ ~w_o:_ =
+      Radiance3.scale t.k_l (1.0 /. m_pi)
+    ;;
+
+    let create = Fields.create;;
+  end
+
+  module T = struct
+    type t =
+      | Lambertian_reflectance of Lambertian_reflectance.t
+    with compare, sexp
+  end
+
+  include T
+  include Comparable.Make(T)
+  include Sexpable.To_stringable(T)
+
+  let evaluate_finite_scattering_density t ~w_i ~w_o =
+    match t with
+    | Lambertian_reflectance t ->
+      Lambertian_reflectance.evaluate_finite_scattering_density t ~w_i ~w_o
+  ;;
+
+  let lambertian_reflectance ~k_l =
+    Lambertian_reflectance (Lambertian_reflectance.create ~k_l)
+  ;;
 end
 
 module Triangle = struct

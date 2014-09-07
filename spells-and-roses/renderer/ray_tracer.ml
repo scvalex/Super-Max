@@ -39,6 +39,35 @@ let intersect ~ray ~triangle =
   else (distance, (w1, w2, w3))
 ;;
 
+let visible ~scene:_ ~intersection_point:_ ~w_i:_ ~distance_to_light:_ =
+  true
+;;
+
+let shade ~scene ~triangle ~intersection_point ~normal ~w_o =
+  Set.fold_right (Scene.lights scene) ~init:(Radiance3.create ~r:0.0 ~g:0.0 ~b:0.0)
+    ~f:(fun light l_o ->
+      let offset =
+        Vector3.(Point3.to_vector (Light.position light)
+                 - Point3.to_vector intersection_point)
+      in
+      let distance_to_light = Vector3.magnitude offset in
+      let w_i = Vector3.scale offset (1.0 /. distance_to_light) in
+      if visible ~scene ~intersection_point ~w_i ~distance_to_light
+      then begin
+        let l_i =
+          Power3.to_radiance
+            (Power3.scale (Light.power light)
+               (1.0 /. (4.0 *. m_pi *. distance_to_light *. distance_to_light)))
+        in
+        let scattered =
+          Bsdf.evaluate_finite_scattering_density (Triangle.bsdf triangle) ~w_i ~w_o
+        in
+        Radiance3.(l_o + l_i * scale scattered (Float.max 0.0 (Vector3.dot w_i normal)))
+      end else begin
+        l_o
+      end)
+;;
+
 let sample_ray_triangle ~scene ~ray ~triangle ~distance =
   let (distance', (w1, w2, w3)) = intersect ~ray ~triangle in
   if Float.(distance' >= distance)
@@ -54,18 +83,9 @@ let sample_ray_triangle ~scene ~ray ~triangle ~distance =
       let (n1, n2, n3) = Triangle.normals triangle in
       Vector3.(direction (scale n1 w1 + scale n2 w2 + scale n3 w3))
     in
-    let w_o =
-      Vector3.scale (Ray.direction ray) (-1.0)
-    in
-    (* let radiance = *)
-    (*   shade ~scene ~triangle ~intersection_point ~normal ~w_o *)
-    (* in *)
+    let w_o = Vector3.scale (Ray.direction ray) (-1.0) in
     let radiance =
-      let _ = scene in
-      let _ = normal in
-      let _ = intersection_point in
-      let _ = w_o in
-      Radiance3.of_color (Color3.create ~r:1.0 ~g:1.0 ~b:1.0)
+      shade ~scene ~triangle ~intersection_point ~normal ~w_o
     in
     Some (radiance, distance')
   end
