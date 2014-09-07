@@ -141,7 +141,7 @@ end
 module Bsdf = struct
   module Lambertian_reflectance = struct
     type t = {
-      k_l : Radiance3.t
+      k_l : Radiance3.t;
     } with fields, compare, sexp
 
     let evaluate_finite_scattering_density t ~w_i:_ ~w_o:_ =
@@ -151,9 +151,29 @@ module Bsdf = struct
     let create = Fields.create;;
   end
 
+  module Blinn_phong = struct
+    type t = {
+      k_l : Radiance3.t;
+      k_g : Radiance3.t;
+      s   : float;
+      n   : Vector3.t;          (* CR scvalex: Where do I get n from? *)
+    } with fields, compare, sexp
+
+    let evaluate_finite_scattering_density t ~w_i ~w_o =
+      let w_h = Vector3.(direction (w_i + w_o)) in
+      Radiance3.(t.k_l
+                 + scale t.k_g ((t.s +. 8.0)
+                                *. Float.(max 0.0 (Vector3.dot w_h t.n))
+                                   ** t.s /. m_pi))
+    ;;
+
+    let create = Fields.create;;
+  end
+
   module T = struct
     type t =
       | Lambertian_reflectance of Lambertian_reflectance.t
+      | Blinn_phong of Blinn_phong.t
     with compare, sexp
   end
 
@@ -165,10 +185,16 @@ module Bsdf = struct
     match t with
     | Lambertian_reflectance t ->
       Lambertian_reflectance.evaluate_finite_scattering_density t ~w_i ~w_o
+    | Blinn_phong t ->
+      Blinn_phong.evaluate_finite_scattering_density t ~w_i ~w_o
   ;;
 
   let lambertian_reflectance ~k_l =
     Lambertian_reflectance (Lambertian_reflectance.create ~k_l)
+  ;;
+
+  let blinn_phong ~k_l ~k_g ~s ~n =
+    Blinn_phong (Blinn_phong.create ~k_l ~k_g ~s ~n)
   ;;
 end
 

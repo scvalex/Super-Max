@@ -137,6 +137,13 @@ module Bsdf : sig
     k_l : Radiance3.t
     -> t
 
+  val blinn_phong :
+    k_l : Radiance3.t
+    -> k_g : Radiance3.t
+    -> s : float
+    -> n : Vector3.t
+    -> t
+
   val evaluate_finite_scattering_density :
     t
     -> w_i : Vector3.t
