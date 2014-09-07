@@ -39,8 +39,20 @@ let intersect ~ray ~triangle =
   else (distance, (w1, w2, w3))
 ;;
 
-let visible ~scene:_ ~intersection_point:_ ~w_i:_ ~distance_to_light:_ =
-  true
+let visible ~scene ~intersection_point ~w_i ~distance_to_light =
+  let ray_bump_epsilon = 1e-4 in
+  let shadow_ray =
+    Ray.create
+      ~origin:Point3.(add_vector intersection_point Vector3.(scale w_i ray_bump_epsilon))
+      ~direction:w_i
+  in
+  let distance_to_light = distance_to_light -. ray_bump_epsilon in
+  let obscured =
+    Set.exists (Scene.triangles scene) ~f:(fun triangle ->
+      let (distance_to_triangle, _) = intersect ~ray:shadow_ray ~triangle in
+      Float.(distance_to_triangle < distance_to_light))
+  in
+  not obscured
 ;;
 
 let shade ~scene ~triangle ~intersection_point ~normal ~w_o =
