@@ -45,6 +45,12 @@ module Vector3 : sig
   val direction : t -> t
 
   val (+) : t -> t -> t
+
+  val (-) : t -> t -> t
+
+  val dot : t -> t -> float
+
+  val cross : t -> t -> t
 end
 
 module Point2 : module type of Vector2
@@ -53,6 +59,8 @@ module Point3 : sig
   include module type of Vector3
 
   val of_vector : Vector3.t -> t
+
+  val to_vector : t -> Vector3.t
 
   val add_vector : t -> Vector3.t -> t
 end

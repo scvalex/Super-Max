@@ -17,8 +17,26 @@ let compute_eye_ray ~x ~y ~width ~height ~camera =
     ~direction:(Vector3.direction start)
 ;;
 
-let intersect ~ray:_ ~triangle:_ =
-  (0.0, (0.0, 0.0, 0.0))
+let intersect ~ray ~triangle =
+  let (t1, t2, t3) = Triangle.vertices triangle in
+  let (t1, t2, t3) = Point3.(to_vector t1, to_vector t2, to_vector t3) in
+  let e1 = Vector3.(t2 - t1) in
+  let e2 = Vector3.(t3 - t1) in
+  let q = Vector3.cross (Ray.direction ray) e2 in
+  let a = Vector3.dot e1 q in
+  let s = Vector3.(Point3.to_vector (Ray.origin ray) - t1) in
+  let r = Vector3.cross s e1 in
+  let w2 = Vector3.(dot s q) /. a in
+  let w3 = Vector3.(dot (Ray.direction ray) r) /. a in
+  let w1 = 1.0 -. (w2 +. w3) in
+  let distance = Vector3.(dot e2 r) /. a in
+  let epsilon = 1e-7 in
+  let epsilon2 = 1e-10 in
+  if Float.(a <= epsilon
+            || w1 < -epsilon2 || w2 < -epsilon2 || w3 < -epsilon2
+            || distance <= 0.0)
+  then (Float.infinity, (w1, w2, w3))
+  else (distance, (w1, w2, w3))
 ;;
 
 let sample_ray_triangle ~scene ~ray ~triangle ~distance =

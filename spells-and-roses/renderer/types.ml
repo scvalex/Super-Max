@@ -48,7 +48,24 @@ module Vector3 = struct
     { x = a.x +. b.x; y = a.y +. b.y; z = a.z +. b.z; }
   ;;
 
+  let (-) a b =
+    { x = a.x -. b.x; y = a.y -. b.y; z = a.z -. b.z; }
+  ;;
+
+  let dot a b =
+    a.x *. b.x +. a.y *. b.y +. a.z *. b.z
+  ;;
+
+  let cross a b =
+    { x = a.y *. b.z -. a.z *. b.y;
+      y = a.z *. b.x -. a.x *. b.z;
+      z = a.x *. b.y -. a.y *. b.x;
+    }
+  ;;
+
   let of_vector t = t;;
+
+  let to_vector t = t;;
 end
 
 module Point2 = Vector2
