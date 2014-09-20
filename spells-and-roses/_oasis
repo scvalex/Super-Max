@@ -19,6 +19,27 @@ SourceRepository head
   Type:               git
   Location:           https://github.com/scvalex/super-max.git
 
+Library linear
+  Path:               linear
+  FindlibName:        linear
+  Install:            false
+  Pack:               true
+  BuildDepends:
+    bin_prot,
+    bin_prot.syntax,
+    comparelib,
+    comparelib.syntax,
+    core,
+    fieldslib,
+    fieldslib.syntax,
+    herelib,
+    herelib.syntax,
+    sexplib,
+    sexplib.syntax,
+    threads
+  Modules:
+    Std
+
 Library lib
   Path:               lib
   FindlibName:        super_max
@@ -146,6 +167,7 @@ Executable super_max
     bin_prot,
     bin_prot.syntax,
     core,
+    linear,
     ocaml_plugin_archive,
     pong,
     renderer,

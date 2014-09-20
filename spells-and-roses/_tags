@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: eb4b7079c215944d70e7c12b58d1c1ec)
+# DO NOT EDIT (digest: 771e53dfe8e010c92c5fc4c297af221c)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -13,6 +13,21 @@
 ".git": not_hygienic
 "_darcs": -traverse
 "_darcs": not_hygienic
+# Library linear
+"linear/linear.cmxs": use_linear
+"linear/std.cmx": for-pack(Linear)
+<linear/*.ml{,i}>: package(bin_prot)
+<linear/*.ml{,i}>: package(bin_prot.syntax)
+<linear/*.ml{,i}>: package(comparelib)
+<linear/*.ml{,i}>: package(comparelib.syntax)
+<linear/*.ml{,i}>: package(core)
+<linear/*.ml{,i}>: package(fieldslib)
+<linear/*.ml{,i}>: package(fieldslib.syntax)
+<linear/*.ml{,i}>: package(herelib)
+<linear/*.ml{,i}>: package(herelib.syntax)
+<linear/*.ml{,i}>: package(sexplib)
+<linear/*.ml{,i}>: package(sexplib.syntax)
+<linear/*.ml{,i}>: package(threads)
 # Library lib
 "lib/lib.cmxs": use_lib
 <lib/*.ml{,i}>: package(async)
@@ -117,6 +132,7 @@
 <bin/super_max.{native,byte}>: package(threads)
 <bin/super_max.{native,byte}>: package(type_conv)
 <bin/super_max.{native,byte}>: use_lib
+<bin/super_max.{native,byte}>: use_linear
 <bin/super_max.{native,byte}>: use_ocaml_plugin_archive
 <bin/super_max.{native,byte}>: use_pong
 <bin/super_max.{native,byte}>: use_renderer
@@ -140,9 +156,10 @@
 <bin/*.ml{,i}>: package(threads)
 <bin/*.ml{,i}>: package(type_conv)
 <bin/*.ml{,i}>: use_lib
+<bin/*.ml{,i}>: use_linear
 <bin/*.ml{,i}>: use_ocaml_plugin_archive
 <bin/*.ml{,i}>: use_pong
 <bin/*.ml{,i}>: use_renderer
 <bin/*.ml{,i}>: use_spells_and_roses
 # OASIS_STOP
-<{bin,lib,plugin,spells_and_roses,pong,renderer}/*.ml{,i}>: syntax_camlp4o
+<{bin,lib,plugin,spells_and_roses,pong,renderer,linear}/*.ml{,i}>: syntax_camlp4o

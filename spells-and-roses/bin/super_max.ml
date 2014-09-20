@@ -1,5 +1,6 @@
 open Core.Std
 open Async.Std
+open Linear.Std
 
 module Flag = struct
   include Command.Spec
@@ -38,6 +39,7 @@ let run_pong_game ~data_dir ~player_file mode =
 ;;
 
 let ray_trace_scene ~device_gamma ~filename =
+  let _ = pi in
   let open Types in
   let image = Image.create ~width:400 ~height:200 () in
   let camera =
