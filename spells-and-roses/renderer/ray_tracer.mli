@@ -1,4 +1,4 @@
-open Types
+open Linear.Std
 
 val ray_trace :
   image : Image.t

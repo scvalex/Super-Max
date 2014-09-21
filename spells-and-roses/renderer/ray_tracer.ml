@@ -1,5 +1,5 @@
 open Core.Std
-open Types
+open Linear.Std
 
 let compute_eye_ray ~x ~y ~width ~height ~camera =
   let aspect = height /. width in

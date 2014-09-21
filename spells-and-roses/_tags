@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 771e53dfe8e010c92c5fc4c297af221c)
+# DO NOT EDIT (digest: 0a20876475f9e4cb656f80ffe50afc60)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -49,6 +49,8 @@
 <lib/*.ml{,i}>: package(threads)
 # Library renderer
 "renderer/renderer.cmxs": use_renderer
+<renderer/*.ml{,i}>: package(bin_prot)
+<renderer/*.ml{,i}>: package(bin_prot.syntax)
 <renderer/*.ml{,i}>: package(comparelib)
 <renderer/*.ml{,i}>: package(comparelib.syntax)
 <renderer/*.ml{,i}>: package(core)
@@ -59,6 +61,7 @@
 <renderer/*.ml{,i}>: package(sexplib)
 <renderer/*.ml{,i}>: package(sexplib.syntax)
 <renderer/*.ml{,i}>: package(threads)
+<renderer/*.ml{,i}>: use_linear
 # Library spells_and_roses
 "spells_and_roses/spells_and_roses.cmxs": use_spells_and_roses
 <spells_and_roses/*.ml{,i}>: package(async)

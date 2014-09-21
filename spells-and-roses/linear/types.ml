@@ -1,6 +1,6 @@
 open Core.Std
 
-let m_pi = 3.14159;;
+let m_pi = 4.0 *. atan 1.0;;
 
 module Vector2 = struct
   module T = struct

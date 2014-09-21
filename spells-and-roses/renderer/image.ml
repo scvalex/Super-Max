@@ -1,5 +1,5 @@
 open Core.Std let _ = _squelch_unused_module_warning_
-open Types
+open Linear.Std
 
 module A2 = Bigarray.Array2
 

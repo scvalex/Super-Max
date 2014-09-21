@@ -90,14 +90,14 @@ Library renderer
     fieldslib.syntax,
     herelib,
     herelib.syntax,
+    linear,
     sexplib,
     sexplib.syntax,
     threads
   Modules:
     Image,
     Ppm,
-    Ray_tracer,
-    Types
+    Ray_tracer
 
 Library spells_and_roses
   Path:               spells_and_roses

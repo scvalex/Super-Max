@@ -1,4 +1,4 @@
-open Types
+open Linear.Std
 
 type t
 
