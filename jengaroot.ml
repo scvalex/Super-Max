@@ -76,8 +76,5 @@ let scheme ~dir =
 ;;
 
 let setup () =
-  let env =
-    Env.create (fun ~dir -> scheme ~dir)
-  in
-  Deferred.return env
+  return (Env.create (fun ~dir -> scheme ~dir))
 ;;
