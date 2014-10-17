@@ -5,6 +5,10 @@ open Jenga_lib.Api
 let ( *>>= ) = Dep.bind
 let ( *>>| ) = Dep.map
 
+let message str =
+  print_endline ("!!jengaroot.ml: " ^ str)
+;;
+
 module Alias = struct
   include Alias
 
@@ -36,6 +40,7 @@ module Smbuild = struct
     | false ->
       Dep.return None
     | true ->
+      message ("Reading " ^ Path.to_string smbuild);
       Dep.contents smbuild
       *>>| fun smbuild_str ->
       let smbuild_str = String.strip smbuild_str in
