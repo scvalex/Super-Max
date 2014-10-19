@@ -16,8 +16,21 @@ let bash ~dir command_string =
           ]
 ;;
 
+let words_of_string string =
+  let string = String.tr string ~target:'\n' ~replacement:' ' in
+  let words = String.split string ~on:' ' in
+  let words = List.filter words ~f:(function | "" -> false | _ -> true) in
+  words
+;;
+
+let file_words path =
+  Dep.contents path
+  *>>| words_of_string
+;;
+
 let link_quietly = Path.root_relative "jenga_bin/link-quietly";;
 let ocamlwrapper = Path.root_relative "jenga_bin/ocamlwrapper";;
+let the_root_lib_dir = Path.root_relative "jenga_lib";;
 let ocamlopt_prog = "ocamlopt.opt";;
 
 module Alias = struct
@@ -90,53 +103,61 @@ let create_directory_context ~dir _smbuild =
 let gen_ocaml_build_rules ~dir _dc smbuild =
   let module Exe = Smbuild.Executable in
   match smbuild with
-  | Smbuild.Executable executable ->
-    let exe_path = Path.relative ~dir (Exe.name executable) in
-    let default_rule =
-      Rule.default ~dir
-        [Dep.path exe_path]
-    in
-    let ocamlflags =
-      let disabled_warnings = [3; 4; 29; 40; 41; 42; 44; 45; 48] in
-      let ocamlwarnings =
-        "@a" ^ String.concat (List.map disabled_warnings
-                                ~f:(fun n -> "-" ^ Int.to_string n))
+  | Smbuild.Executable exe ->
+    let exe_path = Path.relative ~dir (Exe.name exe) in
+    let exe_action =
+      let ocamlflags =
+        let disabled_warnings = [3; 4; 29; 40; 41; 42; 44; 45; 48] in
+        let ocamlwarnings =
+          "@a" ^ String.concat (List.map disabled_warnings
+                                  ~f:(fun n -> "-" ^ Int.to_string n))
+        in
+        [ "-I"; "+camlp4"
+        ; "-w"; ocamlwarnings
+        ; "-strict-sequence"; "-short-paths"
+        ; "-thread"; "-bin-annot"
+        ]
       in
-      [ "-I"; "+camlp4"
-      ; "-w"; ocamlwarnings
-      ; "-strict-sequence"; "-short-paths"
-      ; "-thread"; "-bin-annot"
-      ]
+      let ocamloptflags =
+        ["-inline"; "20"; "-nodynlink"; "-g"]
+      in
+      let cmxa_for_packs =
+        List.map ~f:(fun name -> name ^ ".cmxa")
+          ["nums"; "unix"; "threads"; "bigarray"; "str"]
+      in
+      let libname = "bin__" ^ Exe.name exe in
+      file_words (Path.relative ~dir (libname ^ ".libdeps"))
+      *>>= fun libs ->
+      let liblink_dir ~lib =
+        Path.relative ~dir:the_root_lib_dir lib
+      in
+      let lib_cmxas =
+        List.concat_map libs ~f:(fun lib -> [
+            "-I"; Path.dotdot ~dir (liblink_dir ~lib);
+            lib ^ ".cmxa";
+          ])
+      in
+      file_words (Path.relative ~dir (Exe.name exe ^ ".objdeps"))
+      *>>| fun objs ->
+      let sub_cmxs_in_correct_order =
+        List.map objs ~f:(fun name -> name ^ ".cmx")
+      in
+      bash ~dir
+        (String.concat ~sep:" " (List.concat [
+           [ Path.dotdot ~dir link_quietly
+           ; Path.dotdot ~dir ocamlwrapper
+           ; ocamlopt_prog ];
+           ocamlflags; ocamloptflags;
+           ["-cc"; "g++"];
+           cmxa_for_packs;
+           lib_cmxas;
+           sub_cmxs_in_correct_order;
+           [ Path.basename (Path.relative ~dir (Exe.name exe ^ ".cmx"))
+           ; "-o"; Path.basename exe_path ];
+         ]))
     in
-    let ocamloptflags =
-      ["-inline"; "20"; "-nodynlink"; "-g"]
-    in
-    let cmxa_for_packs =
-      List.map ~f:(fun name -> name ^ ".cmxa")
-        ["nums"; "unix"; "threads"; "bigarray"; "str"]
-    in
-    let lib_cmxas =
-      List.concat_map libs ~f:(fun lib -> [
-          "-I"; dotdot ~dir (LL.liblink_dir ~lib);
-          lib ^ ".cmxa";
-        ])
-    in
-    let exe_rule =
-      Rule.create
-        ~targets:[exe_path]
-        (bash ~dir
-           (String.concat ~sep:" " (List.concat [
-              [ Path.dotdot ~dir link_quietly
-              ; Path.dotdot ~dir ocamlwrapper
-              ; ocamlopt_prog ];
-              ocamlflags; ocamloptflags;
-              ["-cc"; "g++"];
-              cmxa_for_packs;
-              lib_cmxas;
-              sub_cmxs_in_correct_order;
-              [basename main_cmx; "-o"; basename exe_path];
-            ])))
-    in
+    let default_rule = Rule.default ~dir [Dep.path exe_path] in
+    let exe_rule = Rule.create ~targets:[exe_path] exe_action in
     [ default_rule
     ; exe_rule
     ]
