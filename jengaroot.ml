@@ -80,6 +80,10 @@ module DC = struct
   let create = Fields.create;;
 end
 
+let fake_libname_of_exe exe =
+  "bin__" ^ Smbuild.Executable.name exe
+;;
+
 let do_nothing_scheme ~dir =
   Scheme.rules [Rule.default ~dir []]
 ;;
@@ -125,8 +129,8 @@ let gen_ocaml_build_rules ~dir _dc smbuild =
         List.map ~f:(fun name -> name ^ ".cmxa")
           ["nums"; "unix"; "threads"; "bigarray"; "str"]
       in
-      let libname = "bin__" ^ Exe.name exe in
-      file_words (Path.relative ~dir (libname ^ ".libdeps"))
+      file_words (Path.relative ~dir
+                    (fake_libname_of_exe exe ^ ".libdeps"))
       *>>= fun libs ->
       let liblink_dir ~lib =
         Path.relative ~dir:the_root_lib_dir lib
@@ -163,9 +167,45 @@ let gen_ocaml_build_rules ~dir _dc smbuild =
     ]
 ;;
 
+let gen_libdeps dc ~dir ~libs name =
+  [
+    gen_interface_deps_from_objinfo dc ~dir ~libname:name;
+
+    gen_transitive_deps ~dir
+      ~one_step:(return libs)
+      ~dep_wrt_dir:the_root_lib_dir
+      ~template:(fun x -> sprintf "%s/%s.interface.deps" x x)
+      ~target:(name ^ ".inferred-1step.deps");
+
+    gen_transitive_deps ~dir
+      ~one_step:(file_words (relative ~dir (name ^ ".inferred-1step.deps")))
+      ~dep_wrt_dir:the_root_lib_dir
+      ~template:(fun x -> sprintf "%s/%s.libdeps" x x)
+      ~target:(name ^ ".libdeps");
+
+    Rule.alias (Alias.libdeps ~dir) [
+      Dep.path (suffixed ~dir name ".libdeps")
+    ];
+  ]
+;;
+
+let gen_dep_rules ~dir dc smbuild =
+  let libnames =
+    match smbuild with
+    | Smbuild.Executable exe -> [fake_libname_of_exe exe]
+  in
+  let libs =
+    match smbuild with
+    | Smbuild.Executable exe -> Smbuild.Executable.libraries exe
+  in
+  List.concat_map libnames ~f:(fun libname ->
+    gen_libdeps dc ~dir ~libs libname)
+;;
+
 let ocaml_build_rules ~dir dc smbuild =
   List.concat
     [ gen_ocaml_build_rules ~dir dc smbuild
+    ; gen_dep_rules ~dir dc smbuild
     ]
 ;;
 
