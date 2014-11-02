@@ -49,32 +49,17 @@ let (^/) dir name =
 (*   ;; *)
 (* end *)
 
-(* module Smbuild = struct *)
-(*   module Executable = struct *)
-(*     type t = { *)
-(*       name      : string; *)
-(*       libraries : string list; *)
-(*     } with fields, sexp *)
-(*   end *)
+module Smbuild = struct
+  module Executable = struct
+    type t = {
+      libraries : string list;
+    } with fields, sexp
+  end
 
-(*   type t = *)
-(*     | Executable of Executable.t *)
-(*   with sexp *)
-
-(*   let load ~dir = *)
-(*     let smbuild = Path.relative ~dir "smbuild" in *)
-(*     Dep.file_exists smbuild *)
-(*     *>>= function *)
-(*     | false -> *)
-(*       Dep.return None *)
-(*     | true -> *)
-(*       message ("Reading " ^ Path.to_string smbuild); *)
-(*       Dep.contents smbuild *)
-(*       *>>| fun smbuild_str -> *)
-(*       let smbuild_str = String.strip smbuild_str in *)
-(*       Some (t_of_sexp (Sexp.of_string smbuild_str)) *)
-(*   ;; *)
-(* end *)
+  type t =
+    | Executable of Executable.t
+  with sexp
+end
 
 (* module DC = struct *)
 (*   type t = { *)
@@ -230,48 +215,53 @@ let (^/) dir name =
 (*   Scheme.rules_dep rules *)
 (* ;; *)
 
-let build_exe ~dir:_ ~app exe =
-  Dep.return (Action.save ~target:exe app)
+let build_exe ~dir:_ ~app ~smbuild exe =
+  Dep.return (Action.save ~target:exe (app ^ (Sexp.to_string_mach (Smbuild.sexp_of_t smbuild))))
 ;;
 
-let app_rules ~dir =
-  let app = Path.basename dir in
-  let exe = dir ^/ app ^ ".exe" in
-  Dep.return ()
-  *>>| fun () ->
-  [ Rule.default ~dir [Dep.path exe]
-  ; Rule.create ~targets:[exe] (build_exe ~dir ~app exe)
-  ]
+let app_scheme ~dir =
+  Scheme.contents (dir ^/ "smbuild") (fun smbuild ->
+    let smbuild =
+      Smbuild.t_of_sexp (Sexp.of_string (String.strip smbuild))
+    in
+    let app = Path.basename dir in
+    let exe = dir ^/ app ^ ".exe" in
+    Scheme.rules
+      [ Rule.default ~dir [Dep.path exe]
+      ; Rule.create ~targets:[exe] (build_exe ~dir ~app ~smbuild exe)
+      ])
 ;;
 
-let lib_rules ~dir:_ =
-  failwith "not implemented"
+let lib_scheme ~dir:_ =
+  failwith "lib_scheme not implemented"
 ;;
 
-let nothing_to_build_rules ~dir =
-  Dep.return [Rule.default ~dir []]
+let nothing_to_build_scheme ~dir =
+  Scheme.rules [Rule.default ~dir []]
+;;
+
+let all_apps_scheme ~dir =
+  let all_apps =
+    Dep.subdirs ~dir:(dir ^/ "app")
+    *>>| fun apps ->
+    [ Rule.default ~dir
+        (List.map apps ~f:(fun app ->
+           Dep.path (dir ^/ Path.to_string app)))
+    ]
+  in
+  Scheme.rules_dep all_apps
 ;;
 
 let scheme ~dir =
   message ("Building scheme for " ^ (Path.to_string dir));
-  let rules =
-    if Path.(the_root = dir)
-    then begin
-      (* Build all the apps. *)
-      Dep.subdirs ~dir:(dir ^/ "app")
-      *>>| fun apps ->
-      [ Rule.default ~dir
-          (List.map apps ~f:(fun app ->
-             Dep.path (dir ^/ Path.to_string app)))
-      ]
-    end else begin
-      match Path.(to_string (dirname dir)) with
-      | "app" -> app_rules ~dir
-      | "lib" -> lib_rules ~dir
-      | _     -> nothing_to_build_rules ~dir
-    end
-  in
-  Scheme.rules_dep rules
+  if Path.(the_root = dir)
+  then
+    all_apps_scheme ~dir
+  else
+    match Path.(to_string (dirname dir)) with
+    | "app" -> app_scheme ~dir
+    | "lib" -> lib_scheme ~dir
+    | _     -> nothing_to_build_scheme ~dir
 ;;
 
 let setup () =

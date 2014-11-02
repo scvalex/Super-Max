@@ -1,6 +1,4 @@
 (executable
- ((name example)
-  (libraries
-   (
-    core
-    ))))
+ ((libraries ( core ))
+  )
+ )
