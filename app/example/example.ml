@@ -1,12 +1,14 @@
 open Core.Std
+open Async.Std
 
 let example () =
-  Printf.printf "Hello, Ocaml!\n%!"
+  Printf.printf "Hello, Ocaml!\n%!";
+  Deferred.unit
 ;;
 
 let main () =
   Command.run
-    (Command.basic
+    (Command.async
        ~summary:"Example program"
        Command.Spec.empty
        example)
