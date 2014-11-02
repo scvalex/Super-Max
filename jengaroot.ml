@@ -9,6 +9,7 @@ let ( *>>| ) = Dep.map;;
 let message str =
   print_endline ("!!jengaroot.ml: " ^ str)
 ;;
+let _ = message;;
 
 let (^/) dir name =
   Path.relative ~dir name
@@ -103,7 +104,6 @@ let ocamldep_deps ~dir ~source ~target =
   | None ->
     failwith ("missing in ocamldep output: " ^ Path.to_string target)
   | Some paths ->
-    message ("we depend on: " ^ String.concat (List.map paths ~f:Path.to_string));
     Dep.all_unit
       (List.map paths ~f:(fun path -> Dep.path path))
 ;;
@@ -204,7 +204,6 @@ let all_apps_scheme ~dir =
 ;;
 
 let scheme ~dir =
-  message ("Building scheme for " ^ (Path.to_string dir));
   if Path.(the_root = dir)
   then
     all_apps_scheme ~dir
