@@ -230,11 +230,34 @@ let (^/) dir name =
 (*   Scheme.rules_dep rules *)
 (* ;; *)
 
+let build_exe ~dir:_ ~app exe =
+  Dep.return (Action.save ~target:exe app)
+;;
+
+let app_rules ~dir =
+  let app = Path.basename dir in
+  let exe = dir ^/ app ^ ".exe" in
+  Dep.return ()
+  *>>| fun () ->
+  [ Rule.default ~dir [Dep.path exe]
+  ; Rule.create ~targets:[exe] (build_exe ~dir ~app exe)
+  ]
+;;
+
+let lib_rules ~dir:_ =
+  failwith "not implemented"
+;;
+
+let nothing_to_build_rules ~dir =
+  Dep.return [Rule.default ~dir []]
+;;
+
 let scheme ~dir =
   message ("Building scheme for " ^ (Path.to_string dir));
   let rules =
     if Path.(the_root = dir)
     then begin
+      (* Build all the apps. *)
       Dep.subdirs ~dir:(dir ^/ "app")
       *>>| fun apps ->
       [ Rule.default ~dir
@@ -243,17 +266,9 @@ let scheme ~dir =
       ]
     end else begin
       match Path.(to_string (dirname dir)) with
-      | "app" ->
-        let app = Path.basename dir in
-        Dep.return ()
-        *>>| fun () ->
-        [ Rule.default ~dir
-            [Dep.path (dir ^/ app ^ ".exe")]
-        ]
-      | "lib" ->
-        failwith "not implemented"
-      | str ->
-        failwith ("don't know how to build " ^ str)
+      | "app" -> app_rules ~dir
+      | "lib" -> lib_rules ~dir
+      | _     -> nothing_to_build_rules ~dir
     end
   in
   Scheme.rules_dep rules

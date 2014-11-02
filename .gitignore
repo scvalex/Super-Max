@@ -1,3 +1,4 @@
 /.jenga.*
 /.merlin
 /libmap.sexp
+*.exe
