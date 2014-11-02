@@ -28,6 +28,10 @@ let glob_ml ~dir =
   Glob.create ~dir "*.ml"
 ;;
 
+let glob_mli ~dir =
+  Glob.create ~dir "*.mli"
+;;
+
 let non_blank str =
   match String.strip str with
   | "" -> false
@@ -73,6 +77,7 @@ let ocamldep_deps ~dir ~source ~target =
   Dep.action_stdout
     (Dep.all_unit
        [ Dep.glob_change (glob_ml ~dir)
+       ; Dep.glob_change (glob_mli ~dir)
        ; Dep.path source
        ]
      *>>| fun () ->
@@ -115,6 +120,31 @@ let compile_ml_rule ~dir name =
   Rule.create ~targets:[cmi; cmx; o] compile_ml
 ;;
 
+let compile_ml_mli_rules ~dir name =
+  let cmi = dir ^/ name ^ ".cmi" in
+  let cmx = dir ^/ name ^ ".cmx" in
+  let o = dir ^/ name ^ ".o" in
+  let compile_ml =
+    let ml = dir ^/ name ^ ".ml" in
+    Dep.path ml
+    *>>= fun () ->
+    ocamldep_deps ~dir ~source:ml ~target:cmx
+    *>>| fun () ->
+    ocamlopt ~dir ~args:["-c"; basename ml]
+  in
+  let compile_mli =
+    let mli = dir ^/ name ^ ".mli" in
+    Dep.path mli
+    *>>= fun () ->
+    ocamldep_deps ~dir ~source:mli ~target:cmi
+    *>>| fun () ->
+    ocamlopt ~dir ~args:["-c"; basename mli]
+  in
+  [ Rule.create ~targets:[cmx; o] compile_ml
+  ; Rule.create ~targets:[cmi] compile_mli
+  ]
+;;
+
 let app_scheme ~dir =
   Scheme.contents (dir ^/ "smbuild") (fun smbuild ->
     let smbuild =
@@ -124,11 +154,15 @@ let app_scheme ~dir =
     let exe = dir ^/ app ^ ".exe" in
     let app_rules =
       Dep.glob_listing (glob_ml ~dir)
-      *>>| fun mls ->
+      *>>= fun mls ->
+      Dep.glob_listing (glob_mli ~dir)
+      *>>| fun mlis ->
       let compile_ml_rules =
-        List.map mls ~f:(fun ml ->
+        List.concat_map mls ~f:(fun ml ->
           let name = String.chop_suffix_exn (basename ml) ~suffix:".ml" in
-          compile_ml_rule ~dir name)
+          if List.mem mlis (dir ^/ name ^ ".mli")
+          then compile_ml_mli_rules ~dir name
+          else [compile_ml_rule ~dir name])
       in
       List.concat
         [ [ Rule.default ~dir [Dep.path exe]

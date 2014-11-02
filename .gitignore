@@ -2,3 +2,6 @@
 /.merlin
 /libmap.sexp
 *.exe
+*.cmi
+*.cmx
+*.o
