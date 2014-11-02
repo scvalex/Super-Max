@@ -16,12 +16,19 @@ let (^/) dir name =
 
 let basename = Path.basename;;
 
-let ocamlopt ~dir ~args =
-  Action.shell ~dir ~prog:"ocamlopt" ~args
+let ocamlopt ~dir ~external_libraries ~args =
+  let packages =
+    match external_libraries with
+    | [] -> []
+    | _  -> ["-package"; String.concat ~sep:"," external_libraries]
+  in
+  let packages = "-thread" :: packages in
+  Action.shell ~dir ~prog:"ocamlfind"
+    ~args:(List.concat [["ocamlopt"]; args; packages])
 ;;
 
 let ocamldep ~dir ~args =
-  Action.shell ~dir ~prog:"ocamldep" ~args
+  Action.shell ~dir ~prog:"ocamlfind" ~args:("ocamldep" :: args)
 ;;
 
 let glob_ml ~dir =
@@ -47,26 +54,22 @@ let split_into_words str =
 ;;
 
 module Smbuild = struct
-  module Executable = struct
-    type t = {
-      libraries : string list;
-    } with fields, sexp
-  end
-
-  type t =
-    | Executable of Executable.t
-  with sexp
+  type t = {
+    libraries          : string list;
+    external_libraries : string list;
+  } with fields, sexp
 end
 
-let link_exe_rule ~dir ~app ~smbuild:_ exe =
+let link_exe_rule ~dir ~app ~external_libraries exe =
   let link_exe =
     Dep.all_unit
       [ Dep.path (dir ^/ app ^ ".cmx")
       ; Dep.path (dir ^/ app ^ ".o")
       ]
     *>>| fun () ->
-    ocamlopt ~dir
+    ocamlopt ~dir ~external_libraries
       ~args:[ app ^ ".cmx"
+            ; "-linkpkg"
             ; "-o"; basename exe
             ]
   in
@@ -105,7 +108,7 @@ let ocamldep_deps ~dir ~source ~target =
       (List.map paths ~f:(fun path -> Dep.path path))
 ;;
 
-let compile_ml_rule ~dir name =
+let compile_ml_rule ~dir ~external_libraries name =
   let cmi = dir ^/ name ^ ".cmi" in
   let cmx = dir ^/ name ^ ".cmx" in
   let o = dir ^/ name ^ ".o" in
@@ -115,12 +118,13 @@ let compile_ml_rule ~dir name =
     *>>= fun () ->
     ocamldep_deps ~dir ~source:ml ~target:cmx
     *>>| fun () ->
-    ocamlopt ~dir ~args:["-c"; basename ml]
+    ocamlopt ~dir ~external_libraries
+      ~args:["-c"; basename ml]
   in
   Rule.create ~targets:[cmi; cmx; o] compile_ml
 ;;
 
-let compile_ml_mli_rules ~dir name =
+let compile_ml_mli_rules ~dir ~external_libraries name =
   let cmi = dir ^/ name ^ ".cmi" in
   let cmx = dir ^/ name ^ ".cmx" in
   let o = dir ^/ name ^ ".o" in
@@ -130,7 +134,8 @@ let compile_ml_mli_rules ~dir name =
     *>>= fun () ->
     ocamldep_deps ~dir ~source:ml ~target:cmx
     *>>| fun () ->
-    ocamlopt ~dir ~args:["-c"; basename ml]
+    ocamlopt ~dir ~external_libraries
+      ~args:["-c"; basename ml]
   in
   let compile_mli =
     let mli = dir ^/ name ^ ".mli" in
@@ -138,7 +143,8 @@ let compile_ml_mli_rules ~dir name =
     *>>= fun () ->
     ocamldep_deps ~dir ~source:mli ~target:cmi
     *>>| fun () ->
-    ocamlopt ~dir ~args:["-c"; basename mli]
+    ocamlopt ~dir ~external_libraries
+      ~args:["-c"; basename mli]
   in
   [ Rule.create ~targets:[cmx; o] compile_ml
   ; Rule.create ~targets:[cmi] compile_mli
@@ -149,6 +155,9 @@ let app_scheme ~dir =
   Scheme.contents (dir ^/ "smbuild") (fun smbuild ->
     let smbuild =
       Smbuild.t_of_sexp (Sexp.of_string (String.strip smbuild))
+    in
+    let external_libraries =
+      Smbuild.external_libraries smbuild
     in
     let app = basename dir in
     let exe = dir ^/ app ^ ".exe" in
@@ -161,12 +170,12 @@ let app_scheme ~dir =
         List.concat_map mls ~f:(fun ml ->
           let name = String.chop_suffix_exn (basename ml) ~suffix:".ml" in
           if List.mem mlis (dir ^/ name ^ ".mli")
-          then compile_ml_mli_rules ~dir name
-          else [compile_ml_rule ~dir name])
+          then compile_ml_mli_rules ~dir ~external_libraries name
+          else [compile_ml_rule ~dir ~external_libraries name])
       in
       List.concat
         [ [ Rule.default ~dir [Dep.path exe]
-          ; link_exe_rule ~dir ~app ~smbuild exe
+          ; link_exe_rule ~dir ~app ~external_libraries exe
           ]
         ; compile_ml_rules
         ]

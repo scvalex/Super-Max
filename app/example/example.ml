@@ -12,4 +12,4 @@ let main () =
        example)
 ;;
 
-let () = Exn.handle_uncaught_exn ~exit:true main;;
+let () = Exn.handle_uncaught ~exit:true main;;
