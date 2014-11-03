@@ -1,8 +1,8 @@
 (* open Core.Std *)
 
-type mat3 with sexp
+type mat3
 
-type vec3 with sexp
+type vec3
 
 val id : unit -> mat3
 
