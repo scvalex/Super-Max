@@ -1,7 +1,7 @@
-/.jenga.*
-/.merlin
-/libmap.sexp
+.jenga*
 *.exe
 *.cmi
 *.cmx
 *.o
+*.a
+*.cmxa

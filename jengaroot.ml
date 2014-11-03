@@ -67,13 +67,17 @@ module Smbuild = struct
   ;;
 end
 
+let compiled_files_for ~dir names =
+  List.concat_map names ~f:(fun name ->
+    [ Dep.path (dir ^/ name ^ ".cmx")
+    ; Dep.path (dir ^/ name ^ ".cmi")
+    ; Dep.path (dir ^/ name ^ ".o")
+    ])
+;;
+
 let link_exe_rule ~dir ~external_libraries ~exe names =
   let link_exe =
-    Dep.all_unit
-      (List.concat_map names ~f:(fun name ->
-         [ Dep.path (dir ^/ name ^ ".cmx")
-         ; Dep.path (dir ^/ name ^ ".o")
-         ]))
+    Dep.all_unit (compiled_files_for ~dir names)
     *>>| fun () ->
     ocamlopt ~dir ~external_libraries
       ~args:(List.concat
@@ -84,6 +88,31 @@ let link_exe_rule ~dir ~external_libraries ~exe names =
                ])
   in
   Rule.create ~targets:[exe] link_exe
+;;
+
+let link_cmxa_rules ~dir ~external_libraries ~lib_cmxa ~lib names =
+  let lib_a = dir ^/ lib ^ ".a" in
+  let lib_cmx = dir ^/ lib ^ ".cmx" in
+  let link_cmxa =
+    Dep.path lib_cmx
+    *>>| fun () ->
+    ocamlopt ~dir ~external_libraries
+      ~args:["-a"; "-o"; basename lib_cmxa; basename lib_cmx]
+  in
+  let pack_lib_cmx =
+    Dep.all_unit (compiled_files_for ~dir names)
+    *>>| fun () ->
+    ocamlopt ~dir ~external_libraries
+      ~args:(List.concat
+               [ [ "-pack"
+                 ; "-o"; basename lib_cmx
+                 ]
+               ; List.map names ~f:(fun name -> name ^ ".cmx")
+               ])
+  in
+  [ Rule.create ~targets:[lib_cmxa; lib_a] link_cmxa
+  ; Rule.create ~targets:[lib_cmx] pack_lib_cmx
+  ]
 ;;
 
 let ocamldep_deps ~dir ~source ~target =
@@ -198,12 +227,12 @@ let lib_rules ~dir =
   *>>= fun smbuild ->
   let external_libraries = Smbuild.external_libraries smbuild in
   let lib = basename dir ^ "_lib" in
-  let cmxa = dir ^/ lib ^ ".cmxa" in
+  let lib_cmxa = dir ^/ lib ^ ".cmxa" in
   compile_mls_in_dir_rules ~dir ~external_libraries
-  *>>| fun (_names, compile_mls_rules) ->
+  *>>| fun (names, compile_mls_rules) ->
   List.concat
-    [ [ Rule.default ~dir [Dep.path cmxa]
-      ]
+    [ [ Rule.default ~dir [Dep.path lib_cmxa] ]
+    ; link_cmxa_rules ~dir ~external_libraries ~lib_cmxa ~lib names
     ; compile_mls_rules
     ]
 ;;
