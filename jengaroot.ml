@@ -151,67 +151,71 @@ let compile_ml_mli_rules ~dir ~external_libraries name =
   ]
 ;;
 
-let app_scheme ~dir =
-  Scheme.contents (dir ^/ "smbuild") (fun smbuild ->
-    let smbuild =
-      Smbuild.t_of_sexp (Sexp.of_string (String.strip smbuild))
-    in
-    let external_libraries =
-      Smbuild.external_libraries smbuild
-    in
-    let app = basename dir in
-    let exe = dir ^/ app ^ ".exe" in
-    let app_rules =
-      Dep.glob_listing (glob_ml ~dir)
-      *>>= fun mls ->
-      Dep.glob_listing (glob_mli ~dir)
-      *>>| fun mlis ->
-      let compile_ml_rules =
-        List.concat_map mls ~f:(fun ml ->
-          let name = String.chop_suffix_exn (basename ml) ~suffix:".ml" in
-          if List.mem mlis (dir ^/ name ^ ".mli")
-          then compile_ml_mli_rules ~dir ~external_libraries name
-          else [compile_ml_rule ~dir ~external_libraries name])
-      in
-      List.concat
-        [ [ Rule.default ~dir [Dep.path exe]
-          ; link_exe_rule ~dir ~app ~external_libraries exe
-          ]
-        ; compile_ml_rules
-        ]
-    in
-    Scheme.rules_dep app_rules)
+let app_rules ~dir =
+  Dep.contents (dir ^/ "smbuild")
+  *>>= fun smbuild ->
+  let smbuild =
+    Smbuild.t_of_sexp (Sexp.of_string (String.strip smbuild))
+  in
+  let external_libraries =
+    Smbuild.external_libraries smbuild
+  in
+  let app = basename dir in
+  let exe = dir ^/ app ^ ".exe" in
+  Dep.glob_listing (glob_ml ~dir)
+  *>>= fun mls ->
+  Dep.glob_listing (glob_mli ~dir)
+  *>>| fun mlis ->
+  let compile_ml_rules =
+    List.concat_map mls ~f:(fun ml ->
+      let name = String.chop_suffix_exn (basename ml) ~suffix:".ml" in
+      if List.mem mlis (dir ^/ name ^ ".mli")
+      then compile_ml_mli_rules ~dir ~external_libraries name
+      else [compile_ml_rule ~dir ~external_libraries name])
+  in
+  List.concat
+    [ [ Rule.default ~dir [Dep.path exe]
+      ; link_exe_rule ~dir ~app ~external_libraries exe
+      ]
+    ; compile_ml_rules
+    ]
 ;;
 
-let lib_scheme ~dir:_ =
+let lib_rules ~dir:_ =
   failwith "lib_scheme not implemented"
 ;;
 
-let nothing_to_build_scheme ~dir =
-  Scheme.rules [Rule.default ~dir []]
+let nothing_to_build_rules ~dir =
+  Dep.return [Rule.default ~dir []]
 ;;
 
-let all_apps_scheme ~dir =
-  let all_apps =
-    Dep.subdirs ~dir:(dir ^/ "app")
-    *>>| fun apps ->
-    [ Rule.default ~dir
-        (List.map apps ~f:(fun app ->
-           Dep.path (dir ^/ Path.to_string app)))
-    ]
-  in
-  Scheme.rules_dep all_apps
+let all_apps_rules ~dir =
+  Dep.subdirs ~dir:(dir ^/ "app")
+  *>>| fun apps ->
+  [ Rule.default ~dir
+      (List.map apps ~f:(fun app ->
+         Dep.path (dir ^/ Path.to_string app)))
+  ]
 ;;
 
 let scheme ~dir =
-  if Path.(the_root = dir)
-  then
-    all_apps_scheme ~dir
-  else
-    match Path.(to_string (dirname dir)) with
-    | "app" -> app_scheme ~dir
-    | "lib" -> lib_scheme ~dir
-    | _     -> nothing_to_build_scheme ~dir
+  let is_smbuild path =
+    match basename path with
+    | "smbuild" -> true
+    | _         -> false
+  in
+  let rules =
+    if Path.(the_root = dir)
+    then
+      all_apps_rules ~dir
+    else
+      match Path.(to_string (dirname dir)) with
+      | "app" -> app_rules ~dir
+      | "lib" -> lib_rules ~dir
+      | _     -> nothing_to_build_rules ~dir
+  in
+  Scheme.exclude is_smbuild
+    (Scheme.rules_dep rules)
 ;;
 
 let setup () =
