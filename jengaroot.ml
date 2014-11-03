@@ -61,18 +61,21 @@ module Smbuild = struct
   } with fields, sexp
 end
 
-let link_exe_rule ~dir ~app ~external_libraries exe =
+let link_exe_rule ~dir ~external_libraries ~exe names =
   let link_exe =
     Dep.all_unit
-      [ Dep.path (dir ^/ app ^ ".cmx")
-      ; Dep.path (dir ^/ app ^ ".o")
-      ]
+      (List.concat_map names ~f:(fun name ->
+         [ Dep.path (dir ^/ name ^ ".cmx")
+         ; Dep.path (dir ^/ name ^ ".o")
+         ]))
     *>>| fun () ->
     ocamlopt ~dir ~external_libraries
-      ~args:[ app ^ ".cmx"
-            ; "-linkpkg"
-            ; "-o"; basename exe
-            ]
+      ~args:(List.concat
+               [ [ "-linkpkg"
+                 ; "-o"; basename exe
+                 ]
+               ; List.map names ~f:(fun name -> name ^ ".cmx")
+               ])
   in
   Rule.create ~targets:[exe] link_exe
 ;;
@@ -166,16 +169,19 @@ let app_rules ~dir =
   *>>= fun mls ->
   Dep.glob_listing (glob_mli ~dir)
   *>>| fun mlis ->
+  let names =
+    List.map mls ~f:(fun ml ->
+      String.chop_suffix_exn (basename ml) ~suffix:".ml")
+  in
   let compile_ml_rules =
-    List.concat_map mls ~f:(fun ml ->
-      let name = String.chop_suffix_exn (basename ml) ~suffix:".ml" in
+    List.concat_map names ~f:(fun name ->
       if List.mem mlis (dir ^/ name ^ ".mli")
       then compile_ml_mli_rules ~dir ~external_libraries name
       else [compile_ml_rule ~dir ~external_libraries name])
   in
   List.concat
     [ [ Rule.default ~dir [Dep.path exe]
-      ; link_exe_rule ~dir ~app ~external_libraries exe
+      ; link_exe_rule ~dir ~external_libraries ~exe names
       ]
     ; compile_ml_rules
     ]
