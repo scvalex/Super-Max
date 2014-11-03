@@ -59,6 +59,12 @@ module Smbuild = struct
     libraries          : string list;
     external_libraries : string list;
   } with fields, sexp
+
+  let load ~dir =
+    Dep.contents (dir ^/ "smbuild")
+    *>>| fun smbuild ->
+    t_of_sexp (Sexp.of_string (String.strip smbuild))
+  ;;
 end
 
 let link_exe_rule ~dir ~external_libraries ~exe names =
@@ -154,17 +160,7 @@ let compile_ml_mli_rules ~dir ~external_libraries name =
   ]
 ;;
 
-let app_rules ~dir =
-  Dep.contents (dir ^/ "smbuild")
-  *>>= fun smbuild ->
-  let smbuild =
-    Smbuild.t_of_sexp (Sexp.of_string (String.strip smbuild))
-  in
-  let external_libraries =
-    Smbuild.external_libraries smbuild
-  in
-  let app = basename dir in
-  let exe = dir ^/ app ^ ".exe" in
+let compile_mls_in_dir_rules ~dir ~external_libraries =
   Dep.glob_listing (glob_ml ~dir)
   *>>= fun mls ->
   Dep.glob_listing (glob_mli ~dir)
@@ -173,22 +169,43 @@ let app_rules ~dir =
     List.map mls ~f:(fun ml ->
       String.chop_suffix_exn (basename ml) ~suffix:".ml")
   in
-  let compile_ml_rules =
+  let rules =
     List.concat_map names ~f:(fun name ->
       if List.mem mlis (dir ^/ name ^ ".mli")
       then compile_ml_mli_rules ~dir ~external_libraries name
       else [compile_ml_rule ~dir ~external_libraries name])
   in
+  (names, rules)
+;;
+
+let app_rules ~dir =
+  Smbuild.load ~dir
+  *>>= fun smbuild ->
+  let external_libraries = Smbuild.external_libraries smbuild in
+  let exe = dir ^/ (basename dir) ^ ".exe" in
+  compile_mls_in_dir_rules ~dir ~external_libraries
+  *>>| fun (names, compile_mls_rules) ->
   List.concat
     [ [ Rule.default ~dir [Dep.path exe]
       ; link_exe_rule ~dir ~external_libraries ~exe names
       ]
-    ; compile_ml_rules
+    ; compile_mls_rules
     ]
 ;;
 
-let lib_rules ~dir:_ =
-  failwith "lib_scheme not implemented"
+let lib_rules ~dir =
+  Smbuild.load ~dir
+  *>>= fun smbuild ->
+  let external_libraries = Smbuild.external_libraries smbuild in
+  let lib = basename dir ^ "_lib" in
+  let cmxa = dir ^/ lib ^ ".cmxa" in
+  compile_mls_in_dir_rules ~dir ~external_libraries
+  *>>| fun (_names, compile_mls_rules) ->
+  List.concat
+    [ [ Rule.default ~dir [Dep.path cmxa]
+      ]
+    ; compile_mls_rules
+    ]
 ;;
 
 let nothing_to_build_rules ~dir =
