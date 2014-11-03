@@ -195,12 +195,15 @@ let nothing_to_build_rules ~dir =
   Dep.return [Rule.default ~dir []]
 ;;
 
-let all_apps_rules ~dir =
-  Dep.subdirs ~dir:(dir ^/ "app")
-  *>>| fun apps ->
-  [ Rule.default ~dir
-      (List.map apps ~f:(fun app ->
-         Dep.path (dir ^/ Path.to_string app)))
+let everything_under_rules ~dir ~subdirs =
+  let subdirs =
+    List.map subdirs ~f:(fun subdir ->
+      dir ^/ subdir)
+  in
+  Dep.List.concat_map subdirs ~f:(fun subdir ->
+    Dep.subdirs ~dir:subdir)
+  *>>| fun targets ->
+  [ Rule.default ~dir (List.map targets ~f:Dep.path)
   ]
 ;;
 
@@ -213,7 +216,7 @@ let scheme ~dir =
   let rules =
     if Path.(the_root = dir)
     then
-      all_apps_rules ~dir
+      everything_under_rules ~dir ~subdirs:["app"; "lib"]
     else
       match Path.(to_string (dirname dir)) with
       | "app" -> app_rules ~dir
