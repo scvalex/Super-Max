@@ -137,6 +137,7 @@ let link_exe_rule ~dir ~libraries ~external_libraries ~exe names =
                  ; "-o"; basename exe
                  ]
                ; List.map libraries ~f:(fun lib -> lib ^ ".cmxa")
+               (* CR ascvortov: Order cmx files topologically based on ocamldep. *)
                ; List.map names ~f:(fun name -> name ^ ".cmx")
                ])
   in
