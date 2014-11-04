@@ -11,11 +11,47 @@ let message str =
 ;;
 let _ = message;;
 
-let (^/) dir name =
-  Path.relative ~dir name
-;;
+let (^/) dir name = Path.relative ~dir name;;
+
+let (/^) = (^/);;
 
 let basename = Path.basename;;
+
+module Liblinks = struct
+  let lib_dir_path ~lib =
+    Path.the_root /^ "liblinks" /^ lib
+  ;;
+
+  let deps ~suffixes libs =
+    Dep.all_unit
+      (List.map libs ~f:(fun lib ->
+         let dir = lib_dir_path ~lib in
+         Dep.all_unit
+           (List.map suffixes ~f:(fun suffix ->
+              Dep.path (dir ^/ lib ^ suffix)))))
+  ;;
+
+  let rules ~lib =
+    let liblinks_dir = lib_dir_path ~lib in
+    let lib_dir =
+      match String.chop_suffix lib ~suffix:"_lib" with
+      | None     -> failwith ("Lib name does not end in _lib: " ^ lib)
+      | Some lib -> Path.the_root /^ "lib" /^ lib
+    in
+    List.map [".cmx"; ".cmi"; ".cmxa"; ".a"; ".o"] ~f:(fun suffix ->
+      let link_file =
+        let source = lib_dir ^/ lib ^ suffix in
+        Dep.path source
+        *>>| fun () ->
+        let relative_source =
+          Path.reach_from ~dir:liblinks_dir source
+        in
+        Action.shell ~dir:liblinks_dir
+          ~prog:"ln" ~args:["-sf"; relative_source; "."]
+      in
+      Rule.create ~targets:[liblinks_dir ^/ lib ^ suffix] link_file)
+  ;;
+end
 
 let ocamlopt ~dir ~external_libraries ~for_pack ~args =
   let packages =
@@ -94,9 +130,11 @@ let link_exe_rule ~dir ~external_libraries ~exe names =
   Rule.create ~targets:[exe] link_exe
 ;;
 
-let link_cmxa_rules ~dir ~external_libraries ~lib_cmxa ~lib names =
+let link_lib_rules ~dir ~external_libraries ~lib_cmxa ~lib names =
   let lib_a = dir ^/ lib ^ ".a" in
+  let lib_o = dir ^/ lib ^ ".o" in
   let lib_cmx = dir ^/ lib ^ ".cmx" in
+  let lib_cmi = dir ^/ lib ^ ".cmi" in
   let link_cmxa =
     Dep.path lib_cmx
     *>>| fun () ->
@@ -115,7 +153,7 @@ let link_cmxa_rules ~dir ~external_libraries ~lib_cmxa ~lib names =
                ])
   in
   [ Rule.create ~targets:[lib_cmxa; lib_a] link_cmxa
-  ; Rule.create ~targets:[lib_cmx] pack_lib_cmx
+  ; Rule.create ~targets:[lib_cmx; lib_cmi; lib_o] pack_lib_cmx
   ]
 ;;
 
@@ -150,13 +188,15 @@ let ocamldep_deps ~dir ~source ~target =
       (List.map paths ~f:(fun path -> Dep.path path))
 ;;
 
-let compile_ml_rule ~dir ~external_libraries ~for_pack name =
+let compile_ml_rule ~dir ~libraries ~external_libraries ~for_pack name =
   let cmi = dir ^/ name ^ ".cmi" in
   let cmx = dir ^/ name ^ ".cmx" in
   let o = dir ^/ name ^ ".o" in
   let compile_ml =
     let ml = dir ^/ name ^ ".ml" in
     Dep.path ml
+    *>>= fun () ->
+    Liblinks.deps libraries ~suffixes:[".cmxa"; ".cmi"]
     *>>= fun () ->
     ocamldep_deps ~dir ~source:ml ~target:cmx
     *>>| fun () ->
@@ -166,13 +206,15 @@ let compile_ml_rule ~dir ~external_libraries ~for_pack name =
   Rule.create ~targets:[cmi; cmx; o] compile_ml
 ;;
 
-let compile_ml_mli_rules ~dir ~external_libraries ~for_pack name =
+let compile_ml_mli_rules ~dir ~libraries ~external_libraries ~for_pack name =
   let cmi = dir ^/ name ^ ".cmi" in
   let cmx = dir ^/ name ^ ".cmx" in
   let o = dir ^/ name ^ ".o" in
   let compile_ml =
     let ml = dir ^/ name ^ ".ml" in
     Dep.path ml
+    *>>= fun () ->
+    Liblinks.deps libraries ~suffixes:[".cmxa"; ".cmi"]
     *>>= fun () ->
     ocamldep_deps ~dir ~source:ml ~target:cmx
     *>>| fun () ->
@@ -182,6 +224,8 @@ let compile_ml_mli_rules ~dir ~external_libraries ~for_pack name =
   let compile_mli =
     let mli = dir ^/ name ^ ".mli" in
     Dep.path mli
+    *>>= fun () ->
+    Liblinks.deps libraries ~suffixes:[".cmi"]
     *>>= fun () ->
     ocamldep_deps ~dir ~source:mli ~target:cmi
     *>>| fun () ->
@@ -193,7 +237,7 @@ let compile_ml_mli_rules ~dir ~external_libraries ~for_pack name =
   ]
 ;;
 
-let compile_mls_in_dir_rules ~dir ~external_libraries ~for_pack =
+let compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack =
   Dep.glob_listing (glob_ml ~dir)
   *>>= fun mls ->
   Dep.glob_listing (glob_mli ~dir)
@@ -205,8 +249,8 @@ let compile_mls_in_dir_rules ~dir ~external_libraries ~for_pack =
   let rules =
     List.concat_map names ~f:(fun name ->
       if List.mem mlis (dir ^/ name ^ ".mli")
-      then compile_ml_mli_rules ~dir ~external_libraries ~for_pack name
-      else [compile_ml_rule ~dir ~external_libraries ~for_pack name])
+      then compile_ml_mli_rules ~dir ~libraries ~external_libraries ~for_pack name
+      else [compile_ml_rule ~dir ~libraries ~external_libraries ~for_pack name])
   in
   (names, rules)
 ;;
@@ -215,8 +259,9 @@ let app_rules ~dir =
   Smbuild.load ~dir
   *>>= fun smbuild ->
   let external_libraries = Smbuild.external_libraries smbuild in
+  let libraries = Smbuild.libraries smbuild in
   let exe = dir ^/ (basename dir) ^ ".exe" in
-  compile_mls_in_dir_rules ~dir ~external_libraries ~for_pack:None
+  compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack:None
   *>>| fun (names, compile_mls_rules) ->
   List.concat
     [ [ Rule.default ~dir [Dep.path exe]
@@ -230,15 +275,20 @@ let lib_rules ~dir =
   Smbuild.load ~dir
   *>>= fun smbuild ->
   let external_libraries = Smbuild.external_libraries smbuild in
+  let libraries = Smbuild.libraries smbuild in
   let lib = basename dir ^ "_lib" in
   let lib_cmxa = dir ^/ lib ^ ".cmxa" in
-  compile_mls_in_dir_rules ~dir ~external_libraries ~for_pack:(Some lib)
+  compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack:(Some lib)
   *>>| fun (names, compile_mls_rules) ->
   List.concat
     [ [ Rule.default ~dir [Dep.path lib_cmxa] ]
-    ; link_cmxa_rules ~dir ~external_libraries ~lib_cmxa ~lib names
+    ; link_lib_rules ~dir ~external_libraries ~lib_cmxa ~lib names
     ; compile_mls_rules
     ]
+;;
+
+let liblinks_rules ~dir =
+  Dep.return (Liblinks.rules ~lib:(basename dir))
 ;;
 
 let nothing_to_build_rules ~dir =
@@ -269,9 +319,10 @@ let scheme ~dir =
       everything_under_rules ~dir ~subdirs:["app"; "lib"]
     else
       match Path.(to_string (dirname dir)) with
-      | "app" -> app_rules ~dir
-      | "lib" -> lib_rules ~dir
-      | _     -> nothing_to_build_rules ~dir
+      | "app"      -> app_rules ~dir
+      | "lib"      -> lib_rules ~dir
+      | "liblinks" -> liblinks_rules ~dir
+      | _          -> nothing_to_build_rules ~dir
   in
   Scheme.exclude is_smbuild
     (Scheme.rules_dep rules)
