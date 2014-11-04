@@ -51,9 +51,14 @@ module Liblinks = struct
       in
       Rule.create ~targets:[liblinks_dir ^/ lib ^ suffix] link_file)
   ;;
+
+  let include_dirs ~dir libs =
+    List.map libs ~f:(fun lib ->
+      Path.reach_from ~dir (lib_dir_path ~lib))
+  ;;
 end
 
-let ocamlopt ~dir ~external_libraries ~for_pack ~args =
+let ocamlopt ~dir ~external_libraries ~for_pack ~include_dirs ~args =
   let packages =
     match external_libraries with
     | [] -> []
@@ -64,8 +69,12 @@ let ocamlopt ~dir ~external_libraries ~for_pack ~args =
     Option.value_map for_pack ~default:[]
       ~f:(fun pack -> ["-for-pack"; String.capitalize pack])
   in
+  let include_args =
+    List.concat_map include_dirs ~f:(fun include_dir ->
+      ["-I"; include_dir])
+  in
   Action.shell ~dir ~prog:"ocamlfind"
-    ~args:(List.concat [["ocamlopt"]; args; packages_args; pack_args])
+    ~args:(List.concat [["ocamlopt"]; args; packages_args; pack_args; include_args])
 ;;
 
 let ocamldep ~dir ~args =
@@ -115,15 +124,19 @@ let compiled_files_for ~dir names =
     ])
 ;;
 
-let link_exe_rule ~dir ~external_libraries ~exe names =
+let link_exe_rule ~dir ~libraries ~external_libraries ~exe names =
+  let include_dirs = Liblinks.include_dirs ~dir libraries in
   let link_exe =
     Dep.all_unit (compiled_files_for ~dir names)
+    *>>= fun () ->
+    Liblinks.deps libraries ~suffixes:[".cmxa"; ".a"]
     *>>| fun () ->
-    ocamlopt ~dir ~external_libraries ~for_pack:None
+    ocamlopt ~dir ~external_libraries ~for_pack:None ~include_dirs
       ~args:(List.concat
                [ [ "-linkpkg"
                  ; "-o"; basename exe
                  ]
+               ; List.map libraries ~f:(fun lib -> lib ^ ".cmxa")
                ; List.map names ~f:(fun name -> name ^ ".cmx")
                ])
   in
@@ -138,13 +151,13 @@ let link_lib_rules ~dir ~external_libraries ~lib_cmxa ~lib names =
   let link_cmxa =
     Dep.path lib_cmx
     *>>| fun () ->
-    ocamlopt ~dir ~external_libraries ~for_pack:None
+    ocamlopt ~dir ~external_libraries ~for_pack:None ~include_dirs:[]
       ~args:["-a"; "-o"; basename lib_cmxa; basename lib_cmx]
   in
   let pack_lib_cmx =
     Dep.all_unit (compiled_files_for ~dir names)
     *>>| fun () ->
-    ocamlopt ~dir ~external_libraries ~for_pack:None
+    ocamlopt ~dir ~external_libraries ~for_pack:None ~include_dirs:[]
       ~args:(List.concat
                [ [ "-pack"
                  ; "-o"; basename lib_cmx
@@ -188,39 +201,32 @@ let ocamldep_deps ~dir ~source ~target =
       (List.map paths ~f:(fun path -> Dep.path path))
 ;;
 
+let compile_ml ~dir ~name ~external_libraries ~libraries ~for_pack ~include_dirs ~cmx =
+  let ml = dir ^/ name ^ ".ml" in
+  Dep.path ml
+  *>>= fun () ->
+  Liblinks.deps libraries ~suffixes:[".cmi"; ".cmx"; ".o"]
+  *>>= fun () ->
+  ocamldep_deps ~dir ~source:ml ~target:cmx
+  *>>| fun () ->
+  ocamlopt ~dir ~external_libraries ~include_dirs ~for_pack
+    ~args:["-c"; basename ml]
+;;
+
 let compile_ml_rule ~dir ~libraries ~external_libraries ~for_pack name =
   let cmi = dir ^/ name ^ ".cmi" in
   let cmx = dir ^/ name ^ ".cmx" in
   let o = dir ^/ name ^ ".o" in
-  let compile_ml =
-    let ml = dir ^/ name ^ ".ml" in
-    Dep.path ml
-    *>>= fun () ->
-    Liblinks.deps libraries ~suffixes:[".cmxa"; ".cmi"]
-    *>>= fun () ->
-    ocamldep_deps ~dir ~source:ml ~target:cmx
-    *>>| fun () ->
-    ocamlopt ~dir ~external_libraries ~for_pack
-      ~args:["-c"; basename ml]
-  in
-  Rule.create ~targets:[cmi; cmx; o] compile_ml
+  let include_dirs = Liblinks.include_dirs ~dir libraries in
+  Rule.create ~targets:[cmi; cmx; o]
+    (compile_ml ~dir ~name ~external_libraries ~libraries ~for_pack ~include_dirs ~cmx)
 ;;
 
 let compile_ml_mli_rules ~dir ~libraries ~external_libraries ~for_pack name =
   let cmi = dir ^/ name ^ ".cmi" in
   let cmx = dir ^/ name ^ ".cmx" in
   let o = dir ^/ name ^ ".o" in
-  let compile_ml =
-    let ml = dir ^/ name ^ ".ml" in
-    Dep.path ml
-    *>>= fun () ->
-    Liblinks.deps libraries ~suffixes:[".cmxa"; ".cmi"]
-    *>>= fun () ->
-    ocamldep_deps ~dir ~source:ml ~target:cmx
-    *>>| fun () ->
-    ocamlopt ~dir ~external_libraries ~for_pack
-      ~args:["-c"; basename ml]
-  in
+  let include_dirs = Liblinks.include_dirs ~dir libraries in
   let compile_mli =
     let mli = dir ^/ name ^ ".mli" in
     Dep.path mli
@@ -229,10 +235,11 @@ let compile_ml_mli_rules ~dir ~libraries ~external_libraries ~for_pack name =
     *>>= fun () ->
     ocamldep_deps ~dir ~source:mli ~target:cmi
     *>>| fun () ->
-    ocamlopt ~dir ~external_libraries ~for_pack
+    ocamlopt ~dir ~external_libraries ~for_pack ~include_dirs
       ~args:["-c"; basename mli]
   in
-  [ Rule.create ~targets:[cmx; o] compile_ml
+  [ Rule.create ~targets:[cmx; o]
+      (compile_ml ~dir ~name ~external_libraries ~libraries ~for_pack ~include_dirs ~cmx)
   ; Rule.create ~targets:[cmi] compile_mli
   ]
 ;;
@@ -265,7 +272,7 @@ let app_rules ~dir =
   *>>| fun (names, compile_mls_rules) ->
   List.concat
     [ [ Rule.default ~dir [Dep.path exe]
-      ; link_exe_rule ~dir ~external_libraries ~exe names
+      ; link_exe_rule ~dir ~libraries ~external_libraries ~exe names
       ]
     ; compile_mls_rules
     ]
