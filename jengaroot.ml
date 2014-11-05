@@ -161,21 +161,64 @@ let compiled_files_for ~dir names =
     ])
 ;;
 
+let toposort_deps ~dir targets =
+  Dep.glob_listing (glob_ml ~dir)
+  *>>= fun mls ->
+  Dep.all (List.map mls ~f:(fun ml -> ocamldep_deps ~dir ~source:ml))
+  *>>| fun deps ->
+  let targets = String.Set.of_list targets in
+  let deps =
+    String.Table.of_alist_exn
+      (List.filter_map (List.concat deps) ~f:(fun (target, target_deps) ->
+         if Set.mem targets target
+         then Some (target, List.filter target_deps ~f:(Set.mem targets))
+         else None))
+  in
+  let sorted_targets = Queue.create () in
+  let rec loop deps =
+    if Hashtbl.is_empty deps
+    then begin
+      ()
+    end else begin
+      let (ready, still_have_deps) =
+        Hashtbl.partition_map deps ~f:(fun target_deps ->
+          if List.is_empty target_deps
+          then `Fst ()
+          else `Snd target_deps)
+      in
+      if Hashtbl.is_empty ready then
+        failwith ("Toposort failed on: "
+                  ^ (String.concat ~sep:" " (Set.to_list targets)));
+      let ready = String.Set.of_list (Hashtbl.keys ready) in
+      Set.iter ready ~f:(Queue.enqueue sorted_targets);
+      let still_have_deps =
+        String.Table.map still_have_deps ~f:(fun target_deps ->
+          List.filter target_deps ~f:(fun target_dep ->
+            not (Set.mem ready target_dep)))
+      in
+      loop still_have_deps
+    end
+  in
+  loop deps;
+  Queue.to_list sorted_targets
+;;
+
 let link_exe_rule ~dir ~libraries ~external_libraries ~exe names =
   let include_dirs = Liblinks.include_dirs ~dir libraries in
   let link_exe =
     Dep.all_unit (compiled_files_for ~dir names)
     *>>= fun () ->
     Liblinks.deps libraries ~suffixes:[".cmxa"; ".a"]
-    *>>| fun () ->
+    *>>= fun () ->
+    toposort_deps ~dir (List.map names ~f:(fun name -> name ^ ".cmx"))
+    *>>| fun cmxs ->
     ocamlopt ~dir ~external_libraries ~for_pack:None ~include_dirs
       ~args:(List.concat
                [ [ "-linkpkg"
                  ; "-o"; basename exe
                  ]
                ; List.map libraries ~f:(fun lib -> lib ^ ".cmxa")
-               (* CR ascvortov: Order cmx files topologically based on ocamldep. *)
-               ; List.map names ~f:(fun name -> name ^ ".cmx")
+               ; cmxs
                ])
   in
   Rule.create ~targets:[exe] link_exe
