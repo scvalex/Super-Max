@@ -171,7 +171,7 @@ let link_lib_rules ~dir ~external_libraries ~lib_cmxa ~lib names =
   ]
 ;;
 
-let ocamldep_deps ~dir ~source ~target =
+let ocamldep_deps ~dir ~source =
   Dep.action_stdout
     (Dep.all_unit
        [ Dep.glob_change (glob_ml ~dir)
@@ -180,19 +180,25 @@ let ocamldep_deps ~dir ~source ~target =
        ]
      *>>| fun () ->
      ocamldep ~dir ~args:["-native"; basename source])
+  *>>| fun deps ->
+  List.map (split_into_lines deps) ~f:(fun dep ->
+    match String.split dep ~on:':' with
+    | [before; after] ->
+      let before =
+        Option.value_exn (List.hd (split_into_words before))
+          ~message:("invalid ocamldep before: " ^ before)
+      in
+      (before, split_into_words after)
+    | _ ->
+      failwith ("invalid ocamldep output line: " ^ dep))
+;;
+
+let deps_paths ~dir ~source ~target =
+  ocamldep_deps ~dir ~source
   *>>= fun deps ->
   let dep_paths =
-    List.map (split_into_lines deps) ~f:(fun dep ->
-      match String.split dep ~on:':' with
-      | [before; after] ->
-        let before =
-          Option.value_exn (List.hd (split_into_words before))
-            ~message:("invalid ocamldep before: " ^ before)
-        in
-        let after = split_into_words after in
-        (dir ^/ before, List.map after ~f:(fun after -> dir ^/ after))
-      | _ ->
-        failwith ("invalid ocamldep output line: " ^ dep))
+    List.map deps ~f:(fun (before, after) ->
+      (dir ^/ before, List.map after ~f:(fun after -> dir ^/ after)))
   in
   match List.Assoc.find dep_paths target with
   | None ->
@@ -208,7 +214,7 @@ let compile_ml ~dir ~name ~external_libraries ~libraries ~for_pack ~include_dirs
   *>>= fun () ->
   Liblinks.deps libraries ~suffixes:[".cmi"; ".cmx"; ".o"]
   *>>= fun () ->
-  ocamldep_deps ~dir ~source:ml ~target:cmx
+  deps_paths ~dir ~source:ml ~target:cmx
   *>>| fun () ->
   ocamlopt ~dir ~external_libraries ~include_dirs ~for_pack
     ~args:["-c"; basename ml]
@@ -234,7 +240,7 @@ let compile_ml_mli_rules ~dir ~libraries ~external_libraries ~for_pack name =
     *>>= fun () ->
     Liblinks.deps libraries ~suffixes:[".cmi"]
     *>>= fun () ->
-    ocamldep_deps ~dir ~source:mli ~target:cmi
+    deps_paths ~dir ~source:mli ~target:cmi
     *>>| fun () ->
     ocamlopt ~dir ~external_libraries ~for_pack ~include_dirs
       ~args:["-c"; basename mli]
