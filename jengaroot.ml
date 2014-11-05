@@ -116,6 +116,43 @@ module Smbuild = struct
   ;;
 end
 
+let ocamldep_deps ~dir ~source =
+  Dep.action_stdout
+    (Dep.all_unit
+       [ Dep.glob_change (glob_ml ~dir)
+       ; Dep.glob_change (glob_mli ~dir)
+       ; Dep.path source
+       ]
+     *>>| fun () ->
+     ocamldep ~dir ~args:["-native"; basename source])
+  *>>| fun deps ->
+  List.map (split_into_lines deps) ~f:(fun dep ->
+    match String.split dep ~on:':' with
+    | [before; after] ->
+      let before =
+        Option.value_exn (List.hd (split_into_words before))
+          ~message:("invalid ocamldep before: " ^ before)
+      in
+      (before, split_into_words after)
+    | _ ->
+      failwith ("invalid ocamldep output line: " ^ dep))
+;;
+
+let deps_paths ~dir ~source ~target =
+  ocamldep_deps ~dir ~source
+  *>>= fun deps ->
+  let dep_paths =
+    List.map deps ~f:(fun (before, after) ->
+      (dir ^/ before, List.map after ~f:(fun after -> dir ^/ after)))
+  in
+  match List.Assoc.find dep_paths target with
+  | None ->
+    failwith ("missing in ocamldep output: " ^ Path.to_string target)
+  | Some paths ->
+    Dep.all_unit
+      (List.map paths ~f:(fun path -> Dep.path path))
+;;
+
 let compiled_files_for ~dir names =
   List.concat_map names ~f:(fun name ->
     [ Dep.path (dir ^/ name ^ ".cmx")
@@ -169,43 +206,6 @@ let link_lib_rules ~dir ~external_libraries ~lib_cmxa ~lib names =
   [ Rule.create ~targets:[lib_cmxa; lib_a] link_cmxa
   ; Rule.create ~targets:[lib_cmx; lib_cmi; lib_o] pack_lib_cmx
   ]
-;;
-
-let ocamldep_deps ~dir ~source =
-  Dep.action_stdout
-    (Dep.all_unit
-       [ Dep.glob_change (glob_ml ~dir)
-       ; Dep.glob_change (glob_mli ~dir)
-       ; Dep.path source
-       ]
-     *>>| fun () ->
-     ocamldep ~dir ~args:["-native"; basename source])
-  *>>| fun deps ->
-  List.map (split_into_lines deps) ~f:(fun dep ->
-    match String.split dep ~on:':' with
-    | [before; after] ->
-      let before =
-        Option.value_exn (List.hd (split_into_words before))
-          ~message:("invalid ocamldep before: " ^ before)
-      in
-      (before, split_into_words after)
-    | _ ->
-      failwith ("invalid ocamldep output line: " ^ dep))
-;;
-
-let deps_paths ~dir ~source ~target =
-  ocamldep_deps ~dir ~source
-  *>>= fun deps ->
-  let dep_paths =
-    List.map deps ~f:(fun (before, after) ->
-      (dir ^/ before, List.map after ~f:(fun after -> dir ^/ after)))
-  in
-  match List.Assoc.find dep_paths target with
-  | None ->
-    failwith ("missing in ocamldep output: " ^ Path.to_string target)
-  | Some paths ->
-    Dep.all_unit
-      (List.map paths ~f:(fun path -> Dep.path path))
 ;;
 
 let compile_ml ~dir ~name ~external_libraries ~libraries ~for_pack ~include_dirs ~cmx =
