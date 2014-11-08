@@ -25,11 +25,11 @@ module Lib : sig
 
   val name : t -> string
   val of_name : string -> t
+
+  val suffixed_name : t -> string
   val of_suffixed_name : string -> t
 
   val dir : t -> Path.t
-
-  val suffixed : t -> string
 end = struct
   include String_id.Make(struct let module_name = "Jengaroot.Lib" end)
 
@@ -41,14 +41,14 @@ end = struct
     of_string str
   ;;
 
+  let suffixed_name t =
+    to_string t ^ "_lib"
+  ;;
+
   let of_suffixed_name str =
     match String.chop_suffix str ~suffix:"_lib" with
     | None      -> failwith ("Suffixed lib name missing suffix: " ^ str)
     | Some name -> of_name name
-  ;;
-
-  let suffixed t =
-    to_string t ^ "_lib"
   ;;
 
   let dir t =
@@ -58,7 +58,7 @@ end
 
 module Liblinks = struct
   let lib_dir_path ~lib =
-    Path.the_root /^ "liblinks" /^ Lib.suffixed lib
+    Path.the_root /^ "liblinks" /^ Lib.suffixed_name lib
   ;;
 
   let deps ~suffixes libs =
@@ -67,13 +67,13 @@ module Liblinks = struct
          let dir = lib_dir_path ~lib in
          Dep.all_unit
            (List.map suffixes ~f:(fun suffix ->
-              Dep.path (dir ^/ Lib.suffixed lib ^ suffix)))))
+              Dep.path (dir ^/ Lib.suffixed_name lib ^ suffix)))))
   ;;
 
   let rules ~lib =
     let liblinks_dir = lib_dir_path ~lib in
     List.map [".cmx"; ".cmi"; ".cmxa"; ".a"; ".o"] ~f:(fun suffix ->
-      let file = (Lib.suffixed lib) ^ suffix in
+      let file = (Lib.suffixed_name lib) ^ suffix in
       let link_file =
         let source = Lib.dir lib ^/ file in
         Dep.path source
@@ -102,7 +102,7 @@ let ocamlopt ~dir ~external_libraries ~for_pack ~include_dirs ~args =
   let packages_args = "-thread" :: packages in
   let pack_args =
     Option.value_map for_pack ~default:[]
-      ~f:(fun pack -> ["-for-pack"; String.capitalize (Lib.suffixed pack)])
+      ~f:(fun pack -> ["-for-pack"; String.capitalize (Lib.suffixed_name pack)])
   in
   let include_args =
     List.concat_map include_dirs ~f:(fun include_dir ->
@@ -260,7 +260,7 @@ let transitive_libraries ~libraries =
     *>>= fun smbuild ->
     let libraries = Smbuild.libraries smbuild in
     if List.exists libraries ~f:(List.mem found) then
-      failwith ("Dependency cycle in library deps for " ^ Lib.suffixed lib);
+      failwith ("Dependency cycle in library deps for " ^ Lib.name lib);
     Dep.all (List.map libraries ~f:(loop ~found:(lib :: found)))
     *>>| fun lib_deps ->
     (lib :: List.concat lib_deps)
@@ -301,7 +301,7 @@ let link_exe_rule ~dir ~libraries ~external_libraries ~exe names =
                [ [ "-linkpkg"
                  ; "-o"; basename exe
                  ]
-               ; List.map libraries ~f:(fun lib -> Lib.suffixed lib ^ ".cmxa")
+               ; List.map libraries ~f:(fun lib -> Lib.suffixed_name lib ^ ".cmxa")
                ; cmxs
                ])
   in
@@ -309,10 +309,10 @@ let link_exe_rule ~dir ~libraries ~external_libraries ~exe names =
 ;;
 
 let link_lib_rules ~dir ~external_libraries ~lib_cmxa ~lib names =
-  let lib_a = dir ^/ Lib.suffixed lib ^ ".a" in
-  let lib_o = dir ^/ Lib.suffixed lib ^ ".o" in
-  let lib_cmx = dir ^/ Lib.suffixed lib ^ ".cmx" in
-  let lib_cmi = dir ^/ Lib.suffixed lib ^ ".cmi" in
+  let lib_a = dir ^/ Lib.suffixed_name lib ^ ".a" in
+  let lib_o = dir ^/ Lib.suffixed_name lib ^ ".o" in
+  let lib_cmx = dir ^/ Lib.suffixed_name lib ^ ".cmx" in
+  let lib_cmi = dir ^/ Lib.suffixed_name lib ^ ".cmi" in
   let link_cmxa =
     Dep.path lib_cmx
     *>>| fun () ->
@@ -418,7 +418,7 @@ let lib_rules ~dir =
   let external_libraries = Smbuild.external_libraries smbuild in
   let libraries = Smbuild.libraries smbuild in
   let lib = Lib.of_name (basename dir) in
-  let lib_cmxa = dir ^/ Lib.suffixed lib ^ ".cmxa" in
+  let lib_cmxa = dir ^/ Lib.suffixed_name lib ^ ".cmxa" in
   compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack:(Some lib)
   *>>| fun (names, compile_mls_rules) ->
   List.concat
