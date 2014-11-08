@@ -9,6 +9,9 @@ module Sdl = struct
   let window : window typ = ptr void
   let window_opt : window option typ = ptr_opt void
 
+  type gl_context = unit ptr
+  let gl_context : gl_context typ = ptr void
+
   let write_never _ =
     failwith "write_never"
   ;;
@@ -60,9 +63,23 @@ module Sdl = struct
   let delay =
     foreign "SDL_Delay" (uint32_t @-> returning void)
   ;;
+
+  let gl_create_context =
+    foreign "SDL_GL_CreateContext" (window @-> returning gl_context)
+  ;;
+
+  let gl_delete_context =
+    foreign "SDL_GL_DeleteContext" (gl_context @-> returning void)
+  ;;
+
+  let gl_swap_window =
+    foreign "SDL_GL_SwapWindow" (window @-> returning void)
+  ;;
 end
 
 type window = Sdl.window
+
+type gl_context = Sdl.gl_context
 
 let init () =
   let audio = 0x00000010 in
@@ -89,8 +106,10 @@ let gl_set_attribute attr value =
 ;;
 
 let create_window ~title =
+  let opengl = 0x00000002 in
   let fullscreen_desktop = 0x00001001 in
-  Sdl.create_window title 0 0 0 0 (Unsigned.UInt32.of_int fullscreen_desktop)
+  Sdl.create_window title 0 0 0 0
+    (Unsigned.UInt32.of_int (opengl lor fullscreen_desktop))
   |> Or_error.ok_exn
 ;;
 
@@ -100,4 +119,16 @@ let destroy_window window =
 
 let delay ~ms =
   Sdl.delay (Unsigned.UInt32.of_int ms)
+;;
+
+let gl_create_context window =
+  Sdl.gl_create_context window
+;;
+
+let gl_delete_context gl_context =
+  Sdl.gl_delete_context gl_context
+;;
+
+let gl_swap_window window =
+  Sdl.gl_swap_window window
 ;;

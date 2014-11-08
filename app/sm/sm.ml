@@ -9,7 +9,10 @@ let run_render_test () =
   Sdl.gl_set_attribute `Depthsize 24;
   Printf.printf "Let's rock\n%!";
   let window = Sdl.create_window ~title:"Rock" in
+  let gl_context = Sdl.gl_create_context window in
+  Sdl.gl_swap_window window;
   Sdl.delay 3000;
+  Sdl.gl_delete_context gl_context;
   Sdl.destroy_window window;
   Sdl.quit ()
 ;;
