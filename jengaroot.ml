@@ -269,7 +269,7 @@ let transitive_libraries ~libraries =
   in
   Dep.List.concat_map libraries ~f:(loop ~found:[])
   *>>| fun libs ->
-  Lib.(Set.to_list (Set.of_list libs))
+  Lib.Set.(to_list (of_list libs))
 ;;
 
 let library_deps ~libraries =
@@ -277,8 +277,12 @@ let library_deps ~libraries =
     (List.map libraries ~f:(fun lib ->
        Smbuild.load ~dir:(Lib.dir lib)
        *>>| fun smbuild ->
-       (Lib.name lib, List.map ~f:Lib.name (Smbuild.libraries smbuild))))
-  *>>| String.Table.of_alist_exn
+       ((Lib.name lib, List.map ~f:Lib.name (Smbuild.libraries smbuild)),
+        Smbuild.external_libraries smbuild)))
+  *>>| fun deps ->
+  let (deps, external_libraries) = List.unzip deps in
+  (String.Table.of_alist_exn deps,
+   List.concat external_libraries)
 ;;
 
 let link_exe_rule ~dir ~libraries ~external_libraries ~exe names =
@@ -288,7 +292,10 @@ let link_exe_rule ~dir ~libraries ~external_libraries ~exe names =
     transitive_libraries ~libraries
     *>>= fun libraries ->
     library_deps ~libraries
-    *>>= fun lib_deps ->
+    *>>= fun (lib_deps, lib_external_libraries) ->
+    let external_libraries =
+      String.Set.(to_list (of_list (external_libraries @ lib_external_libraries)))
+    in
     let libraries =
       let targets = String.Set.of_list (Hashtbl.keys lib_deps) in
       List.map ~f:Lib.of_name (toposort ~targets lib_deps)
