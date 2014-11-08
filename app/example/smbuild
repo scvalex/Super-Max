@@ -1,3 +1,0 @@
-((libraries ( linear ))
- (external_libraries ( async core ))
- )
