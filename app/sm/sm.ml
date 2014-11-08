@@ -2,7 +2,13 @@ open Core.Std
 open Sdl_lib.Std
 
 let run_render_test () =
-  Sdl.init () |> Or_error.ok_exn
+  Sdl.init ();
+  Sdl.gl_set_attribute `Context_major_version 3;
+  Sdl.gl_set_attribute `Context_major_version 3;
+  Sdl.gl_set_attribute `Doublebuffer 1;
+  Sdl.gl_set_attribute `Depthsize 24;
+  Printf.printf "Let's rock\n%!";
+  Sdl.quit ()
 ;;
 
 let main () =
