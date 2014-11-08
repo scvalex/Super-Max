@@ -77,9 +77,7 @@ module Sdl = struct
   ;;
 end
 
-type window = Sdl.window
-
-type gl_context = Sdl.gl_context
+include Sdl
 
 let init () =
   let audio = 0x00000010 in
@@ -87,10 +85,6 @@ let init () =
   let events = 0x00004000 in
   Sdl.init (Unsigned.UInt32.of_int (audio lor video lor events))
   |> Or_error.ok_exn
-;;
-
-let quit () =
-  Sdl.quit ()
 ;;
 
 let gl_set_attribute attr value =
@@ -113,22 +107,6 @@ let create_window ~title =
   |> Or_error.ok_exn
 ;;
 
-let destroy_window window =
-  Sdl.destroy_window window
-;;
-
 let delay ~ms =
   Sdl.delay (Unsigned.UInt32.of_int ms)
-;;
-
-let gl_create_context window =
-  Sdl.gl_create_context window
-;;
-
-let gl_delete_context gl_context =
-  Sdl.gl_delete_context gl_context
-;;
-
-let gl_swap_window window =
-  Sdl.gl_swap_window window
 ;;
