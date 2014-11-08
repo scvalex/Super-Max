@@ -1,0 +1,3 @@
+((libraries ( sdl ))
+ (external_libraries ( core ))
+ )

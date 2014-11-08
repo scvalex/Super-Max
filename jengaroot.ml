@@ -93,6 +93,8 @@ module Liblinks = struct
   ;;
 end
 
+(* CR scvalex: Support pre-processors. *)
+(* CR scvalex: Add warnings. *)
 let ocamlopt ~dir ~external_libraries ~for_pack ~include_dirs ~args =
   let packages =
     match external_libraries with
