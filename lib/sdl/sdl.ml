@@ -5,6 +5,10 @@ open Ctypes
 open Foreign
 
 module Sdl = struct
+  type window = unit ptr
+  let window : window typ = ptr void
+  let window_opt : window option typ = ptr_opt void
+
   let write_never _ =
     failwith "write_never"
   ;;
@@ -21,6 +25,14 @@ module Sdl = struct
     view ~read ~write:write_never int
   ;;
 
+  let some_to_ok t =
+    let read = function
+      | Some v -> Ok v
+      | None   -> Error (get_error ())
+    in
+    view ~read ~write:write_never t
+  ;;
+
   let init =
     foreign "SDL_Init" (uint32_t @-> returning zero_to_ok)
   ;;
@@ -32,7 +44,25 @@ module Sdl = struct
   let gl_set_attribute =
     foreign "SDL_GL_SetAttribute" (int @-> int @-> returning zero_to_ok)
   ;;
+
+  let create_window =
+    foreign "SDL_CreateWindow"
+      (string
+       @-> int @-> int @-> int @-> int
+       @-> uint32_t
+       @-> returning (some_to_ok window_opt))
+  ;;
+
+  let destroy_window =
+    foreign "SDL_DestroyWindow" (window @-> returning void)
+  ;;
+
+  let delay =
+    foreign "SDL_Delay" (uint32_t @-> returning void)
+  ;;
 end
+
+type window = Sdl.window
 
 let init () =
   let audio = 0x00000010 in
@@ -56,4 +86,18 @@ let gl_set_attribute attr value =
   in
   Sdl.gl_set_attribute attr value
   |> Or_error.ok_exn
+;;
+
+let create_window ~title =
+  let fullscreen_desktop = 0x00001001 in
+  Sdl.create_window title 0 0 0 0 (Unsigned.UInt32.of_int fullscreen_desktop)
+  |> Or_error.ok_exn
+;;
+
+let destroy_window window =
+  Sdl.destroy_window window
+;;
+
+let delay ~ms =
+  Sdl.delay (Unsigned.UInt32.of_int ms)
 ;;

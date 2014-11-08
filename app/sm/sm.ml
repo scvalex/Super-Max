@@ -8,6 +8,9 @@ let run_render_test () =
   Sdl.gl_set_attribute `Doublebuffer 1;
   Sdl.gl_set_attribute `Depthsize 24;
   Printf.printf "Let's rock\n%!";
+  let window = Sdl.create_window ~title:"Rock" in
+  Sdl.delay 3000;
+  Sdl.destroy_window window;
   Sdl.quit ()
 ;;
 
