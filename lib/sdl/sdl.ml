@@ -100,9 +100,10 @@ let gl_set_attribute attr value =
 ;;
 
 let create_window ~title =
+  let undefined = 0x1FFF0000 in
   let opengl = 0x00000002 in
   let fullscreen_desktop = 0x00001001 in
-  Sdl.create_window title 0 0 0 0
+  Sdl.create_window title undefined undefined 800 600
     (Unsigned.UInt32.of_int (opengl lor fullscreen_desktop))
   |> Or_error.ok_exn
 ;;

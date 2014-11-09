@@ -1,5 +1,6 @@
 open Core.Std
 open Sdl_lib.Std
+open Gl_lib.Std
 
 let run_render_test () =
   Sdl.init ();
@@ -10,6 +11,8 @@ let run_render_test () =
   Printf.printf "Let's rock\n%!";
   let window = Sdl.create_window ~title:"Rock" in
   let gl_context = Sdl.gl_create_context window in
+  Gl.clear_color 0.1 0.1 0.1 1.0;
+  Gl.clear `Color_buffer_bit;
   Sdl.gl_swap_window window;
   Sdl.delay ~ms:3000;
   Sdl.gl_delete_context gl_context;
