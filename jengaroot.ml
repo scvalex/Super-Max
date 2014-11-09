@@ -94,8 +94,8 @@ module Liblinks = struct
 end
 
 (* CR scvalex: Support pre-processors. *)
-(* CR scvalex: Add warnings. *)
-let ocamlopt ~dir ~external_libraries ~foreign_libraries ~for_pack ~include_dirs ~args =
+let ocamlopt ~dir ~external_libraries ~foreign_libraries ~for_pack
+      ~include_dirs ~args ~allow_unused_opens =
   let packages =
     match external_libraries with
     | [] -> []
@@ -119,9 +119,16 @@ let ocamlopt ~dir ~external_libraries ~foreign_libraries ~for_pack ~include_dirs
       @ List.concat_map foreign_libraries ~f:(fun foreign_library ->
         ["-cclib"; "-l" ^ foreign_library])
   in
+  let warning_args =
+    let ignored_warnings = ["4"; "23"; "41"; "44"; "45"] in
+    let ignored_warnings =
+      if allow_unused_opens then "33" :: ignored_warnings else ignored_warnings
+    in
+    ["-w"; String.concat ~sep:"-" ("@A" :: ignored_warnings)]
+  in
   Action.shell ~dir ~prog:"ocamlfind"
     ~args:(List.concat [ ["ocamlopt"]; args; packages_args; pack_args; include_args
-                       ; foreign_args
+                       ; foreign_args; warning_args
                        ])
 ;;
 
@@ -329,7 +336,8 @@ let link_exe_rule ~dir ~libraries ~external_libraries ~foreign_libraries ~exe na
     *>>= fun () ->
     toposort_deps ~dir (List.map names ~f:(fun name -> name ^ ".cmx"))
     *>>| fun cmxs ->
-    ocamlopt ~dir ~external_libraries ~foreign_libraries ~for_pack:None
+    ocamlopt ~dir ~external_libraries ~foreign_libraries
+      ~for_pack:None ~allow_unused_opens:false
       ~include_dirs:(Liblinks.include_dirs ~dir libraries)
       ~args:(List.concat
                [ [ "-linkpkg"
@@ -351,13 +359,13 @@ let link_lib_rules ~dir ~external_libraries ~foreign_libraries ~lib_cmxa ~lib na
     Dep.all_unit (List.map ~f:Dep.path [lib_cmx; lib_cmi; lib_o])
     *>>| fun () ->
     ocamlopt ~dir ~external_libraries ~foreign_libraries
-      ~include_dirs:[] ~for_pack:None
+      ~include_dirs:[] ~for_pack:None ~allow_unused_opens:false
       ~args:["-a"; "-o"; basename lib_cmxa; basename lib_cmx]
   in
   let pack_lib_cmx =
     Dep.all_unit (compiled_files_for ~dir names)
     *>>| fun () ->
-    ocamlopt ~dir ~external_libraries
+    ocamlopt ~dir ~external_libraries ~allow_unused_opens:false
       ~for_pack:None ~include_dirs:[] ~foreign_libraries:[]
       ~args:(List.concat
                [ [ "-pack"
@@ -380,7 +388,7 @@ let compile_ml ~dir ~name ~external_libraries ~libraries ~for_pack ~include_dirs
   deps_paths ~dir ~source:ml ~target:cmx
   *>>| fun () ->
   ocamlopt ~dir ~external_libraries ~include_dirs ~for_pack
-    ~foreign_libraries:[]
+    ~foreign_libraries:[] ~allow_unused_opens:false
     ~args:["-c"; basename ml]
 ;;
 
@@ -407,7 +415,7 @@ let compile_ml_mli_rules ~dir ~libraries ~external_libraries ~for_pack name =
     deps_paths ~dir ~source:mli ~target:cmi
     *>>| fun () ->
     ocamlopt ~dir ~external_libraries ~for_pack ~include_dirs
-      ~foreign_libraries:[]
+      ~foreign_libraries:[] ~allow_unused_opens:true
       ~args:["-c"; basename mli]
   in
   [ Rule.create ~targets:[cmx; o]

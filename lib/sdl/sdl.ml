@@ -23,7 +23,7 @@ module Sdl = struct
   let zero_to_ok =
     let read = function
       | 0   -> Ok ()
-      | err -> Error (get_error ())
+      | _   -> Error (get_error ())
     in
     view ~read ~write:write_never int
   ;;

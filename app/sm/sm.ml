@@ -11,7 +11,7 @@ let run_render_test () =
   let window = Sdl.create_window ~title:"Rock" in
   let gl_context = Sdl.gl_create_context window in
   Sdl.gl_swap_window window;
-  Sdl.delay 3000;
+  Sdl.delay ~ms:3000;
   Sdl.gl_delete_context gl_context;
   Sdl.destroy_window window;
   Sdl.quit ()

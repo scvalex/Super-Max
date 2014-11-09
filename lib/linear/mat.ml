@@ -1,4 +1,4 @@
-open Core.Std
+open Core.Std let _ = _squelch_unused_module_warning_
 
 type mat3 = { m00 : float; m01 : float; m02 : float;
               m10 : float; m11 : float; m12 : float;
