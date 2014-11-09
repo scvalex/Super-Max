@@ -348,7 +348,7 @@ let link_lib_rules ~dir ~external_libraries ~foreign_libraries ~lib_cmxa ~lib na
   let lib_cmx = dir ^/ Lib.suffixed_name lib ^ ".cmx" in
   let lib_cmi = dir ^/ Lib.suffixed_name lib ^ ".cmi" in
   let link_cmxa =
-    Dep.path lib_cmx
+    Dep.all_unit (List.map ~f:Dep.path [lib_cmx; lib_cmi; lib_o])
     *>>| fun () ->
     ocamlopt ~dir ~external_libraries ~foreign_libraries
       ~include_dirs:[] ~for_pack:None
