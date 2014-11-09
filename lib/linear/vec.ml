@@ -1,4 +1,4 @@
-open Core.Std let _ = _squelch_unused_module_warning_
+open Core_kernel.Std let _ = _squelch_unused_module_warning_
 open Platform_lib.Std
 
 type t

@@ -93,13 +93,18 @@ module Liblinks = struct
   ;;
 end
 
-(* CR scvalex: Support pre-processors. *)
+let pp_packages =
+  [ "camlp4"; "sexplib.syntax"; "bin_prot.syntax"; "herelib.syntax"
+  ; "fieldslib.syntax"; "comparelib.syntax"
+  ]
+;;
+
 let ocamlopt ~dir ~external_libraries ~foreign_libraries ~for_pack
       ~include_dirs ~args ~allow_unused_opens =
   let packages =
     match external_libraries with
     | [] -> []
-    | _  -> ["-package"; String.concat ~sep:"," external_libraries]
+    | _  -> ["-package"; String.concat ~sep:"," (pp_packages @ external_libraries)]
   in
   let packages_args = "-thread" :: packages in
   let pack_args =
@@ -126,14 +131,25 @@ let ocamlopt ~dir ~external_libraries ~foreign_libraries ~for_pack
     in
     ["-w"; String.concat ~sep:"-" ("@A" :: ignored_warnings)]
   in
+  let syntax_args =
+    ["-syntax"; "camlp4o"]
+  in
   Action.shell ~dir ~prog:"ocamlfind"
     ~args:(List.concat [ ["ocamlopt"]; args; packages_args; pack_args; include_args
-                       ; foreign_args; warning_args
+                       ; foreign_args; warning_args; syntax_args
                        ])
 ;;
 
 let ocamldep ~dir ~args =
-  Action.shell ~dir ~prog:"ocamlfind" ~args:("ocamldep" :: args)
+  let packages_args =
+    ["-package"; String.concat ~sep:"," pp_packages]
+  in
+  let syntax_args =
+    ["-syntax"; "camlp4o"]
+  in
+  Action.shell ~dir ~prog:"ocamlfind"
+    ~args:(List.concat [ ["ocamldep"]; args; packages_args; syntax_args
+                       ])
 ;;
 
 let glob_ml ~dir =

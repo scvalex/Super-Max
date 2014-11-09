@@ -1,6 +1,6 @@
-(* open Core.Std *)
+open Core_kernel.Std
 
-type mat3
+type mat3 with sexp
 
 type vec3
 
