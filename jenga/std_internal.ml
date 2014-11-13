@@ -16,3 +16,19 @@ let (^/) dir name = Path.relative ~dir name;;
 let (/^) = (^/);;
 
 let basename = Path.basename;;
+
+let nothing_to_build_rules ~dir =
+  Dep.return [Rule.default ~dir []]
+;;
+
+let everything_under_rules ~dir ~subdirs =
+  let subdirs =
+    List.map subdirs ~f:(fun subdir ->
+      dir ^/ subdir)
+  in
+  Dep.List.concat_map subdirs ~f:(fun subdir ->
+    Dep.subdirs ~dir:subdir)
+  *>>| fun targets ->
+  [ Rule.default ~dir (List.map targets ~f:Dep.path)
+  ]
+;;
