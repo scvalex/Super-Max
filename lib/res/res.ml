@@ -1,6 +1,16 @@
 open Core.Std
 open Async.Std
 
+module Metadata = struct
+  type t = {
+    source        : string option;
+    geometry_id   : string option;
+    creation_time : Time.t;
+  } with fields, sexp, bin_io
+
+  let create = Fields.create;;
+end
+
 module Mesh = struct
   type t = {
     vertices : Float_array.t;
@@ -9,8 +19,20 @@ module Mesh = struct
   let create = Fields.create;;
 end
 
-type t =
-  | Mesh of Mesh.t
+type t = {
+  metadata : Metadata.t;
+  data     : [`Mesh of Mesh.t];
+}
+
+let create_mesh ?source ?geometry_id ~vertices () =
+  let metadata = Metadata.create ~source ~geometry_id ~creation_time:(Time.now ()) in
+  let data = `Mesh (Mesh.create ~vertices) in
+  { metadata; data; }
+;;
+
+let metadata t =
+  Sexp.to_string_mach (Metadata.sexp_of_t t.metadata)
+;;
 
 (* CR scvalex: Serialize these as a stream of atoms. *)
 module On_disk = struct
@@ -22,9 +44,12 @@ module On_disk = struct
     let create = Fields.create;;
   end
 
-  type t =
-    | Mesh of Mesh.t
-  with bin_io
+  type t = {
+    metadata : Metadata.t;
+    data     : [`Mesh of Mesh.t];
+  } with fields, bin_io
+
+  let create = Fields.create;;
 end
 
 let load file =
@@ -34,23 +59,30 @@ let load file =
     >>| function
     | `Eof ->
       failwithf "ran out of input reading %s" file ()
-    | `Ok (On_disk.Mesh mesh) ->
-      Mesh (Mesh.create ~vertices:(Float_array.of_array (On_disk.Mesh.vertices mesh))))
+    | `Ok on_disk ->
+      let metadata = On_disk.metadata on_disk in
+      let data =
+        match On_disk.data on_disk with
+        | `Mesh mesh ->
+          `Mesh (Mesh.create ~vertices:(Float_array.of_array (On_disk.Mesh.vertices mesh)))
+      in
+      { metadata; data; })
 ;;
 
 let save t file =
   Deferred.Or_error.try_with (fun () ->
     Writer.with_file file ~f:(fun writer ->
-      let on_disk =
-        match t with
-        | Mesh mesh ->
+      let data =
+        match t.data with
+        | `Mesh mesh ->
           let vertices = Mesh.vertices mesh in
           let vertices' = Array.create ~len:(Float_array.length vertices) 0.0 in
           for idx = 0 to Float_array.length vertices - 1 do
             Array.set vertices' idx vertices.{idx}
           done;
-          On_disk.Mesh (On_disk.Mesh.create ~vertices:vertices')
+          `Mesh (On_disk.Mesh.create ~vertices:vertices')
       in
+      let on_disk = On_disk.create ~metadata:t.metadata ~data in
       Writer.write_bin_prot writer On_disk.bin_writer_t on_disk;
       Writer.flushed writer))
 ;;
