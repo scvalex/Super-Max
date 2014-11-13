@@ -76,3 +76,6 @@
 [submodule "packages/ocaml-inotify"]
 	path = packages/ocaml-inotify
 	url = https://github.com/vincenthz/ocaml-inotify
+[submodule "assets"]
+	path = assets
+	url = https://github.com/scvalex/super-max-assets.git
