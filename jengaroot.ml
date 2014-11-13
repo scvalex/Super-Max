@@ -179,6 +179,8 @@ module Smbuild : sig
 
   val load : dir : Path.t -> t Dep.t
 
+  val exists : dir : Path.t -> bool Dep.t
+
   val libraries : t -> Lib.t list
 
   val external_libraries : t -> string list
@@ -195,6 +197,10 @@ end = struct
     Dep.contents (dir ^/ "smbuild")
     *>>| fun smbuild ->
     t_of_sexp (Sexp.of_string (String.strip smbuild))
+  ;;
+
+  let exists ~dir =
+    Dep.file_exists (dir ^/ "smbuild")
   ;;
 
   let libraries t =
@@ -458,46 +464,60 @@ let compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack =
   (names, rules)
 ;;
 
+let nothing_to_build_rules ~dir =
+  Dep.return [Rule.default ~dir []]
+;;
+
 let app_rules ~dir =
-  Smbuild.load ~dir
-  *>>= fun smbuild ->
-  let external_libraries = Smbuild.external_libraries smbuild in
-  let foreign_libraries = Smbuild.foreign_libraries smbuild in
-  let libraries = Smbuild.libraries smbuild in
-  let exe = dir ^/ (basename dir) ^ ".exe" in
-  compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack:None
-  *>>| fun (names, compile_mls_rules) ->
-  List.concat
-    [ [ Rule.default ~dir [Dep.path exe]
-      ; link_exe_rule ~dir ~libraries ~external_libraries ~foreign_libraries ~exe names
+  Smbuild.exists ~dir
+  *>>= fun smbuild_present ->
+  if smbuild_present
+  then begin
+    Smbuild.load ~dir
+    *>>= fun smbuild ->
+    let external_libraries = Smbuild.external_libraries smbuild in
+    let foreign_libraries = Smbuild.foreign_libraries smbuild in
+    let libraries = Smbuild.libraries smbuild in
+    let exe = dir ^/ (basename dir) ^ ".exe" in
+    compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack:None
+    *>>| fun (names, compile_mls_rules) ->
+    List.concat
+      [ [ Rule.default ~dir [Dep.path exe]
+        ; link_exe_rule ~dir ~libraries ~external_libraries ~foreign_libraries ~exe names
+        ]
+      ; compile_mls_rules
       ]
-    ; compile_mls_rules
-    ]
+  end else begin
+    nothing_to_build_rules ~dir
+  end
 ;;
 
 let lib_rules ~dir =
-  Smbuild.load ~dir
-  *>>= fun smbuild ->
-  let external_libraries = Smbuild.external_libraries smbuild in
-  let foreign_libraries = Smbuild.foreign_libraries smbuild in
-  let libraries = Smbuild.libraries smbuild in
-  let lib = Lib.of_name (basename dir) in
-  let lib_cmxa = dir ^/ Lib.suffixed_name lib ^ ".cmxa" in
-  compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack:(Some lib)
-  *>>| fun (names, compile_mls_rules) ->
-  List.concat
-    [ [ Rule.default ~dir [Dep.path lib_cmxa] ]
-    ; link_lib_rules ~dir ~external_libraries ~foreign_libraries ~lib_cmxa ~lib names
-    ; compile_mls_rules
-    ]
+  Smbuild.exists ~dir
+  *>>= fun smbuild_present ->
+  if smbuild_present
+  then begin
+    Smbuild.load ~dir
+    *>>= fun smbuild ->
+    let external_libraries = Smbuild.external_libraries smbuild in
+    let foreign_libraries = Smbuild.foreign_libraries smbuild in
+    let libraries = Smbuild.libraries smbuild in
+    let lib = Lib.of_name (basename dir) in
+    let lib_cmxa = dir ^/ Lib.suffixed_name lib ^ ".cmxa" in
+    compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack:(Some lib)
+    *>>| fun (names, compile_mls_rules) ->
+    List.concat
+      [ [ Rule.default ~dir [Dep.path lib_cmxa] ]
+      ; link_lib_rules ~dir ~external_libraries ~foreign_libraries ~lib_cmxa ~lib names
+      ; compile_mls_rules
+      ]
+  end else begin
+    nothing_to_build_rules ~dir
+  end
 ;;
 
 let liblinks_rules ~dir =
   Dep.return (Liblinks.rules ~lib:(Lib.of_suffixed_name (basename dir)))
-;;
-
-let nothing_to_build_rules ~dir =
-  Dep.return [Rule.default ~dir []]
 ;;
 
 let everything_under_rules ~dir ~subdirs =
