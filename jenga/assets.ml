@@ -10,9 +10,9 @@ module Res : sig
   module Mesh : sig
     type t with sexp
 
-    val file : t -> string
+    val source : t -> string
 
-    val geometry_id : t -> string
+    val source_id : t -> string
   end
 
   type t =
@@ -27,9 +27,9 @@ end = struct
 
   module Mesh = struct
     type t = {
-      id          : Id.t;
-      file        : string;
-      geometry_id : string;
+      id        : Id.t;
+      source    : string;
+      source_id : string;
     } with fields, sexp
   end
 
@@ -75,13 +75,13 @@ let build_res ~dir res =
   *>>= fun () ->
   match res with
   | Res.Mesh mesh ->
-    Dep.path (dir ^/ Res.Mesh.file mesh)
+    Dep.path (dir ^/ Res.Mesh.source mesh)
     *>>| fun () ->
     Action.shell ~dir ~prog:(Path.reach_from ~dir res_exe)
       ~args:[ "extract"; "mesh"
-            ; "-source"; Res.Mesh.file mesh
+            ; "-source"; Res.Mesh.source mesh
+            ; "-source-id"; Res.Mesh.source_id mesh
             ; "-target-id"; Res.Id.to_string (Res.id res)
-            ; "-geometry-id"; Res.Mesh.geometry_id mesh
             ]
 ;;
 

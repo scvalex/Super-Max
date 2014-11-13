@@ -3,6 +3,6 @@ open Async.Std
 
 val extract_mesh :
   source : string
-  -> geometry_id : string
+  -> source_id : string
   -> target_id : string
   -> unit Deferred.Or_error.t

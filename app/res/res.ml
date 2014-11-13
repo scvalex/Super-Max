@@ -2,9 +2,8 @@ open Core.Std
 open Async.Std
 open Res_lib.Std
 
-let extract_mesh ~source ~geometry_id ~target_id =
-  Printf.printf "Extracting %s.%s to %s" source geometry_id target_id;
-  Extract.extract_mesh ~source ~geometry_id ~target_id
+let extract_mesh ~source ~source_id ~target_id =
+  Extract.extract_mesh ~source ~source_id ~target_id
   |> Deferred.Or_error.ok_exn
 ;;
 
@@ -16,8 +15,8 @@ module Flag = struct
       ~doc:"FILE where to extract the resource from"
   ;;
 
-  let geometry_id =
-    flag "geometry-id" (required string)
+  let source_id =
+    flag "source-id" (required string)
       ~doc:"STRING unique id of the resource in the source file"
   ;;
 
@@ -35,9 +34,9 @@ let main () =
             [ ("mesh",
                Command.async
                  ~summary:"Extract a mesh from a foreign file"
-                 Flag.( empty +> source +> geometry_id +> target_id)
-                 (fun source geometry_id target_id () ->
-                    extract_mesh ~source ~geometry_id ~target_id))
+                 Flag.( empty +> source +> source_id +> target_id)
+                 (fun source source_id target_id () ->
+                    extract_mesh ~source ~source_id ~target_id))
             ])
        ])
 ;;

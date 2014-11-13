@@ -4,7 +4,7 @@ open Async.Std
 module Metadata = struct
   type t = {
     source        : string option;
-    geometry_id   : string option;
+    source_id     : string option;
     creation_time : Time.t;
   } with fields, sexp, bin_io
 
@@ -24,8 +24,8 @@ type t = {
   data     : [`Mesh of Mesh.t];
 }
 
-let create_mesh ?source ?geometry_id ~vertices () =
-  let metadata = Metadata.create ~source ~geometry_id ~creation_time:(Time.now ()) in
+let create_mesh ?source ?source_id ~vertices () =
+  let metadata = Metadata.create ~source ~source_id ~creation_time:(Time.now ()) in
   let data = `Mesh (Mesh.create ~vertices) in
   { metadata; data; }
 ;;

@@ -15,7 +15,7 @@ val load : string -> t Deferred.Or_error.t
 
 val create_mesh :
   ?source : string
-  -> ?geometry_id : string
+  -> ?source_id : string
   -> vertices : Float_array.t
   -> unit
   -> t
