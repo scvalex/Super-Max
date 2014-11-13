@@ -371,14 +371,14 @@ let link_lib_rules ~dir ~external_libraries ~foreign_libraries ~lib_cmxa ~lib na
   in
   let pack_lib_cmx =
     Dep.all_unit (compiled_files_for ~dir names)
-    *>>| fun () ->
+    *>>= fun () ->
+    toposort_deps ~dir (List.map names ~f:(fun name -> name ^ ".cmx"))
+    *>>| fun cmxs ->
     ocamlopt ~dir ~external_libraries ~allow_unused_opens:false
       ~for_pack:None ~include_dirs:[] ~foreign_libraries:[]
       ~args:(List.concat
-               [ [ "-pack"
-                 ; "-o"; basename lib_cmx
-                 ]
-               ; List.map names ~f:(fun name -> name ^ ".cmx")
+               [ ["-pack"; "-o"; basename lib_cmx]
+               ; cmxs
                ])
   in
   [ Rule.create ~targets:[lib_cmxa; lib_a] link_cmxa
