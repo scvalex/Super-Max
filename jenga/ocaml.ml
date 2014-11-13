@@ -1,4 +1,4 @@
-open Core.Std let _ = _squelch_unused_module_warning_
+open Core.Std
 open Jenga_lib.Api
 open Std_internal
 

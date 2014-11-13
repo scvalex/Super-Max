@@ -6,18 +6,20 @@ open Std_internal
 let scheme ~dir =
   let is_smbuild path =
     match basename path with
-    | "smbuild" -> true
-    | _         -> false
+    | "smbuild"  -> true
+    | "resbuild" -> true
+    | _          -> false
   in
   let rules =
     if Path.(the_root = dir)
     then
-      everything_under_rules ~dir ~subdirs:["app"; "lib"]
+      everything_under_rules ~dir ~subdirs:["app"; "lib"; "assets"]
     else
       match Path.(to_string (dirname dir)) with
       | "app"      -> Ocaml.app_rules ~dir
       | "lib"      -> Ocaml.lib_rules ~dir
       | "liblinks" -> Ocaml.liblinks_rules ~dir
+      | "assets"   -> Assets.asset_rules ~dir
       | _          -> nothing_to_build_rules ~dir
   in
   Scheme.exclude is_smbuild
