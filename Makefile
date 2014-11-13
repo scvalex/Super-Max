@@ -4,3 +4,4 @@ jenga:
 
 clean:
 	git clean -fdx
+	git -C assets/ clean -fdx
