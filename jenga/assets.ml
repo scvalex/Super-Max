@@ -2,6 +2,8 @@ open Core.Std let _ = _squelch_unused_module_warning_
 open Jenga_lib.Api
 open Std_internal
 
+let res_exe = Path.the_root /^ "app" /^ "res" /^ "res.exe";;
+
 module Res : sig
   module Id : Identifiable
 
@@ -69,12 +71,18 @@ end = struct
 end
 
 let build_res ~dir res =
+  Dep.path res_exe
+  *>>= fun () ->
   match res with
   | Res.Mesh mesh ->
     Dep.path (dir ^/ Res.Mesh.file mesh)
     *>>| fun () ->
-    message ("Building " ^ (Res.Id.to_string (Res.id res)) ^ "." ^ (Res.Mesh.geometry_id mesh));
-    Action.save ~target:(Res.target res ~dir) "MAGIC"
+    Action.shell ~dir ~prog:(Path.reach_from ~dir res_exe)
+      ~args:[ "extract"; "mesh"
+            ; "-source"; Res.Mesh.file mesh
+            ; "-target-id"; Res.Id.to_string (Res.id res)
+            ; "-geometry-id"; Res.Mesh.geometry_id mesh
+            ]
 ;;
 
 let asset_rules ~dir =
