@@ -3,7 +3,7 @@ open Async.Std
 
 module Metadata = struct
   type t = {
-    n_vertices    : int;
+    vertex_count  : int;
     source        : string option;
     source_id     : string option;
     creation_time : Time.t;
@@ -26,9 +26,11 @@ type t = {
 }
 
 let create_mesh ?source ?source_id ~vertices () =
+  if Int.(Float_array.length vertices mod 3 <> 0) then
+    failwithf "vertices length not a multiple of 3" ();
   let metadata =
     Metadata.create ~source ~source_id ~creation_time:(Time.now ())
-      ~n_vertices:(Float_array.length vertices)
+      ~vertex_count:(Float_array.length vertices / 3)
   in
   let data = `Mesh (Mesh.create ~vertices) in
   { metadata; data; }
@@ -38,55 +40,78 @@ let metadata t =
   Sexp.to_string_mach (Metadata.sexp_of_t t.metadata)
 ;;
 
-(* CR scvalex: Serialize these as a stream of atoms. *)
-module On_disk = struct
-  module Mesh = struct
-    type t = {
-      vertices : float array;
-    } with fields, bin_io
-
-    let create = Fields.create;;
-  end
-
-  type t = {
-    metadata : Metadata.t;
-    data     : [`Mesh of Mesh.t];
-  } with fields, bin_io
-
-  let create = Fields.create;;
+module Chunk = struct
+  type t =
+    | Metadata of [`Mesh] * Metadata.t
+    | Vertices of float array
+  with bin_io
 end
 
 let load file =
   Deferred.Or_error.try_with (fun () ->
     Reader.with_file file ~f:(fun reader ->
-      Reader.read_bin_prot reader On_disk.bin_reader_t)
-    >>| function
-    | `Eof ->
-      failwithf "ran out of input reading %s" file ()
-    | `Ok on_disk ->
-      let metadata = On_disk.metadata on_disk in
-      let data =
-        match On_disk.data on_disk with
-        | `Mesh mesh ->
-          `Mesh (Mesh.create ~vertices:(Float_array.of_array (On_disk.Mesh.vertices mesh)))
+      let (chunks, result) =
+        Unpack_sequence.unpack_bin_prot_from_reader Chunk.bin_reader_t reader
       in
-      { metadata; data; })
+      Pipe.fold ~init:None chunks ~f:(fun acc chunk ->
+        Scheduler.yield ()
+        >>| fun () ->
+        match (acc, chunk) with
+        | (None, Chunk.Metadata (`Mesh, metadata)) ->
+          let vertices = Float_array.create (3 * Metadata.vertex_count metadata) in
+          let data = `Mesh (Mesh.create ~vertices) in
+          Some ({ metadata; data; }, 0)
+        | (None, _) ->
+          failwithf "Metadata chunk was not first in %s" file ()
+        | (Some _, Chunk.Metadata _) ->
+          failwithf "multiple Metadata chunks in %s" file ()
+        | (Some (t, next_vertex), Chunk.Vertices vertices) ->
+          match t.data with
+          | `Mesh mesh ->
+            for idx = 0 to Array.length vertices - 1 do
+              (Mesh.vertices mesh).{next_vertex + idx} <- vertices.(idx)
+            done;
+            Some (t, next_vertex + Array.length vertices))
+      >>= function
+      | None ->
+        failwithf "nothing was read from %s" file ()
+      | Some (t, _) ->
+        result
+        >>| fun result ->
+        match result with
+        | Unpack_sequence.Result.Input_closed ->
+          t
+        | _ ->
+          Error.raise (Unpack_sequence.Result.to_error result)))
 ;;
 
 let save t file =
   Deferred.Or_error.try_with (fun () ->
     Writer.with_file file ~f:(fun writer ->
-      let data =
-        match t.data with
-        | `Mesh mesh ->
-          let vertices = Mesh.vertices mesh in
-          let vertices' = Array.create ~len:(Float_array.length vertices) 0.0 in
-          for idx = 0 to Float_array.length vertices - 1 do
-            Array.set vertices' idx vertices.{idx}
-          done;
-          `Mesh (On_disk.Mesh.create ~vertices:vertices')
-      in
-      let on_disk = On_disk.create ~metadata:t.metadata ~data in
-      Writer.write_bin_prot writer On_disk.bin_writer_t on_disk;
-      Writer.flushed writer))
+      match t.data with
+      | `Mesh mesh ->
+        let write_chunk chunk =
+          Writer.write_bin_prot writer Chunk.bin_writer_t chunk;
+          Writer.flushed writer
+        in
+        write_chunk (Chunk.Metadata (`Mesh, t.metadata))
+        >>= fun () ->
+        let vertices = Mesh.vertices mesh in
+        let length = Float_array.length vertices in
+        let rec loop idx =
+          if Int.(idx >= length)
+          then begin
+            Deferred.unit
+          end else begin
+            let count = Int.min 1000 Int.(length - idx) in
+            let buf = Array.create ~len:count 0.0 in
+            for jdx = 0 to count - 1 do
+              buf.(jdx) <- vertices.{idx + jdx}
+            done;
+            write_chunk (Chunk.Vertices buf)
+            >>= fun () ->
+            loop (idx + count)
+          end
+        in
+        loop 0))
 ;;
