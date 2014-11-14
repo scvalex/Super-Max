@@ -3,10 +3,9 @@ open Async.Std
 
 type t = Xml.xml
 
-let parse_file file =
-  Deferred.Or_error.try_with (fun () ->
-    In_thread.run (fun () ->
-      Xml.parse_file file))
+let parse_file_exn file =
+  In_thread.run (fun () ->
+    Xml.parse_file file)
 ;;
 
 let children t =
@@ -38,34 +37,75 @@ module Query = struct
   type one = (t list -> t list)
   type t = one list
 
+  let run t xml =
+    List.fold_left t ~init:[xml] ~f:(fun xmls one ->
+      one xmls)
+  ;;
+
   let empty = [];;
 
-  let (+>) t q =
-    t @ [q]
+  let (+>) t one =
+    t @ [one]
   ;;
 
   let tag tag1 xmls =
+    let tag1 = String.lowercase tag1 in
     let xmls = List.concat_map xmls ~f:children in
-    List.filter xmls ~f:(fun xml ->
-      match tag xml with
-      | None      -> false
-      | Some tag2 -> String.(tag1 = tag2))
+    if String.(tag1 = "*")
+    then
+      xmls
+    else
+      List.filter xmls ~f:(fun xml ->
+        match tag xml with
+        | None ->
+          false
+        | Some tag2 ->
+          let tag2 = String.lowercase tag2 in
+          String.(tag1 = tag2))
   ;;
 
-  let attr key value xmls =
-    let xmls = List.concat_map xmls ~f:children in
+  let with_attr one key value xmls =
+    let xmls = one xmls in
     List.filter xmls ~f:(fun xml ->
       match attr xml key with
       | None        -> false
       | Some value' -> String.(value = value'))
   ;;
-
-  let run t xml =
-    List.fold_left t ~init:[xml] ~f:(fun xmls q ->
-      q xmls)
-  ;;
 end
 
-let query t query =
+let matches t query =
   Query.run query t
+;;
+
+let match_one_exn ~here t query =
+  match Query.run query t with
+  | [t] -> t
+  | []  -> failwithf "query %s matched nothing" (Source_code_position.to_string here) ()
+  | _   -> failwithf "query %s matched multiple" (Source_code_position.to_string here) ()
+;;
+
+let exists t query =
+  not (List.is_empty (matches t query))
+;;
+
+let attr_exn ~here t key =
+  match attr t key with
+  | Some value ->
+    value
+  | None ->
+    failwithf "no attr '%s' at %s" key (Source_code_position.to_string here) ()
+;;
+
+let text_content_exn ~here t =
+  match t with
+  | Xml.PCData text ->
+    text
+  | _ ->
+    String.concat ~sep:" " (List.map (children t) ~f:(fun xml ->
+      match xml with
+      | Xml.PCData text ->
+        text
+      | _ ->
+        failwithf "xml had non-text children at %s"
+          (Source_code_position.to_string here) ()))
 ;;
