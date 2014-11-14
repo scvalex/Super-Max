@@ -1,4 +1,6 @@
 open Core.Std
+open Async.Std
+open Res_lib.Std
 open Sdl_lib.Std
 open Gl_lib.Std
 
@@ -20,6 +22,14 @@ let run_render_test () =
   Sdl.quit ()
 ;;
 
+let run_render_mesh file () =
+  Res.load file
+  |> Deferred.Or_error.ok_exn
+  >>= fun _res ->
+  Printf.printf "Rendring mesh\n%!";
+  Deferred.unit
+;;
+
 let main () =
   Command.run
     (Command.group ~summary:"super-max tools"
@@ -30,6 +40,13 @@ let main () =
                  ~summary:"test the renderer"
                  Command.Spec.empty
                  run_render_test)
+            ; ("mesh",
+               Command.async
+                 ~summary:"render a mesh"
+                 Command.Spec.
+                   ( empty
+                     +> anon ("MESH" %: file) )
+                 run_render_mesh)
             ])
        ])
 ;;
