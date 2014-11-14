@@ -79,3 +79,6 @@
 [submodule "assets"]
 	path = assets
 	url = https://github.com/scvalex/super-max-assets.git
+[submodule "packages/xml-light"]
+	path = packages/xml-light
+	url = https://github.com/ncannasse/xml-light.git
