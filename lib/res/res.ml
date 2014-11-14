@@ -3,6 +3,7 @@ open Async.Std
 
 module Metadata = struct
   type t = {
+    n_vertices    : int;
     source        : string option;
     source_id     : string option;
     creation_time : Time.t;
@@ -25,7 +26,10 @@ type t = {
 }
 
 let create_mesh ?source ?source_id ~vertices () =
-  let metadata = Metadata.create ~source ~source_id ~creation_time:(Time.now ()) in
+  let metadata =
+    Metadata.create ~source ~source_id ~creation_time:(Time.now ())
+      ~n_vertices:(Float_array.length vertices)
+  in
   let data = `Mesh (Mesh.create ~vertices) in
   { metadata; data; }
 ;;
