@@ -1,0 +1,3 @@
+((libraries ( gl sdl ))
+ (external_libraries ( async core))
+ )

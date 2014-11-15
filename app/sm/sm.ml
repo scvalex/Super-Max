@@ -1,25 +1,11 @@
 open Core.Std
 open Async.Std
 open Res_lib.Std
-open Sdl_lib.Std
-open Gl_lib.Std
+open Render_lib.Std
 
 let run_render_test () =
-  Sdl.init ();
-  Sdl.gl_set_attribute `Context_major_version 3;
-  Sdl.gl_set_attribute `Context_major_version 3;
-  Sdl.gl_set_attribute `Doublebuffer 1;
-  Sdl.gl_set_attribute `Depthsize 24;
-  Printf.printf "Let's rock\n%!";
-  let window = Sdl.create_window ~title:"Rock" in
-  let gl_context = Sdl.gl_create_context window in
-  Gl.clear_color 0.1 0.1 0.1 1.0;
-  Gl.clear `Color_buffer_bit;
-  Sdl.gl_swap_window window;
-  Sdl.delay ~ms:3000;
-  Sdl.gl_delete_context gl_context;
-  Sdl.destroy_window window;
-  Sdl.quit ()
+  Renderer.with_renderer (fun renderer ->
+    Renderer.test renderer)
 ;;
 
 let run_render_mesh file () =
@@ -36,7 +22,7 @@ let main () =
        [ ("render",
           Command.group ~summary:"render tools"
             [ ("test",
-               Command.basic
+               Command.async
                  ~summary:"test the renderer"
                  Command.Spec.empty
                  run_render_test)
