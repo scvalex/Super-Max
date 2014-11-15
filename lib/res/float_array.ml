@@ -14,3 +14,7 @@ let of_array array =
 let length t =
   dim t
 ;;
+
+let size_bytes t =
+  length t * 4
+;;
