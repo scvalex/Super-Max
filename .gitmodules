@@ -82,3 +82,6 @@
 [submodule "packages/xml-light"]
 	path = packages/xml-light
 	url = https://github.com/ncannasse/xml-light.git
+[submodule "packages/ocaml-ctypes"]
+	path = packages/ocaml-ctypes
+	url = https://github.com/ocamllabs/ocaml-ctypes.git
