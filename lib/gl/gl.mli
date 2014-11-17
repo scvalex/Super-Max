@@ -30,6 +30,20 @@ val create_shader : shader_type -> shader
 
 val delete_shader : shader -> unit
 
+val shader_source : shader -> string -> unit
+
+val compile_shader : shader -> unit
+
+val get_shader_iv :
+  shader
+  -> [ `Compile_status | `Info_log_length ]
+  -> int
+
+val get_shader_info_log :
+  shader
+  -> max_length : int
+  -> string
+
 val create_program : unit -> program
 
 val attach_shader : program -> shader -> unit

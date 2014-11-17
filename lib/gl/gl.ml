@@ -108,6 +108,25 @@ module Gl = struct
     foreign "glDeleteShader" (shader_t @-> returning void_or_error)
   ;;
 
+  let shader_source =
+    foreign "glShaderSource"
+      (shader_t @-> int32_t @-> ptr string @-> ptr int32_t @-> returning void_or_error)
+  ;;
+
+  let compile_shader =
+    foreign "glCompileShader" (shader_t @-> returning void_or_error)
+  ;;
+
+  let get_shader_iv =
+    foreign "glGetShaderiv"
+      (shader_t @-> gl_enum_t @-> ptr int32_t @-> returning void_or_error)
+  ;;
+
+  let get_shader_info_log =
+    foreign "glGetShaderInfoLog"
+      (program_t @-> int32_t @-> ptr int32_t @-> ptr char @-> returning void_or_error)
+  ;;
+
   let create_program =
     foreign "glCreateProgram" (void @-> returning (nonzero_uint32_t program_t))
   ;;
@@ -188,6 +207,39 @@ let delete_shader shader =
   stats.Stats.live_shaders <- stats.Stats.live_shaders - 1;
   delete_shader shader
   |> Or_error.ok_exn ~here:_here_
+;;
+
+let shader_source shader code =
+  let code_ptr =
+    allocate string code
+  in
+  shader_source shader (Int32.of_int 1) code_ptr (from_voidp int32_t null)
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let compile_shader shader =
+  compile_shader shader
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let get_shader_iv shader pname =
+  let pname =
+    match pname with
+    | `Compile_status  -> 0x8B81
+    | `Info_log_length -> 0x8B84
+  in
+  let param_ptr = allocate int32_t Int32.zero in
+  Or_error.ok_exn ~here:_here_
+    (get_shader_iv shader (UInt32.of_int pname) param_ptr);
+  Int32.to_int (!@ param_ptr)
+;;
+
+let get_shader_info_log shader ~max_length =
+  let info_log_ptr = allocate_n char ~count:(max_length + 1) in
+  Or_error.ok_exn ~here:_here_
+    (get_shader_info_log shader (Int32.of_int max_length)
+       (from_voidp int32_t null) info_log_ptr);
+  string_from_ptr info_log_ptr ~length:(max_length - 1)
 ;;
 
 let create_program () =
