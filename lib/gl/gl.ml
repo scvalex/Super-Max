@@ -6,6 +6,16 @@ open Foreign
 
 module UInt32 = Unsigned.UInt32
 
+module Or_error = struct
+  include Or_error
+
+  let ok_exn ~here or_error =
+    match or_error with
+    | Ok x      -> x
+    | Error err -> Error.raise (Error.tag err (Source_code_position.to_string here))
+  ;;
+end
+
 module Stats = struct
   type t = {
     mutable live_buffers  : int;
@@ -124,7 +134,7 @@ let clear what =
     | `Stencil_buffer_bit -> 0x00000400
   in
   Gl.clear (UInt32.of_int what)
-  |> Or_error.ok_exn
+  |> Or_error.ok_exn ~here:_here_
 ;;
 
 let create_shader kind =
@@ -136,19 +146,19 @@ let create_shader kind =
     | `Fragment_shader -> 0x8B30
   in
   create_shader (UInt32.of_int kind)
-  |> Or_error.ok_exn
+  |> Or_error.ok_exn ~here:_here_
 ;;
 
 let create_program () =
   stats.Stats.live_programs <- stats.Stats.live_programs + 1;
   create_program ()
-  |> Or_error.ok_exn
+  |> Or_error.ok_exn ~here:_here_
 ;;
 
 let gen_buffer () =
   stats.Stats.live_buffers <- stats.Stats.live_buffers + 1;
   let buffer_ptr = allocate uint32_t UInt32.zero in
-  Or_error.ok_exn (gen_buffers (UInt32.of_int 1) buffer_ptr);
+  Or_error.ok_exn ~here:_here_ (gen_buffers (UInt32.of_int 1) buffer_ptr);
   !@ buffer_ptr
 ;;
 
@@ -171,7 +181,7 @@ let bind_buffer target buffer =
     | Some n -> n
   in
   bind_buffer (UInt32.of_int target) buffer
-  |> Or_error.ok_exn
+  |> Or_error.ok_exn ~here:_here_
 ;;
 
 let with_bound_buffer target buffer ~f =
@@ -187,7 +197,7 @@ let use_program program =
     | Some n -> n
   in
   use_program program
-  |> Or_error.ok_exn
+  |> Or_error.ok_exn ~here:_here_
 ;;
 
 let with_used_program program ~f =
