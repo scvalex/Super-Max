@@ -129,6 +129,11 @@ module Gl = struct
       (program_t @-> gl_enum_t @-> ptr int32_t @-> returning void_or_error)
   ;;
 
+  let get_program_info_log =
+    foreign "glGetProgramInfoLog"
+      (program_t @-> int32_t @-> ptr int32_t @-> ptr char @-> returning void_or_error)
+  ;;
+
   let gen_buffers =
     foreign "glGenBuffers" (uint32_t @-> ptr buffer_t @-> returning void_or_error)
   ;;
@@ -216,6 +221,14 @@ let get_program_iv program pname =
   Or_error.ok_exn ~here:_here_
     (get_program_iv program (UInt32.of_int pname) param_ptr);
   Int32.to_int (!@ param_ptr)
+;;
+
+let get_program_info_log program ~max_length =
+  let info_log_ptr = allocate_n char ~count:(max_length + 1) in
+  Or_error.ok_exn ~here:_here_
+    (get_program_info_log program (Int32.of_int max_length)
+       (from_voidp int32_t null) info_log_ptr);
+  string_from_ptr info_log_ptr ~length:(max_length - 1)
 ;;
 
 let gen_buffer () =

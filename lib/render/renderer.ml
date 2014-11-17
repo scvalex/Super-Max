@@ -81,10 +81,9 @@ void main() {
         Gl.link_program program;
         let status = Gl.get_program_iv program `Link_status in
         if Int.(status = 0) then begin
-          ()
-      (*     let info_log_length = Gl.get_program_iv program `Info_log_length in *)
-      (*     let info = Gl.get_program_info_log program info_log_length None in *)
-      (*     failwithf "failed to link program: %s" info () *)
+          let info_log_length = Gl.get_program_iv program `Info_log_length in
+          let info = Gl.get_program_info_log program ~max_length:info_log_length in
+          failwithf "failed to link program: %s" info ()
         end;
         List.iter shaders ~f:(Gl.detach_shader program);
       program

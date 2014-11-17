@@ -43,6 +43,11 @@ val get_program_iv :
   -> [ `Link_status | `Info_log_length ]
   -> int
 
+val get_program_info_log :
+  program
+  -> max_length : int
+  -> string
+
 val gen_buffer : unit -> buffer
 
 val with_bound_buffer :
