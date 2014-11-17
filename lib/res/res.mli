@@ -1,6 +1,8 @@
 open Core.Std
 open Async.Std
 
+module Id : Identifiable
+
 module Mesh : sig
   type t
 
@@ -27,3 +29,5 @@ val create_program :
   -> t
 
 val metadata : t -> string
+
+val filename : Id.t -> string
