@@ -93,6 +93,8 @@ void main() {
     let the_program = create_program [ vertex_shader; fragment_shader ] in
     Gl.delete_shader vertex_shader;
     Gl.delete_shader fragment_shader;
+    let vao = Gl.gen_vertex_array ()in
+    Gl.bind_vertex_array vao;
     let position_buffer_object = Gl.gen_buffer () in
     Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
       Gl.buffer_data `Array_buffer vertex_positions `Static_draw);

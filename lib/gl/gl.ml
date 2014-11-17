@@ -24,12 +24,14 @@ module Stats = struct
     mutable live_buffers  : int;
     mutable live_shaders  : int;
     mutable live_programs : int;
+    mutable live_vaos     : int;
   } with sexp
 
   let create () =
     { live_buffers = 0;
       live_shaders = 0;
       live_programs = 0;
+      live_vaos = 0;
     }
   ;;
 end
@@ -47,6 +49,9 @@ module Gl = struct
   let buffer_t = uint32_t
 
   let gl_enum_t = uint32_t
+
+  type vertex_array_object = Unsigned.uint32
+  let vertex_array_t = uint32_t
 
   let write_never _ =
     failwith "write_never"
@@ -192,13 +197,22 @@ module Gl = struct
 
   let vertex_attrib_pointer =
     foreign "glVertexAttribPointer"
-      (uint32_t @-> int32_t @-> gl_enum_t @-> uchar @-> int32_t @-> ptr void
+      (uint32_t @-> int32_t @-> gl_enum_t @-> uchar @-> uint32_t @-> ptr void
        @-> returning void_or_error)
   ;;
 
   let draw_arrays =
     foreign "glDrawArrays"
       (gl_enum_t @-> int32_t @-> int32_t @-> returning void_or_error)
+  ;;
+
+  let gen_vertex_arrays =
+    foreign "glGenVertexArrays"
+      (uint32_t @-> ptr vertex_array_t @-> returning void_or_error)
+  ;;
+
+  let bind_vertex_array =
+    foreign "glBindVertexArray" (vertex_array_t @-> returning void_or_error)
   ;;
 end
 
@@ -429,7 +443,7 @@ let vertex_attrib_pointer idx ~size kind ~normalize ~stride =
     (Int32.of_int size)
     (UInt32.of_int kind)
     (Unsigned.UChar.of_int normalize)
-    (Int32.of_int stride)
+    (UInt32.of_int stride)
     (to_voidp null)
   |> Or_error.ok_exn ~here:_here_
 ;;
@@ -440,6 +454,18 @@ let draw_arrays kind ~first ~count =
     | `Triangles -> 0x0004
   in
   draw_arrays (UInt32.of_int kind) (Int32.of_int first) (Int32.of_int count)
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let gen_vertex_array () =
+  stats.Stats.live_vaos <- stats.Stats.live_vaos + 1;
+  let vao_ptr = allocate uint32_t UInt32.zero in
+  Or_error.ok_exn ~here:_here_ (gen_vertex_arrays (UInt32.of_int 1) vao_ptr);
+  !@ vao_ptr
+;;
+
+let bind_vertex_array vao =
+  bind_vertex_array vao
   |> Or_error.ok_exn ~here:_here_
 ;;
 

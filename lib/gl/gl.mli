@@ -21,6 +21,8 @@ type buffer_target =
   | `Transform_feedback_buffer | `Uniform_buffer
   ] with sexp
 
+type vertex_array_object
+
 val clear_color : float -> float -> float -> float -> unit
 
 val clear :
@@ -102,6 +104,10 @@ val draw_arrays :
   -> first : int
   -> count : int
   -> unit
+
+val gen_vertex_array : unit -> vertex_array_object
+
+val bind_vertex_array : vertex_array_object -> unit
 
 module Debug : sig
   val stats : unit -> string
