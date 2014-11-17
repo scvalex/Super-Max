@@ -67,6 +67,17 @@ module Gl = struct
     | n      -> Some (Error.createf "GL error %d" n)
   ;;
 
+  let get_error () =
+    let rec loop acc =
+      match get_error () with
+      | None     -> acc
+      | Some err -> loop (err :: acc)
+    in
+    match loop [] with
+    | []   -> None
+    | errs -> Some (Error.of_list errs)
+  ;;
+
   let nonzero_to_ok ~to_int t =
     let read n =
       if Int.(<>) (to_int n) 0
