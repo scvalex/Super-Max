@@ -170,6 +170,25 @@ module Gl = struct
   let use_program =
     foreign "glUseProgram" (program_t @-> returning void_or_error)
   ;;
+
+  let enable_vertex_attrib_array =
+    foreign "glEnableVertexAttribArray" (uint32_t @-> returning void_or_error)
+  ;;
+
+  let disable_vertex_attrib_array =
+    foreign "glDisableVertexAttribArray" (uint32_t @-> returning void_or_error)
+  ;;
+
+  let vertex_attrib_pointer =
+    foreign "glVertexAttribPointer"
+      (uint32_t @-> int32_t @-> gl_enum_t @-> int32_t @-> int32_t @-> ptr void
+       @-> returning void_or_error)
+  ;;
+
+  let draw_arrays =
+    foreign "glDrawArrays"
+      (gl_enum_t @-> int32_t @-> int32_t @-> returning void_or_error)
+  ;;
 end
 
 include Gl
@@ -368,6 +387,49 @@ let with_used_program program ~f =
   use_program (Some program);
   Exn.protect ~f
     ~finally:(fun () -> use_program None)
+;;
+
+let enable_vertex_attrib_array idx =
+  enable_vertex_attrib_array (UInt32.of_int idx)
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let disable_vertex_attrib_array idx =
+  disable_vertex_attrib_array (UInt32.of_int idx)
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let with_vertex_attrib_array idx ~f =
+  enable_vertex_attrib_array idx;
+  Exn.protect ~f
+    ~finally:(fun () -> disable_vertex_attrib_array idx)
+;;
+
+let vertex_attrib_pointer idx ~size kind ~normalize ~stride =
+  let kind =
+    match kind with
+    | `Float -> 0x1406
+  in
+  let normalize =
+    if normalize then 1 else 0
+  in
+  vertex_attrib_pointer
+    (UInt32.of_int idx)
+    (Int32.of_int size)
+    (UInt32.of_int kind)
+    (Int32.of_int normalize)
+    (Int32.of_int stride)
+    (from_voidp void null)
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let draw_arrays kind ~first ~count =
+  let kind =
+    match kind with
+    | `Triangles -> 0x0004
+  in
+  draw_arrays (UInt32.of_int kind) (Int32.of_int first) (Int32.of_int count)
+  |> Or_error.ok_exn ~here:_here_
 ;;
 
 module Debug = struct

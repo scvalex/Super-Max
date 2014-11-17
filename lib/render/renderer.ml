@@ -100,11 +100,9 @@ void main() {
     Gl.clear `Color_buffer_bit;
     Gl.with_used_program the_program ~f:(fun () ->
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
-        ()
-        (* Gl.enable_vertex_attrib_array 0; *)
-        (* Gl.vertex_attrib_pointer 0 4 `Float false 0 0; *)
-        (* Gl.draw_arrays `Triangles 0 3; *)
-        (* Gl.disable_vertex_attrib_array 0; *)));
+        Gl.with_vertex_attrib_array 0 ~f:(fun () ->
+          Gl.vertex_attrib_pointer 0 ~size:4 `Float ~normalize:false ~stride:0;
+          Gl.draw_arrays `Triangles ~first:0 ~count:3)));
     Sdl.gl_swap_window t.window)
   >>= fun () ->
   Clock.after (sec 3.0)

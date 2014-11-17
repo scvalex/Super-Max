@@ -84,6 +84,25 @@ val with_used_program :
   -> f : (unit -> 'a)
   -> 'a
 
+val with_vertex_attrib_array :
+  int
+  -> f : (unit -> 'a)
+  -> 'a
+
+val vertex_attrib_pointer :
+  int
+  -> size : int
+  -> [ `Float ]
+  -> normalize : bool
+  -> stride : int
+  -> unit
+
+val draw_arrays :
+  [ `Triangles ]
+  -> first : int
+  -> count : int
+  -> unit
+
 module Debug : sig
   val stats : unit -> string
 end
