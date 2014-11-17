@@ -1,4 +1,5 @@
 open Core_kernel.Std
+open Res_lib.Std
 
 (** https://www.opengl.org/sdk/docs/man3/ *)
 
@@ -63,6 +64,14 @@ val get_program_info_log :
   -> string
 
 val gen_buffer : unit -> buffer
+
+val buffer_data :
+  buffer_target
+  -> Float_array.t
+  -> [ `Stream_draw | `Stream_read | `Stream_copy
+     | `Static_draw | `Static_read | `Static_copy
+     | `Dynamic_draw | `Dynamic_read | `Dynamic_copy ]
+  -> unit
 
 val with_bound_buffer :
   buffer_target

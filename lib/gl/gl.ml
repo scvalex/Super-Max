@@ -1,6 +1,7 @@
 (** https://www.opengl.org/sdk/docs/man3/ *)
 
-open Core_kernel.Std let _ = _squelch_unused_module_warning_
+open Core_kernel.Std
+open Res_lib.Std
 open Ctypes
 open Foreign
 
@@ -161,6 +162,11 @@ module Gl = struct
     foreign "glBindBuffer" (gl_enum_t @-> buffer_t @-> returning void_or_error)
   ;;
 
+  let buffer_data =
+    foreign "glBufferData"
+      (gl_enum_t @-> long @-> ptr void @-> gl_enum_t @-> returning void_or_error)
+  ;;
+
   let use_program =
     foreign "glUseProgram" (program_t @-> returning void_or_error)
   ;;
@@ -174,11 +180,27 @@ type shader_type =
   | `Fragment_shader
   ] with sexp
 
-type buffer_target =
-  [ `Array_buffer | `Copy_read_buffer | `Copy_write_buffer | `Element_array_buffer
-  | `Pixel_pack_buffer | `Pixel_unpack_buffer | `Texture_buffer
-  | `Transform_feedback_buffer | `Uniform_buffer
-  ] with sexp
+module Buffer_target = struct
+  type t =
+    [ `Array_buffer | `Copy_read_buffer | `Copy_write_buffer | `Element_array_buffer
+    | `Pixel_pack_buffer | `Pixel_unpack_buffer | `Texture_buffer
+    | `Transform_feedback_buffer | `Uniform_buffer
+    ] with sexp
+
+  let to_int = function
+    | `Array_buffer              -> 0x8892
+    | `Copy_read_buffer          -> 0x8F36
+    | `Copy_write_buffer         -> 0x8F37
+    | `Element_array_buffer      -> 0x8893
+    | `Pixel_pack_buffer         -> 0x88EB
+    | `Pixel_unpack_buffer       -> 0x88EC
+    | `Texture_buffer            -> 0x8C2A
+    | `Transform_feedback_buffer -> 0x8C8E
+    | `Uniform_buffer            -> 0x8A11
+  ;;
+end
+
+type buffer_target = Buffer_target.t with sexp
 
 let clear what =
   let what =
@@ -291,18 +313,7 @@ let gen_buffer () =
 ;;
 
 let bind_buffer target buffer =
-  let target =
-    match target with
-    | `Array_buffer              -> 0x8892
-    | `Copy_read_buffer          -> 0x8F36
-    | `Copy_write_buffer         -> 0x8F37
-    | `Element_array_buffer      -> 0x8893
-    | `Pixel_pack_buffer         -> 0x88EB
-    | `Pixel_unpack_buffer       -> 0x88EC
-    | `Texture_buffer            -> 0x8C2A
-    | `Transform_feedback_buffer -> 0x8C8E
-    | `Uniform_buffer            -> 0x8A11
-  in
+  let target = Buffer_target.to_int target in
   let buffer =
     match buffer with
     | None   -> UInt32.zero
@@ -316,6 +327,31 @@ let with_bound_buffer target buffer ~f =
   bind_buffer target (Some buffer);
   Exn.protect ~f
     ~finally:(fun () -> bind_buffer target None)
+;;
+
+let buffer_data target array usage =
+  let target = Buffer_target.to_int target in
+  let usage =
+    match usage with
+    | `Stream_draw  -> 0x88E0
+    | `Stream_read  -> 0x88E1
+    | `Stream_copy  -> 0x88E2
+    | `Static_draw  -> 0x88E4
+    | `Static_read  -> 0x88E5
+    | `Static_copy  -> 0x88E6
+    | `Dynamic_draw -> 0x88E8
+    | `Dynamic_read -> 0x88E9
+    | `Dynamic_copy -> 0x88EA
+  in
+  let array_ptr =
+    to_voidp (bigarray_start array1 array)
+  in
+  buffer_data
+    (UInt32.of_int target)
+    (Signed.Long.of_int (Float_array.size_bytes array))
+    array_ptr
+    (UInt32.of_int usage)
+  |> Or_error.ok_exn ~here:_here_
 ;;
 
 let use_program program =

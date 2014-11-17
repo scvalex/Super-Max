@@ -39,7 +39,7 @@ let with_renderer f =
 
 let test t =
   on_ui_thread t (fun () ->
-    let _vertex_positions =
+    let vertex_positions =
       (* CR scvalex: 4D positins here. *)
       Float_array.of_array
         [| 0.75; 0.75; 0.0; 1.0
@@ -95,8 +95,7 @@ void main() {
     Gl.delete_shader fragment_shader;
     let position_buffer_object = Gl.gen_buffer () in
     Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
-      ()
-      (* Gl.buffer_data `Array_buffer (Float_array.size_bytes vertex_positions) `Static_draw; *));
+      Gl.buffer_data `Array_buffer vertex_positions `Static_draw);
     Gl.clear_color 0.1 0.1 0.1 1.0;
     Gl.clear `Color_buffer_bit;
     Gl.with_used_program the_program ~f:(fun () ->

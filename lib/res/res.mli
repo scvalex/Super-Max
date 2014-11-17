@@ -4,6 +4,7 @@ open Async.Std
 module Mesh : sig
   type t
 
+  (* CR scvalex: Rename to positions. *)
   val vertices : t -> Float_array.t
 end
 
