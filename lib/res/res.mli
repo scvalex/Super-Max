@@ -4,8 +4,7 @@ open Async.Std
 module Mesh : sig
   type t
 
-  (* CR scvalex: Rename to positions. *)
-  val vertices : t -> Float_array.t
+  val positions : t -> Float_array.t
 end
 
 type t
@@ -17,7 +16,7 @@ val load : string -> t Deferred.Or_error.t
 val create_mesh :
   ?source : string
   -> ?source_id : string
-  -> vertices : Float_array.t
+  -> positions : Float_array.t
   -> unit
   -> t
 

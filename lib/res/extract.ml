@@ -12,7 +12,7 @@ let extract_mesh ~source ~source_id ~target_id =
       Deferred.return (Or_error.errorf "unknown file format: %s" source)
   in
   extract_data ()
-  >>= fun vertices ->
-  let res = Res.create_mesh ~source ~source_id ~vertices () in
+  >>= fun positions ->
+  let res = Res.create_mesh ~source ~source_id ~positions () in
   Res.save res target
 ;;

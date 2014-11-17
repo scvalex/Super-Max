@@ -14,7 +14,7 @@ end
 
 module Mesh = struct
   type t = {
-    vertices : Float_array.t;
+    positions : Float_array.t;
   } with fields
 
   let create = Fields.create;;
@@ -25,14 +25,14 @@ type t = {
   data     : [`Mesh of Mesh.t];
 }
 
-let create_mesh ?source ?source_id ~vertices () =
-  if Int.(Float_array.length vertices mod 3 <> 0) then
-    failwithf "vertices length not a multiple of 3" ();
+let create_mesh ?source ?source_id ~positions () =
+  if Int.(Float_array.length positions mod 3 <> 0) then
+    failwithf "positions length not a multiple of 3" ();
   let metadata =
     Metadata.create ~source ~source_id ~creation_time:(Time.now ())
-      ~vertex_count:(Float_array.length vertices / 3)
+      ~vertex_count:(Float_array.length positions / 3)
   in
-  let data = `Mesh (Mesh.create ~vertices) in
+  let data = `Mesh (Mesh.create ~positions) in
   { metadata; data; }
 ;;
 
@@ -43,7 +43,7 @@ let metadata t =
 module Chunk = struct
   type t =
     | Metadata of [`Mesh] * Metadata.t
-    | Vertices of float array
+    | Positions of float array
   with bin_io
 end
 
@@ -58,20 +58,20 @@ let load file =
         >>| fun () ->
         match (acc, chunk) with
         | (None, Chunk.Metadata (`Mesh, metadata)) ->
-          let vertices = Float_array.create (3 * Metadata.vertex_count metadata) in
-          let data = `Mesh (Mesh.create ~vertices) in
+          let positions = Float_array.create (3 * Metadata.vertex_count metadata) in
+          let data = `Mesh (Mesh.create ~positions) in
           Some ({ metadata; data; }, 0)
         | (None, _) ->
           failwithf "Metadata chunk was not first in %s" file ()
         | (Some _, Chunk.Metadata _) ->
           failwithf "multiple Metadata chunks in %s" file ()
-        | (Some (t, next_vertex), Chunk.Vertices vertices) ->
+        | (Some (t, next_vertex), Chunk.Positions positions) ->
           match t.data with
           | `Mesh mesh ->
-            for idx = 0 to Array.length vertices - 1 do
-              (Mesh.vertices mesh).{next_vertex + idx} <- vertices.(idx)
+            for idx = 0 to Array.length positions - 1 do
+              (Mesh.positions mesh).{next_vertex + idx} <- positions.(idx)
             done;
-            Some (t, next_vertex + Array.length vertices))
+            Some (t, next_vertex + Array.length positions))
       >>= function
       | None ->
         failwithf "nothing was read from %s" file ()
@@ -96,8 +96,8 @@ let save t file =
         in
         write_chunk (Chunk.Metadata (`Mesh, t.metadata))
         >>= fun () ->
-        let vertices = Mesh.vertices mesh in
-        let length = Float_array.length vertices in
+        let positions = Mesh.positions mesh in
+        let length = Float_array.length positions in
         let rec loop idx =
           if Int.(idx >= length)
           then begin
@@ -106,9 +106,9 @@ let save t file =
             let count = Int.min 1000 Int.(length - idx) in
             let buf = Array.create ~len:count 0.0 in
             for jdx = 0 to count - 1 do
-              buf.(jdx) <- vertices.{idx + jdx}
+              buf.(jdx) <- positions.{idx + jdx}
             done;
-            write_chunk (Chunk.Vertices buf)
+            write_chunk (Chunk.Positions buf)
             >>= fun () ->
             loop (idx + count)
           end
