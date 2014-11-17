@@ -27,15 +27,11 @@ val create_program : unit -> program
 
 val gen_buffer : unit -> buffer
 
-val bind_buffer : buffer_target -> buffer option -> unit
-
 val with_bound_buffer :
   buffer_target
   -> buffer
   -> f : (unit -> 'a)
   -> 'a
-
-val use_program : program option -> unit
 
 val with_used_program :
   program
