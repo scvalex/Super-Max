@@ -6,6 +6,8 @@ open Foreign
 
 module UInt32 = Unsigned.UInt32
 
+module Int32 = Signed.Int32
+
 module Or_error = struct
   include Or_error
 
@@ -110,6 +112,23 @@ module Gl = struct
     foreign "glCreateProgram" (void @-> returning (nonzero_uint32_t program_t))
   ;;
 
+  let attach_shader =
+    foreign "glAttachShader" (program_t @-> shader_t @-> returning void_or_error)
+  ;;
+
+  let detach_shader =
+    foreign "glDetachShader" (program_t @-> shader_t @-> returning void_or_error)
+  ;;
+
+  let link_program =
+    foreign "glLinkProgram" (program_t @-> returning void_or_error)
+  ;;
+
+  let get_program_iv =
+    foreign "glGetProgramiv"
+      (program_t @-> gl_enum_t @-> ptr int32_t @-> returning void_or_error)
+  ;;
+
   let gen_buffers =
     foreign "glGenBuffers" (uint32_t @-> ptr buffer_t @-> returning void_or_error)
   ;;
@@ -170,6 +189,33 @@ let create_program () =
   stats.Stats.live_programs <- stats.Stats.live_programs + 1;
   create_program ()
   |> Or_error.ok_exn ~here:_here_
+;;
+
+let attach_shader program shader =
+  attach_shader program shader
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let detach_shader program shader =
+  detach_shader program shader
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let link_program program =
+  link_program program
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let get_program_iv program pname =
+  let pname =
+    match pname with
+    | `Link_status     -> 0x8B82
+    | `Info_log_length -> 0x8B84
+  in
+  let param_ptr = allocate int32_t Int32.zero in
+  Or_error.ok_exn ~here:_here_
+    (get_program_iv program (UInt32.of_int pname) param_ptr);
+  Int32.to_int (!@ param_ptr)
 ;;
 
 let gen_buffer () =

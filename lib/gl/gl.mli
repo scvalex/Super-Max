@@ -32,6 +32,17 @@ val delete_shader : shader -> unit
 
 val create_program : unit -> program
 
+val attach_shader : program -> shader -> unit
+
+val detach_shader : program -> shader -> unit
+
+val link_program : program -> unit
+
+val get_program_iv :
+  program
+  -> [ `Link_status | `Info_log_length ]
+  -> int
+
 val gen_buffer : unit -> buffer
 
 val with_bound_buffer :

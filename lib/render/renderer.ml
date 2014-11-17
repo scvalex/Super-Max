@@ -75,17 +75,18 @@ void main() {
       (*   end; *)
       shader
     in
-    let create_program _shaders =
+    let create_program shaders =
       let program = Gl.create_program () in
-      (*   List.iter shaders ~f:(Gl.attach_shader program); *)
-      (*   Gl.link_program program; *)
-      (*   let ok = Gl.get_program_iv program `Link_status in *)
-      (*   if not ok then begin *)
+        List.iter shaders ~f:(Gl.attach_shader program);
+        Gl.link_program program;
+        let status = Gl.get_program_iv program `Link_status in
+        if Int.(status = 0) then begin
+          ()
       (*     let info_log_length = Gl.get_program_iv program `Info_log_length in *)
       (*     let info = Gl.get_program_info_log program info_log_length None in *)
       (*     failwithf "failed to link program: %s" info () *)
-      (*   end; *)
-      (*   List.iter shaders ~f:(Gl.detach_shader program); *)
+        end;
+        List.iter shaders ~f:(Gl.detach_shader program);
       program
     in
     let vertex_shader = create_shader `Vertex_shader vertex_shader_code in
