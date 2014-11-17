@@ -181,7 +181,7 @@ module Gl = struct
 
   let vertex_attrib_pointer =
     foreign "glVertexAttribPointer"
-      (uint32_t @-> int32_t @-> gl_enum_t @-> int32_t @-> int32_t @-> ptr void
+      (uint32_t @-> int32_t @-> gl_enum_t @-> uchar @-> int32_t @-> ptr void
        @-> returning void_or_error)
   ;;
 
@@ -417,9 +417,9 @@ let vertex_attrib_pointer idx ~size kind ~normalize ~stride =
     (UInt32.of_int idx)
     (Int32.of_int size)
     (UInt32.of_int kind)
-    (Int32.of_int normalize)
+    (Unsigned.UChar.of_int normalize)
     (Int32.of_int stride)
-    (from_voidp void null)
+    (to_voidp null)
   |> Or_error.ok_exn ~here:_here_
 ;;
 
