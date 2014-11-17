@@ -6,6 +6,10 @@ let extract_mesh ~source ~source_id ~target_id =
   Extract.extract_mesh ~source ~source_id ~target_id
   |> Deferred.Or_error.ok_exn
 ;;
+let extract_program ~vertex ~fragment ~target_id =
+  Extract.extract_program ~vertex ~fragment ~target_id
+  |> Deferred.Or_error.ok_exn
+;;
 
 module Flag = struct
   include Command.Spec
@@ -24,6 +28,16 @@ module Flag = struct
     flag "target-id" (required string)
       ~doc:"STRING our id for the resource; also determines the output file"
   ;;
+
+  let vertex =
+    flag "vertex" (required file)
+      ~doc:"FILE vertex shader source"
+  ;;
+
+  let fragment =
+    flag "fragment" (required file)
+      ~doc:"FILE fragment shader source"
+  ;;
 end
 
 let main () =
@@ -37,6 +51,12 @@ let main () =
                  Flag.( empty +> source +> source_id +> target_id)
                  (fun source source_id target_id () ->
                     extract_mesh ~source ~source_id ~target_id))
+            ; ("program",
+               Command.async
+                 ~summary:"Save a program's shaders to a res file"
+                 Flag.( empty +> vertex +> fragment +> target_id)
+                 (fun vertex fragment target_id () ->
+                    extract_program ~vertex ~fragment ~target_id))
             ])
        ])
 ;;

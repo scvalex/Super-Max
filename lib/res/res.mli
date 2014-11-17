@@ -20,4 +20,10 @@ val create_mesh :
   -> unit
   -> t
 
+val create_program :
+  vertex : string
+  -> fragment : string
+  -> unit
+  -> t
+
 val metadata : t -> string

@@ -15,8 +15,17 @@ module Res : sig
     val source_id : t -> string
   end
 
+  module Program : sig
+    type t with sexp
+
+    val vertex : t -> string
+
+    val fragment : t -> string
+  end
+
   type t =
     | Mesh of Mesh.t
+    | Program of Program.t
   with sexp
 
   val id : t -> Id.t
@@ -33,12 +42,22 @@ end = struct
     } with fields, sexp
   end
 
+  module Program = struct
+    type t = {
+      id       : Id.t;
+      vertex   : string;
+      fragment : string;
+    } with fields, sexp
+  end
+
   type t =
     | Mesh of Mesh.t
+    | Program of Program.t
   with sexp
 
   let id = function
     | Mesh mesh -> Mesh.id mesh
+    | Program program -> Program.id program
   ;;
 
   let target t ~dir =
@@ -81,6 +100,18 @@ let build_res ~dir res =
       ~args:[ "extract"; "mesh"
             ; "-source"; Res.Mesh.source mesh
             ; "-source-id"; Res.Mesh.source_id mesh
+            ; "-target-id"; Res.Id.to_string (Res.id res)
+            ]
+  | Res.Program program ->
+    Dep.all_unit
+      [ Dep.path (dir ^/ Res.Program.vertex program)
+      ; Dep.path (dir ^/ Res.Program.fragment program)
+      ]
+    *>>| fun () ->
+    Action.shell ~dir ~prog:(Path.reach_from ~dir res_exe)
+      ~args:[ "extract"; "program"
+            ; "-vertex"; Res.Program.vertex program
+            ; "-fragment"; Res.Program.fragment program
             ; "-target-id"; Res.Id.to_string (Res.id res)
             ]
 ;;
