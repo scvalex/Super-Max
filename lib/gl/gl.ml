@@ -6,6 +6,23 @@ open Foreign
 
 module UInt32 = Unsigned.UInt32
 
+module Stats = struct
+  type t = {
+    mutable live_buffers  : int;
+    mutable live_shaders  : int;
+    mutable live_programs : int;
+  } with sexp
+
+  let create () =
+    { live_buffers = 0;
+      live_shaders = 0;
+      live_programs = 0;
+    }
+  ;;
+end
+
+let stats = Stats.create ();;
+
 module Gl = struct
   type shader = Unsigned.uint32
   let shader_t = uint32_t
@@ -102,6 +119,7 @@ let clear what =
 ;;
 
 let create_shader kind =
+  stats.Stats.live_shaders <- stats.Stats.live_shaders + 1;
   let kind =
     match kind with
     | `Vertex_shader   -> 0x8B31
@@ -113,11 +131,13 @@ let create_shader kind =
 ;;
 
 let create_program () =
+  stats.Stats.live_programs <- stats.Stats.live_programs + 1;
   create_program ()
   |> Or_error.ok_exn
 ;;
 
 let gen_buffer () =
+  stats.Stats.live_buffers <- stats.Stats.live_buffers + 1;
   let buffer_ptr = allocate uint32_t UInt32.zero in
   Or_error.ok_exn (gen_buffers (UInt32.of_int 1) buffer_ptr);
   !@ buffer_ptr
@@ -144,3 +164,9 @@ let bind_buffer target buffer =
   bind_buffer (UInt32.of_int target) buffer
   |> Or_error.ok_exn
 ;;
+
+module Debug = struct
+  let stats () =
+    Sexp.to_string_mach (Stats.sexp_of_t stats)
+  ;;
+end

@@ -28,3 +28,7 @@ val bind_buffer :
   | `Transform_feedback_buffer | `Uniform_buffer ]
   -> buffer option
   -> unit
+
+module Debug : sig
+  val stats : unit -> string
+end
