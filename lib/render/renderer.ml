@@ -91,8 +91,8 @@ void main() {
     let vertex_shader = create_shader `Vertex_shader vertex_shader_code in
     let fragment_shader = create_shader `Fragment_shader fragment_shader_code in
     let the_program = create_program [ vertex_shader; fragment_shader ] in
-    (* Gl.delete_shader vertex_shader; *)
-    (* Gl.delete_shader fragment_shader; *)
+    Gl.delete_shader vertex_shader;
+    Gl.delete_shader fragment_shader;
     let position_buffer_object = Gl.gen_buffer () in
     Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
       ()

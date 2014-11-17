@@ -102,6 +102,10 @@ module Gl = struct
     foreign "glCreateShader" (gl_enum_t @-> returning (nonzero_uint32_t shader_t))
   ;;
 
+  let delete_shader =
+    foreign "glDeleteShader" (shader_t @-> returning void_or_error)
+  ;;
+
   let create_program =
     foreign "glCreateProgram" (void @-> returning (nonzero_uint32_t program_t))
   ;;
@@ -121,10 +125,17 @@ end
 
 include Gl
 
+type shader_type =
+  [ `Vertex_shader
+  | `Geometry_shader
+  | `Fragment_shader
+  ] with sexp
+
 type buffer_target =
   [ `Array_buffer | `Copy_read_buffer | `Copy_write_buffer | `Element_array_buffer
   | `Pixel_pack_buffer | `Pixel_unpack_buffer | `Texture_buffer
-  | `Transform_feedback_buffer | `Uniform_buffer ]
+  | `Transform_feedback_buffer | `Uniform_buffer
+  ] with sexp
 
 let clear what =
   let what =
@@ -146,6 +157,12 @@ let create_shader kind =
     | `Fragment_shader -> 0x8B30
   in
   create_shader (UInt32.of_int kind)
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let delete_shader shader =
+  stats.Stats.live_shaders <- stats.Stats.live_shaders - 1;
+  delete_shader shader
   |> Or_error.ok_exn ~here:_here_
 ;;
 
