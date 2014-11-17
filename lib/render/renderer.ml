@@ -94,23 +94,20 @@ void main() {
        Gl.delete_shader vertex_shader;
        Gl.delete_shader fragment_shader;
     *)
-    (* let position_buffer_objects = Gl.gen_buffers 1 in
-       Gl.bind_buffer `Array_buffer (Some position_buffer_object);
-       Gl.buffer_data `Array_buffer (Float_array.size_bytes vertex_positions) `Static_draw;
-       Gl.bind_buffer `Array_buffer None;
-    *)
+    let position_buffer_object = Gl.gen_buffer () in
+    Gl.bind_buffer `Array_buffer (Some position_buffer_object);
+    (* Gl.buffer_data `Array_buffer (Float_array.size_bytes vertex_positions) `Static_draw; *)
+    Gl.bind_buffer `Array_buffer None;
     Gl.clear_color 0.1 0.1 0.1 1.0;
     Gl.clear `Color_buffer_bit;
-    (* CR scvalex: Check for OpenGL errors frequently. *)
-    (* Gl.use_program (Some the_program);
-       Gl.bind_buffer `Array_buffer (Some position_buffer_object);
-       Gl.enable_vertex_attrib_array 0;
-       Gl.vertex_attrib_pointer 0 4 `Float false 0 0;
-       Gl.draw_arrays `Triangles 0 3;
-       Gl.disable_vertex_attrib_array 0;
-       Gl.bind_buffer `Array_buffer None;
-       Gl.use_program None;
-    *)
+    (* Gl.use_program (Some the_program); *)
+    Gl.bind_buffer `Array_buffer (Some position_buffer_object);
+    (* Gl.enable_vertex_attrib_array 0; *)
+    (* Gl.vertex_attrib_pointer 0 4 `Float false 0 0; *)
+    (* Gl.draw_arrays `Triangles 0 3; *)
+    (* Gl.disable_vertex_attrib_array 0; *)
+    Gl.bind_buffer `Array_buffer None;
+    (* Gl.use_program None; *)
     Sdl.gl_swap_window t.window)
   >>= fun () ->
   Clock.after (sec 3.0)

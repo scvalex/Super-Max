@@ -6,6 +6,8 @@ type shader
 
 type program
 
+type buffer
+
 val clear_color : float -> float -> float -> float -> unit
 
 val clear :
@@ -17,3 +19,12 @@ val create_shader :
   -> shader
 
 val create_program : unit -> program
+
+val gen_buffer : unit -> buffer
+
+val bind_buffer :
+  [ `Array_buffer | `Copy_read_buffer | `Copy_write_buffer | `Element_array_buffer
+  | `Pixel_pack_buffer | `Pixel_unpack_buffer | `Texture_buffer
+  | `Transform_feedback_buffer | `Uniform_buffer ]
+  -> buffer option
+  -> unit
