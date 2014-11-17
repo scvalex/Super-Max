@@ -103,9 +103,18 @@ module Gl = struct
   let bind_buffer =
     foreign "glBindBuffer" (gl_enum_t @-> buffer_t @-> returning void_or_error)
   ;;
+
+  let use_program =
+    foreign "glUseProgram" (program_t @-> returning void_or_error)
+  ;;
 end
 
 include Gl
+
+type buffer_target =
+  [ `Array_buffer | `Copy_read_buffer | `Copy_write_buffer | `Element_array_buffer
+  | `Pixel_pack_buffer | `Pixel_unpack_buffer | `Texture_buffer
+  | `Transform_feedback_buffer | `Uniform_buffer ]
 
 let clear what =
   let what =
@@ -163,6 +172,28 @@ let bind_buffer target buffer =
   in
   bind_buffer (UInt32.of_int target) buffer
   |> Or_error.ok_exn
+;;
+
+let with_bound_buffer target buffer ~f =
+  bind_buffer target (Some buffer);
+  Exn.protect ~f
+    ~finally:(fun () -> bind_buffer target None)
+;;
+
+let use_program program =
+  let program =
+    match program with
+    | None   -> UInt32.zero
+    | Some n -> n
+  in
+  use_program program
+  |> Or_error.ok_exn
+;;
+
+let with_used_program program ~f =
+  use_program (Some program);
+  Exn.protect ~f
+    ~finally:(fun () -> use_program None)
 ;;
 
 module Debug = struct
