@@ -19,6 +19,7 @@ module Mesh = struct
   type t = {
     id        : Res_id.t;
     positions : Float_array.t;
+    (* CR scvalex: Indices! *)
   } with fields
 
   let create = Fields.create;;
