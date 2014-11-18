@@ -15,4 +15,8 @@ val on_ui_thread : t -> 'a Ui.t -> 'a Deferred.t
 (** Just show some simple graphics. *)
 val test : t -> unit Deferred.t
 
-val render_mesh : t -> Res.Mesh.t -> unit Ui.t
+val render_mesh :
+  t
+  -> mesh : Res.Mesh.t
+  -> program : Res.Program.t
+  -> unit Ui.t

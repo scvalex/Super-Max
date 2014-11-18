@@ -4,11 +4,15 @@ open Async.Std
 module Mesh : sig
   type t
 
+  val id : t -> Res_id.t
+
   val positions : t -> Float_array.t
 end
 
 module Program : sig
   type t
+
+  val id : t -> Res_id.t
 
   val vertex : t -> string
 

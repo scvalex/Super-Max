@@ -17,6 +17,7 @@ end
 
 module Mesh = struct
   type t = {
+    id        : Res_id.t;
     positions : Float_array.t;
   } with fields
 
@@ -25,6 +26,7 @@ end
 
 module Program = struct
   type t = {
+    id       : Res_id.t;
     vertex   : string;
     fragment : string;
   } with fields
@@ -43,7 +45,6 @@ end
 type t = {
   metadata : Metadata.t;
   data     : [`Mesh of Mesh.t | `Program of Program.t];
-  id       : Res_id.t;
 } with fields
 
 let create_mesh ?source ?source_id ~positions id =
@@ -53,18 +54,24 @@ let create_mesh ?source ?source_id ~positions id =
     Metadata.create ?source ?source_id ()
       ~vertex_count:(Float_array.length positions / 3)
   in
-  let data = `Mesh (Mesh.create ~positions) in
-  { metadata; data; id; }
+  let data = `Mesh (Mesh.create ~positions ~id) in
+  { metadata; data; }
 ;;
 
 let create_program ~vertex ~fragment id =
   let metadata = Metadata.create () in
-  let data = `Program (Program.create ~vertex ~fragment) in
-  { metadata; data; id; }
+  let data = `Program (Program.create ~vertex ~fragment ~id) in
+  { metadata; data; }
 ;;
 
 let metadata t =
   Sexp.to_string_mach (Metadata.sexp_of_t t.metadata)
+;;
+
+let id t =
+  match t.data with
+  | `Mesh mesh       -> Mesh.id mesh
+  | `Program program -> Program.id program
 ;;
 
 module Chunk = struct
@@ -91,11 +98,11 @@ let load ~id file =
               (Metadata.vertex_count metadata)
           in
           let positions = Float_array.create (3 * vertices) in
-          let data = `Mesh (Mesh.create ~positions) in
-          Some ({ metadata; data; id; }, 0)
+          let data = `Mesh (Mesh.create ~positions ~id) in
+          Some ({ metadata; data; }, 0)
         | (None, Chunk.Metadata (`Program, metadata)) ->
-          let data = `Program (Program.create ~vertex:"" ~fragment:"") in
-          Some ({ metadata; data; id; }, 0)
+          let data = `Program (Program.create ~vertex:"" ~fragment:"" ~id) in
+          Some ({ metadata; data; }, 0)
         | (None, _) ->
           failwithf "Metadata chunk was not first in %s" file ()
         | (Some _, Chunk.Metadata _) ->
@@ -165,7 +172,7 @@ let save t file =
         in
         loop 0
       | `Program program ->
-        write_chunk (Chunk.Metadata (`Mesh, t.metadata))
+        write_chunk (Chunk.Metadata (`Program, t.metadata))
         >>= fun () ->
         write_chunk (Chunk.Source_code (`Vertex, Program.vertex program))
         >>= fun () ->

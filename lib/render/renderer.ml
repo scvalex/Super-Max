@@ -19,8 +19,9 @@ end = struct
 end
 
 type t = {
-  thread : In_thread.Helper_thread.t;
-  window : Sdl.window;
+  thread        : In_thread.Helper_thread.t;
+  window        : Sdl.window;
+  program_cache : Gl.program Res_id.Table.t;
 }
 
 let on_ui_thread t ui =
@@ -40,9 +41,13 @@ let with_renderer f =
     Sdl.gl_set_attribute `Depthsize 24;
     let window = Sdl.create_window ~title:"Rock" in
     let gl_context = Sdl.gl_create_context window in
+    (* CR scvalex: What's this all about? *)
+    let vao = Gl.gen_vertex_array () in
+    Gl.bind_vertex_array vao;
     (window, gl_context))
   >>= fun (window, gl_context) ->
-  let t = { window; thread; } in
+  let program_cache = Res_id.Table.create () in
+  let t = { window; thread; program_cache; } in
   Monitor.protect (fun () -> f t)
     ~finally:(fun () ->
       on_ui_thread t (Ui.create (fun () ->
@@ -51,7 +56,7 @@ let with_renderer f =
         Sdl.quit ())))
 ;;
 
-let create_shader shader_type shader_code =
+let compile_shader shader_type shader_code =
   let shader = Gl.create_shader shader_type in
   Gl.shader_source shader shader_code;
   Gl.compile_shader shader;
@@ -64,7 +69,7 @@ let create_shader shader_type shader_code =
   shader
 ;;
 
-let create_program shaders =
+let link_program shaders =
   let program = Gl.create_program () in
   List.iter shaders ~f:(Gl.attach_shader program);
   Gl.link_program program;
@@ -75,6 +80,15 @@ let create_program shaders =
     failwithf "failed to link program: %s" info ()
   end;
   List.iter shaders ~f:(Gl.detach_shader program);
+  program
+;;
+
+let compile_and_link_program_exn ~vertex ~fragment =
+  let vertex_shader = compile_shader `Vertex_shader vertex in
+  let fragment_shader = compile_shader `Fragment_shader fragment in
+  let program = link_program [ vertex_shader; fragment_shader ] in
+  Gl.delete_shader vertex_shader;
+  Gl.delete_shader fragment_shader;
   program
 ;;
 
@@ -103,19 +117,17 @@ void main() {
   outputColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }"
     in
-    let vertex_shader = create_shader `Vertex_shader vertex_shader_code in
-    let fragment_shader = create_shader `Fragment_shader fragment_shader_code in
-    let the_program = create_program [ vertex_shader; fragment_shader ] in
-    Gl.delete_shader vertex_shader;
-    Gl.delete_shader fragment_shader;
-    let vao = Gl.gen_vertex_array ()in
-    Gl.bind_vertex_array vao;
+    let program =
+      compile_and_link_program_exn
+        ~vertex:vertex_shader_code
+        ~fragment:fragment_shader_code
+    in
     let position_buffer_object = Gl.gen_buffer () in
     Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
       Gl.buffer_data `Array_buffer vertex_positions `Static_draw);
     Gl.clear_color 0.1 0.1 0.1 1.0;
     Gl.clear `Color_buffer_bit;
-    Gl.with_used_program the_program ~f:(fun () ->
+    Gl.with_used_program program ~f:(fun () ->
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
         Gl.with_vertex_attrib_array 0 ~f:(fun () ->
           Gl.vertex_attrib_pointer 0 ~size:3 `Float ~normalize:false ~stride:0;
@@ -125,7 +137,34 @@ void main() {
   Clock.after (sec 3.0)
 ;;
 
-let render_mesh _t _mesh =
+let compiled_program t program =
+  let id = Res.Program.id program in
+  match Hashtbl.find t.program_cache id with
+  | Some program ->
+    program
+  | None ->
+    let program =
+      compile_and_link_program_exn
+        ~vertex:(Res.Program.vertex program)
+        ~fragment:(Res.Program.fragment program)
+    in
+    Hashtbl.set t.program_cache ~key:id ~data:program;
+    program
+;;
+
+let render_mesh t ~mesh ~program =
   Ui.create (fun () ->
-    ())
+    let program = compiled_program t program in
+    let position_buffer_object = Gl.gen_buffer () in
+    Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
+      Gl.buffer_data `Array_buffer (Res.Mesh.positions mesh) `Static_draw);
+    Gl.clear_color 0.01 0.01 0.01 1.0;
+    Gl.clear `Color_buffer_bit;
+    Gl.with_used_program program ~f:(fun () ->
+      Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
+        Gl.with_vertex_attrib_array 0 ~f:(fun () ->
+          Gl.vertex_attrib_pointer 0 ~size:3 `Float ~normalize:false ~stride:0;
+          Gl.draw_arrays `Triangles ~first:0
+            ~count:(Float_array.length (Res.Mesh.positions mesh)))));
+    Sdl.gl_swap_window t.window)
 ;;

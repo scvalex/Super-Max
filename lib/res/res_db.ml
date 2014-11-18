@@ -14,8 +14,9 @@ let t =
 
 let add_pack ~dir =
   let dir = Filename.realpath dir in
-  let pack = Filename.dirname dir in
-  if Hashtbl.mem t.packs pack then
+  let pack = Filename.basename dir in
+  if (Hashtbl.mem t.packs pack
+      && String.(dir <> Hashtbl.find_exn t.packs pack)) then
     failwithf "Already have pack %s at %s" pack dir ();
   Hashtbl.set t.packs ~key:pack ~data:dir
 ;;
