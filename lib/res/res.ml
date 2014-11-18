@@ -43,7 +43,7 @@ end
 type t = {
   metadata : Metadata.t;
   data     : [`Mesh of Mesh.t | `Program of Program.t];
-}
+} with fields
 
 let create_mesh ?source ?source_id ~positions () =
   if Int.(Float_array.length positions mod 3 <> 0) then

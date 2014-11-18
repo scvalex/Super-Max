@@ -9,11 +9,24 @@ let run_render_test () =
 ;;
 
 let run_render_mesh file () =
-  Res.load file
+  let dir = Filename.dirname file in
+  Res_db.add_pack ~dir;
+  let pack = Filename.dirname dir in
+  let name = Filename.(chop_extension (basename file)) in
+  Res_db.load
+    ~id:(Res_db.Id.create ~pack ~name)
+    ~cache_until:`Don't_cache
   |> Deferred.Or_error.ok_exn
-  >>= fun _res ->
-  Printf.printf "Rendring mesh\n%!";
-  Deferred.unit
+  >>= fun res ->
+  Renderer.with_renderer (fun renderer ->
+    match Res.data res with
+    | `Mesh mesh ->
+      Renderer.on_ui_thread renderer
+        (Renderer.render_mesh renderer mesh)
+      >>= fun () ->
+      Clock.after (sec 3.0)
+    | _ ->
+      failwithf "Not a mesh: %s" file ())
 ;;
 
 let main () =

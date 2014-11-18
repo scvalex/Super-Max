@@ -9,6 +9,11 @@ module Id : sig
   val name : t -> string
 
   val pack  : t -> string
+
+  val create :
+    pack : string
+    -> name : string
+    -> t
 end
 
 val add_pack :

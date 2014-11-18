@@ -15,6 +15,8 @@ module Id = struct
   include Comparable.Make(T)
   include Hashable.Make(T)
 
+  let create = Fields.create;;
+
   let filename t =
     t.name ^ ".res"
   ;;

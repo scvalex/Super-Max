@@ -4,13 +4,27 @@ open Sdl_lib.Std
 open Gl_lib.Std
 open Res_lib.Std
 
+module Ui : sig
+  type 'a t
+
+  val create : (unit -> 'a) -> 'a t
+
+  val to_f : 'a t -> (unit -> 'a)
+end = struct
+  type 'a t = (unit -> 'a)
+
+  let create f = f;;
+
+  let to_f t = t;;
+end
+
 type t = {
   thread : In_thread.Helper_thread.t;
   window : Sdl.window;
 }
 
-let on_ui_thread t f =
-  In_thread.run ~thread:t.thread f
+let on_ui_thread t ui =
+  In_thread.run ~thread:t.thread (Ui.to_f ui)
 ;;
 
 let with_renderer f =
@@ -31,14 +45,14 @@ let with_renderer f =
   let t = { window; thread; } in
   Monitor.protect (fun () -> f t)
     ~finally:(fun () ->
-      on_ui_thread t (fun () ->
+      on_ui_thread t (Ui.create (fun () ->
         Sdl.gl_delete_context gl_context;
         Sdl.destroy_window window;
-        Sdl.quit ()))
+        Sdl.quit ())))
 ;;
 
 let test t =
-  on_ui_thread t (fun () ->
+  on_ui_thread t (Ui.create (fun () ->
     let vertex_positions =
       Float_array.of_array
         [| 0.75; 0.75; 0.0
@@ -104,7 +118,12 @@ void main() {
         Gl.with_vertex_attrib_array 0 ~f:(fun () ->
           Gl.vertex_attrib_pointer 0 ~size:3 `Float ~normalize:false ~stride:0;
           Gl.draw_arrays `Triangles ~first:0 ~count:3)));
-    Sdl.gl_swap_window t.window)
+    Sdl.gl_swap_window t.window))
   >>= fun () ->
   Clock.after (sec 3.0)
+;;
+
+let render_mesh _t _mesh =
+  Ui.create (fun () ->
+    ())
 ;;
