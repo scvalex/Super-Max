@@ -32,6 +32,7 @@ let extract_mesh ~source ~source_id =
             +> with_attr (tag "source") "id" source_id )
     in
     (* CR scvalex: Validate the technique of the vertices. *)
+    (* CR scvalex: Convert units to meters (if not already in meters). *)
     let vertices =
       let float_array_xml =
         X.match_one_exn ~here:_here_ vertices_xml

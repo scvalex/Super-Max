@@ -1,8 +1,6 @@
 open Core.Std
 open Async.Std
 
-module Id = String_id.Make(struct let module_name = "Res.Id" end)
-
 module Metadata = struct
   type t = {
     vertex_count  : int option;
@@ -171,8 +169,4 @@ let save t file =
         write_chunk (Chunk.Source_code (`Vertex, Program.vertex program))
         >>= fun () ->
         write_chunk (Chunk.Source_code (`Fragment, Program.fragment program))))
-;;
-
-let filename id =
-  Id.to_string id ^ ".res"
 ;;

@@ -1,11 +1,21 @@
 open Core.Std
 open Async.Std
 
-val add_search_path :
+module Id : sig
+  type t
+
+  val to_string : t -> string
+
+  val name : t -> string
+
+  val pack  : t -> string
+end
+
+val add_pack :
   dir : string
   -> unit
 
 val load :
-  id : Res.Id.t
+  id : Id.t
   -> cache_until : [`Don't_cache | `End_of_days]
   -> Res.t Deferred.Or_error.t
