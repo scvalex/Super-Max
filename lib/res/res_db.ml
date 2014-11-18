@@ -1,39 +1,14 @@
 open Core.Std
 open Async.Std
 
-module Id = struct
-  module T = struct
-    type t = {
-      pack : string;
-      name : string;
-    } with compare, sexp, fields
-
-    let hash = Hashtbl.hash;;
-  end
-
-  include T
-  include Comparable.Make(T)
-  include Hashable.Make(T)
-
-  let create = Fields.create;;
-
-  let filename t =
-    t.name ^ ".res"
-  ;;
-
-  let to_string t =
-    t.pack ^ "/" ^ t.name
-  ;;
-end
-
 type t = {
   packs : string String.Table.t;
-  cache : Res.t Id.Table.t;
+  cache : Res.t Res_id.Table.t;
 }
 
 let t =
   let packs = String.Table.create () in
-  let cache = Id.Table.create () in
+  let cache = Res_id.Table.create () in
   { packs; cache; }
 ;;
 
@@ -50,14 +25,14 @@ let load ~id ~cache_until =
   | Some res ->
     Deferred.Or_error.return res
   | None ->
-    match Hashtbl.find t.packs (Id.pack id) with
+    match Hashtbl.find t.packs (Res_id.pack id) with
     | None ->
       Deferred.return
         (Or_error.errorf "no path for pack %s (of %s)"
-           (Id.pack id) (Id.to_string id))
+           (Res_id.pack id) (Res_id.to_string id))
     | Some dir ->
       let open Deferred.Or_error.Monad_infix in
-      Res.load (dir ^/ Id.filename id)
+      Res.load (dir ^/ Res_id.filename id)
       >>| fun res ->
       match cache_until with
       | `Don't_cache ->

@@ -14,7 +14,7 @@ let run_render_mesh file () =
   let pack = Filename.dirname dir in
   let name = Filename.(chop_extension (basename file)) in
   Res_db.load
-    ~id:(Res_db.Id.create ~pack ~name)
+    ~id:(Res_id.create ~pack ~name)
     ~cache_until:`Don't_cache
   |> Deferred.Or_error.ok_exn
   >>= fun res ->
