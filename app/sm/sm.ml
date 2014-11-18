@@ -8,6 +8,8 @@ let run_render_test () =
     Renderer.test renderer)
 ;;
 
+(* CR scvalex: Input subsystem. *)
+
 let run_render_mesh mesh_file program_file () =
   let load_res_exn file =
     let dir = Filename.dirname file in
