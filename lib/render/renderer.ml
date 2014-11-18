@@ -40,19 +40,18 @@ let with_renderer f =
 let test t =
   on_ui_thread t (fun () ->
     let vertex_positions =
-      (* CR scvalex: 4D positins here. *)
       Float_array.of_array
-        [| 0.75; 0.75; 0.0; 1.0
-         ; 0.75; -0.75; 0.0; 1.0
-         ; -0.75; -0.75; 0.0; 1.0
+        [| 0.75; 0.75; 0.0
+         ; 0.75; -0.75; 0.0
+         ; -0.75; -0.75; 0.0
         |]
     in
     let vertex_shader_code =
       "#version 330
 
-layout(location = 0) in vec4 position;
+layout(location = 0) in vec3 position;
 void main() {
-  gl_Position = position;
+  gl_Position = vec4(position.xyz, 1.0);
 }"
     in
     let fragment_shader_code =
@@ -103,7 +102,7 @@ void main() {
     Gl.with_used_program the_program ~f:(fun () ->
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
         Gl.with_vertex_attrib_array 0 ~f:(fun () ->
-          Gl.vertex_attrib_pointer 0 ~size:4 `Float ~normalize:false ~stride:0;
+          Gl.vertex_attrib_pointer 0 ~size:3 `Float ~normalize:false ~stride:0;
           Gl.draw_arrays `Triangles ~first:0 ~count:3)));
     Sdl.gl_swap_window t.window)
   >>= fun () ->
