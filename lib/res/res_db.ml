@@ -32,7 +32,7 @@ let load ~id ~cache_until =
            (Res_id.pack id) (Res_id.to_string id))
     | Some dir ->
       let open Deferred.Or_error.Monad_infix in
-      Res.load (dir ^/ Res_id.filename id)
+      Res.load ~id (dir ^/ Res_id.filename id)
       >>| fun res ->
       match cache_until with
       | `Don't_cache ->

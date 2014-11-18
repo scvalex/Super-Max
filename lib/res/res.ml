@@ -43,9 +43,10 @@ end
 type t = {
   metadata : Metadata.t;
   data     : [`Mesh of Mesh.t | `Program of Program.t];
+  id       : Res_id.t;
 } with fields
 
-let create_mesh ?source ?source_id ~positions () =
+let create_mesh ?source ?source_id ~positions id =
   if Int.(Float_array.length positions mod 3 <> 0) then
     failwithf "positions length not a multiple of 3" ();
   let metadata =
@@ -53,13 +54,13 @@ let create_mesh ?source ?source_id ~positions () =
       ~vertex_count:(Float_array.length positions / 3)
   in
   let data = `Mesh (Mesh.create ~positions) in
-  { metadata; data; }
+  { metadata; data; id; }
 ;;
 
-let create_program ~vertex ~fragment () =
+let create_program ~vertex ~fragment id =
   let metadata = Metadata.create () in
   let data = `Program (Program.create ~vertex ~fragment) in
-  { metadata; data; }
+  { metadata; data; id; }
 ;;
 
 let metadata t =
@@ -74,7 +75,7 @@ module Chunk = struct
   with bin_io
 end
 
-let load file =
+let load ~id file =
   Deferred.Or_error.try_with (fun () ->
     Reader.with_file file ~f:(fun reader ->
       let (chunks, result) =
@@ -91,10 +92,10 @@ let load file =
           in
           let positions = Float_array.create (3 * vertices) in
           let data = `Mesh (Mesh.create ~positions) in
-          Some ({ metadata; data; }, 0)
+          Some ({ metadata; data; id; }, 0)
         | (None, Chunk.Metadata (`Program, metadata)) ->
           let data = `Program (Program.create ~vertex:"" ~fragment:"") in
-          Some ({ metadata; data; }, 0)
+          Some ({ metadata; data; id; }, 0)
         | (None, _) ->
           failwithf "Metadata chunk was not first in %s" file ()
         | (Some _, Chunk.Metadata _) ->

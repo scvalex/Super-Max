@@ -17,7 +17,8 @@ let extract_mesh ~source ~source_id ~target_id =
   in
   extract_data ()
   >>=? fun positions ->
-  let res = Res.create_mesh ~source ~source_id ~positions () in
+  let id = Res_id.create ~pack:"unknown" ~name:target_id in
+  let res = Res.create_mesh ~source ~source_id ~positions id in
   Res.save res (target ~target_id)
 ;;
 
@@ -29,6 +30,7 @@ let extract_program ~vertex ~fragment ~target_id =
     >>| fun fragment ->
     (vertex, fragment))
   >>=? fun (vertex, fragment) ->
-  let res = Res.create_program ~vertex ~fragment () in
+  let id = Res_id.create ~pack:"unknown" ~name:target_id in
+  let res = Res.create_program ~vertex ~fragment id in
   Res.save res (target ~target_id)
 ;;
