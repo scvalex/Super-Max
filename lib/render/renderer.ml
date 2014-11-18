@@ -51,6 +51,33 @@ let with_renderer f =
         Sdl.quit ())))
 ;;
 
+let create_shader shader_type shader_code =
+  let shader = Gl.create_shader shader_type in
+  Gl.shader_source shader shader_code;
+  Gl.compile_shader shader;
+  let status = Gl.get_shader_iv shader `Compile_status in
+  if Int.(status = 0) then begin
+    let info_log_length = Gl.get_shader_iv shader `Info_log_length in
+    let info = Gl.get_shader_info_log shader ~max_length:info_log_length in
+    failwithf "failed to compile shader: %s" info ()
+  end;
+  shader
+;;
+
+let create_program shaders =
+  let program = Gl.create_program () in
+  List.iter shaders ~f:(Gl.attach_shader program);
+  Gl.link_program program;
+  let status = Gl.get_program_iv program `Link_status in
+  if Int.(status = 0) then begin
+    let info_log_length = Gl.get_program_iv program `Info_log_length in
+    let info = Gl.get_program_info_log program ~max_length:info_log_length in
+    failwithf "failed to link program: %s" info ()
+  end;
+  List.iter shaders ~f:(Gl.detach_shader program);
+  program
+;;
+
 let test t =
   on_ui_thread t (Ui.create (fun () ->
     let vertex_positions =
@@ -75,31 +102,6 @@ out vec4 outputColor;
 void main() {
   outputColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }"
-    in
-    let create_shader shader_type shader_code =
-      let shader = Gl.create_shader shader_type in
-      Gl.shader_source shader shader_code;
-      Gl.compile_shader shader;
-      let status = Gl.get_shader_iv shader `Compile_status in
-      if Int.(status = 0) then begin
-        let info_log_length = Gl.get_shader_iv shader `Info_log_length in
-        let info = Gl.get_shader_info_log shader ~max_length:info_log_length in
-        failwithf "failed to compile shader: %s" info ()
-      end;
-      shader
-    in
-    let create_program shaders =
-      let program = Gl.create_program () in
-      List.iter shaders ~f:(Gl.attach_shader program);
-      Gl.link_program program;
-      let status = Gl.get_program_iv program `Link_status in
-      if Int.(status = 0) then begin
-        let info_log_length = Gl.get_program_iv program `Info_log_length in
-        let info = Gl.get_program_info_log program ~max_length:info_log_length in
-        failwithf "failed to link program: %s" info ()
-      end;
-      List.iter shaders ~f:(Gl.detach_shader program);
-      program
     in
     let vertex_shader = create_shader `Vertex_shader vertex_shader_code in
     let fragment_shader = create_shader `Fragment_shader fragment_shader_code in
