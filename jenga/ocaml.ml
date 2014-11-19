@@ -211,6 +211,9 @@ let ocamldep_deps ~dir ~source =
      *>>| fun () ->
      ocamldep ~dir ~args:["-native"; basename source])
   *>>| fun deps ->
+  let deps =
+    String.Search_pattern.(replace_all (create "\\\n") ~in_:deps ~with_:" ")
+  in
   List.map (split_into_lines deps) ~f:(fun dep ->
     match String.split dep ~on:':' with
     | [before; after] ->
