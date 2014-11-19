@@ -16,9 +16,9 @@ let extract_mesh ~source ~source_id ~target_id =
       Deferred.return (Or_error.errorf "unknown file format: %s" source)
   in
   extract_data ()
-  >>=? fun positions ->
+  >>=? fun (positions, indices) ->
   let id = Res_id.create ~pack:"unknown" ~name:target_id in
-  let res = Res.create_mesh ~source ~source_id ~positions id in
+  let res = Res.create_mesh ~source ~source_id ~positions ~indices id in
   Res.save res (target ~target_id)
 ;;
 

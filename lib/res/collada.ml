@@ -26,16 +26,16 @@ let extract_mesh ~source ~source_id =
       | None    -> failwithf "can't handle source_id '%s'" xpath ()
       | Some id -> id
     in
-    let vertices_xml =
+    let positions_xml =
       X.match_one_exn ~here:_here_ mesh_xml
         Q.( empty
             +> with_attr (tag "source") "id" source_id )
     in
-    (* CR scvalex: Validate the technique of the vertices. *)
+    (* CR scvalex: Validate the technique of the positions. *)
     (* CR scvalex: Convert units to meters (if not already in meters). *)
-    let vertices =
+    let positions =
       let float_array_xml =
-        X.match_one_exn ~here:_here_ vertices_xml
+        X.match_one_exn ~here:_here_ positions_xml
           Q.( empty
               +> tag "float_array" )
       in
@@ -47,5 +47,11 @@ let extract_mesh ~source ~source_id =
         then None
         else Some (Float.of_string word))
     in
-    Float_array.of_array (Array.of_list vertices))
+    let positions =
+      Float_array.of_array (Array.of_list positions)
+    in
+    let indices =
+      Int_array.of_array (Array.of_list [])
+    in
+    (positions, indices))
 ;;

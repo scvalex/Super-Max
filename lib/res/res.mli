@@ -7,6 +7,8 @@ module Mesh : sig
   val id : t -> Res_id.t
 
   val positions : t -> Float_array.t
+
+  val indices : t -> Int_array.t
 end
 
 module Program : sig
@@ -36,6 +38,7 @@ val create_mesh :
   ?source : string
   -> ?source_id : string
   -> positions : Float_array.t
+  -> indices : Int_array.t
   -> Res_id.t
   -> t
 
