@@ -6,9 +6,25 @@ let extract_mesh ~source ~source_id ~target_id =
   Extract.extract_mesh ~source ~source_id ~target_id
   |> Deferred.Or_error.ok_exn
 ;;
+
 let extract_program ~vertex ~fragment ~target_id =
   Extract.extract_program ~vertex ~fragment ~target_id
   |> Deferred.Or_error.ok_exn
+;;
+
+let identify_res ~file =
+  let module Res = Res_lib.Std.Res in
+  Res.load ~id:(Res_id.create ~pack:"unkown" ~name:"mystery") file
+  |> Deferred.Or_error.ok_exn
+  >>| fun res ->
+  let p fmt = ksprintf (fun str -> Printf.printf "%s\n%!" str) fmt in
+  match Res.data res with
+  | `Mesh mesh ->
+    p "Mesh";
+    p " - vertices: %d" (Float_array.length (Res.Mesh.positions mesh) / 3);
+    p " - indices:  %d" (Int_array.length (Res.Mesh.indices mesh))
+  | `Program _program ->
+    p "Program"
 ;;
 
 module Flag = struct
@@ -58,6 +74,12 @@ let main () =
                  (fun vertex fragment target_id () ->
                     extract_program ~vertex ~fragment ~target_id))
             ])
+       ; ("identify",
+          Command.async
+            ~summary:"Identify a res file"
+            Flag.( empty +> anon ("FILE" %: file) )
+            (fun file () ->
+               identify_res ~file))
        ])
 ;;
 

@@ -68,13 +68,16 @@ let extract_mesh ~source ~source_id =
       Float_array.of_array (Array.of_list positions)
     in
     let indices =
+      let input_count =
+        List.length (X.matches polylist_xml Q.(empty +> tag "input"))
+      in
       let p_xml =
-        X.match_one_exn ~here:_here_ polylist_xml
-          Q.(empty +> tag "p")
+        X.match_one_exn ~here:_here_ polylist_xml Q.(empty +> tag "p")
       in
       let text = X.text_content_exn ~here:_here_ p_xml in
       let words = split_words text in
-      List.map words ~f:Int32.of_string
+      let indices = List.map words ~f:Int32.of_string in
+      List.filteri indices ~f:(fun idx _ -> Int.(idx mod input_count = 1))
     in
     let indices =
       Int_array.of_array (Array.of_list indices)
