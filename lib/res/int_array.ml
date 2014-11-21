@@ -18,3 +18,9 @@ let length t =
 let size_bytes t =
   length t * 4
 ;;
+
+let iteri t ~f =
+  for idx = 0 to length t - 1 do
+    f idx t.{idx}
+  done
+;;

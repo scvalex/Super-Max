@@ -12,17 +12,30 @@ let extract_program ~vertex ~fragment ~target_id =
   |> Deferred.Or_error.ok_exn
 ;;
 
-let identify_res ~file =
+let identify_res ~verbose ~file =
   let module Res = Res_lib.Std.Res in
   Res.load ~id:(Res_id.create ~pack:"unkown" ~name:"mystery") file
   |> Deferred.Or_error.ok_exn
   >>| fun res ->
   let p fmt = ksprintf (fun str -> Printf.printf "%s\n%!" str) fmt in
+  let pn fmt = ksprintf (fun str -> Printf.printf "%s" str) fmt in
   match Res.data res with
   | `Mesh mesh ->
     p "Mesh";
     p " - vertices: %d" (Float_array.length (Res.Mesh.positions mesh) / 3);
-    p " - indices:  %d" (Int_array.length (Res.Mesh.indices mesh))
+    if verbose then begin
+      pn "    ";
+      Float_array.iteri (Res.Mesh.positions mesh) ~f:(fun idx pos ->
+        pn "%.2f%s" pos (if Int.(idx mod 3 = 2) then ", " else " "));
+      p "";
+    end;
+    p " - indices:  %d" (Int_array.length (Res.Mesh.indices mesh));
+    if verbose then begin
+      pn "    ";
+      Int_array.iteri (Res.Mesh.indices mesh) ~f:(fun _idx idx ->
+        pn "%s " (Int32.to_string idx));
+      p "";
+    end;
   | `Program _program ->
     p "Program"
 ;;
@@ -54,6 +67,10 @@ module Flag = struct
     flag "fragment" (required file)
       ~doc:"FILE fragment shader source"
   ;;
+
+  let verbose =
+    flag "verbose" no_arg
+      ~doc:" Show verbose output"
 end
 
 let main () =
@@ -77,9 +94,9 @@ let main () =
        ; ("identify",
           Command.async
             ~summary:"Identify a res file"
-            Flag.( empty +> anon ("FILE" %: file) )
-            (fun file () ->
-               identify_res ~file))
+            Flag.( empty +> verbose +> anon ("FILE" %: file) )
+            (fun verbose file () ->
+               identify_res ~verbose ~file))
        ])
 ;;
 

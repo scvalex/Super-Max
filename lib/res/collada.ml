@@ -77,8 +77,9 @@ let extract_mesh ~source ~source_id =
       let text = X.text_content_exn ~here:_here_ p_xml in
       let words = split_words text in
       let indices = List.map words ~f:Int32.of_string in
-      List.filteri indices ~f:(fun idx _ -> Int.(idx mod input_count = 1))
+      List.filteri indices ~f:(fun idx _ -> Int.(idx mod input_count = 0))
     in
+    (* CR scvalex: Extract based on node, not on mesh. *)
     let indices =
       Int_array.of_array (Array.of_list indices)
     in
