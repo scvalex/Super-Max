@@ -164,7 +164,8 @@ let render_mesh t ~mesh ~program =
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
         Gl.with_vertex_attrib_array 0 ~f:(fun () ->
           Gl.vertex_attrib_pointer 0 ~size:3 `Float ~normalize:false ~stride:0;
-          Gl.draw_arrays `Triangles ~first:0
-            ~count:(Float_array.length (Res.Mesh.positions mesh)))));
+          Gl.draw_elements `Triangles
+            ~indices:(Res.Mesh.indices mesh)
+            ~count:(Int_array.length (Res.Mesh.indices mesh)))));
     Sdl.gl_swap_window t.window)
 ;;

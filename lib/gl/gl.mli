@@ -23,6 +23,8 @@ type buffer_target =
 
 type vertex_array_object
 
+type draw_mode = [ `Triangles ] with sexp
+
 val clear_color : float -> float -> float -> float -> unit
 
 val clear :
@@ -100,7 +102,7 @@ val vertex_attrib_pointer :
   -> unit
 
 val draw_arrays :
-  [ `Triangles ]
+  draw_mode
   -> first : int
   -> count : int
   -> unit
@@ -108,6 +110,12 @@ val draw_arrays :
 val gen_vertex_array : unit -> vertex_array_object
 
 val bind_vertex_array : vertex_array_object -> unit
+
+val draw_elements :
+  draw_mode
+  -> indices : Int_array.t
+  -> count : int
+  -> unit
 
 module Debug : sig
   val stats : unit -> string

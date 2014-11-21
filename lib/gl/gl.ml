@@ -214,6 +214,12 @@ module Gl = struct
   let bind_vertex_array =
     foreign "glBindVertexArray" (vertex_array_t @-> returning void_or_error)
   ;;
+
+  let draw_elements =
+    foreign "glDrawElements"
+      (gl_enum_t @-> int32_t @-> gl_enum_t @-> ptr void
+       @-> returning void_or_error)
+  ;;
 end
 
 include Gl
@@ -245,6 +251,16 @@ module Buffer_target = struct
 end
 
 type buffer_target = Buffer_target.t with sexp
+
+module Draw_mode = struct
+  type t = [ `Triangles ] with sexp
+
+  let to_int = function
+    | `Triangles -> 0x0004
+  ;;
+end
+
+type draw_mode = Draw_mode.t with sexp
 
 let clear what =
   let what =
@@ -387,9 +403,7 @@ let buffer_data target array usage =
     | `Dynamic_read -> 0x88E9
     | `Dynamic_copy -> 0x88EA
   in
-  let array_ptr =
-    to_voidp (bigarray_start array1 array)
-  in
+  let array_ptr = to_voidp (bigarray_start array1 array) in
   buffer_data
     (UInt32.of_int target)
     (Signed.Long.of_int (Float_array.size_bytes array))
@@ -448,12 +462,9 @@ let vertex_attrib_pointer idx ~size kind ~normalize ~stride =
   |> Or_error.ok_exn ~here:_here_
 ;;
 
-let draw_arrays kind ~first ~count =
-  let kind =
-    match kind with
-    | `Triangles -> 0x0004
-  in
-  draw_arrays (UInt32.of_int kind) (Int32.of_int first) (Int32.of_int count)
+let draw_arrays draw_mode ~first ~count =
+  let draw_mode = Draw_mode.to_int draw_mode in
+  draw_arrays (UInt32.of_int draw_mode) (Int32.of_int first) (Int32.of_int count)
   |> Or_error.ok_exn ~here:_here_
 ;;
 
@@ -466,6 +477,15 @@ let gen_vertex_array () =
 
 let bind_vertex_array vao =
   bind_vertex_array vao
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let draw_elements draw_mode ~indices ~count =
+  let draw_mode = Draw_mode.to_int draw_mode in
+  let type_ = 0x1401 in
+  let indices_ptr = to_voidp (bigarray_start array1 indices) in
+  draw_elements (UInt32.of_int draw_mode) (Int32.of_int count)
+    (UInt32.of_int type_) indices_ptr
   |> Or_error.ok_exn ~here:_here_
 ;;
 
