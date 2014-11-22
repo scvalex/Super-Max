@@ -25,6 +25,15 @@ module Snapshot = struct
     | `Unknown str ->
       log "Unknown SDL event: %s" str;
       t
+    | `Key (dir, key) ->
+      match Key.of_sdl_key key with
+      | None ->
+        log "Unknown SDL key: %s" (Sexp.to_string_mach (Sdl.sexp_of_event event));
+        t
+      | Some key ->
+        match dir with
+        | `Down -> { t with pressed = Set.add t.pressed key; }
+        | `Up   -> { t with pressed = Set.remove t.pressed key; }
   ;;
 end
 

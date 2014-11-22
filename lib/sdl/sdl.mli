@@ -6,9 +6,15 @@ type window
 
 type gl_context
 
+type key =
+  [ `Down | `Up | `Left | `Right
+  | `Unknown of int
+  ] with sexp
+
 type event =
   [ `Quit
   | `Unknown of string
+  | `Key of ([`Down | `Up] * key)
   ] with sexp
 
 val init : unit -> unit
