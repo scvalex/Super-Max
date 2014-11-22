@@ -42,7 +42,7 @@ let run_render_mesh mesh_file program_file () =
       Renderer.on_ui_thread renderer
         (Renderer.with_sdl_window renderer Input.process_events)
       >>= fun snapshot ->
-      if Input.Snapshot.pressed snapshot Key.escape
+      if Input.Snapshot.pressed snapshot Key.quit
       then Deferred.unit
       else loop ()
     in

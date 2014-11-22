@@ -5,6 +5,7 @@ open Ctypes
 open Foreign
 
 module UInt32 = Unsigned.UInt32
+module UInt8 = Unsigned.UInt8
 
 module Sdl = struct
   type window = unit ptr
@@ -15,12 +16,16 @@ module Sdl = struct
   let gl_context : gl_context typ = ptr void
 
   module Event = struct
-    module Quit = struct
+    module Window = struct
       type t
-      let t : t structure typ = structure "SDL_QuitEvent"
+      let t : t structure typ = structure "SDL_WindowEvent"
 
       let _ = field t "type" uint32_t;;
       let _ = field t "timestamp" uint32_t;;
+      let _ = field t "windowID" uint32_t;;
+      let event = field t "event" uint8_t;;
+      let _ = field t "data1" int32_t;;
+      let _ = field t "data2" int32_t;;
 
       seal t;;
     end
@@ -30,7 +35,7 @@ module Sdl = struct
 
     let type_ = field t "type" uint32_t;;
 
-    let _quit = field t "quit" Quit.t;;
+    let window = field t "window" Window.t;;
 
     let _padding = field t "padding" (array 56 uint8_t);;
 
@@ -150,7 +155,14 @@ let delay ~ms =
 
 let interpret_event event =
   match UInt32.to_int (getf event Event.type_) with
-  | 0x100 -> `Quit
+  | 0x100 ->
+    `Quit
+  | 0x200 -> begin
+      let window_event = getf event Event.window in
+      match UInt8.to_int (getf window_event Event.Window.event) with
+      | 14 -> `Quit
+      | n  -> `Unknown (sprintf "unknown window event: %d" n)
+    end
   | n     -> `Unknown (sprintf "unknown event type: %d" n)
 ;;
 
