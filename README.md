@@ -3,12 +3,8 @@ super-max
 
 > A catch-all for game-related projects
 
-spells-and-roses
-----------------
+Build
+-----
 
-The next-gen version of Spellslinger written in OCaml and SDL 2.0.
-
-packages
---------
-
-External dependencies included as git submodules.
+Install OCaml, OPAM, and Jenga.  Run `jenga` in the top-level
+directory and install any missing OCaml packages and libraries.
