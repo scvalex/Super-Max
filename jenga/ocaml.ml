@@ -80,7 +80,7 @@ end
 
 let pp_packages =
   [ "camlp4"; "sexplib.syntax"; "bin_prot.syntax"; "herelib.syntax"
-  ; "fieldslib.syntax"; "comparelib.syntax"
+  ; "fieldslib.syntax"; "comparelib.syntax"; "variantslib.syntax"
   ]
 ;;
 

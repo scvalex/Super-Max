@@ -2,13 +2,12 @@ open Core.Std
 open Async.Std
 open Res_lib.Std
 open Render_lib.Std
+open Input_lib.Std
 
 let run_render_test () =
   Renderer.with_renderer (fun renderer ->
     Renderer.test renderer)
 ;;
-
-(* CR scvalex: Input subsystem. *)
 
 let run_render_mesh mesh_file program_file () =
   let load_res_exn file =
@@ -37,7 +36,17 @@ let run_render_mesh mesh_file program_file () =
     Renderer.on_ui_thread renderer
       (Renderer.render_mesh renderer ~program ~mesh)
     >>= fun () ->
-    Clock.after (sec 3.0))
+    let rec loop () =
+      Clock.after (sec 0.1)
+      >>= fun () ->
+      Renderer.on_ui_thread renderer
+        (Renderer.with_sdl_window renderer Input.process_events)
+      >>= fun snapshot ->
+      if Input.Snapshot.pressed snapshot Key.escape
+      then Deferred.unit
+      else loop ()
+    in
+    loop ())
 ;;
 
 let main () =
