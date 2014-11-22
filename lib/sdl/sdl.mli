@@ -6,6 +6,11 @@ type window
 
 type gl_context
 
+type event =
+  [ `Quit
+  | `Unknown of string
+  ] with sexp
+
 val init : unit -> unit
 
 val quit : unit -> unit
@@ -31,3 +36,5 @@ val gl_create_context : window -> gl_context
 val gl_delete_context : gl_context -> unit
 
 val gl_swap_window : window -> unit
+
+val poll_event : unit -> event option

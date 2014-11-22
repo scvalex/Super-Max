@@ -3,6 +3,7 @@ open Core.Std
 module T = struct
   type t =
     | Escape
+    | Quit
   with sexp, variants, compare
 end
 
