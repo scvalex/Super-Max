@@ -22,3 +22,10 @@ let filename t =
 let to_string t =
   t.pack ^ "/" ^ t.name
 ;;
+
+let analyze_filename file =
+  let dir = Filename.dirname file in
+  let pack = Filename.basename dir in
+  let name = Filename.(chop_extension (basename file)) in
+  (`Dir dir, `Pack pack, `Name name)
+;;

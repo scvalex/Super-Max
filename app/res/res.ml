@@ -14,14 +14,20 @@ let extract_program ~vertex ~fragment ~target_id =
 
 let identify_res ~verbose ~file =
   let module Res = Res_lib.Std.Res in
-  Res.load ~id:(Res_id.create ~pack:"unkown" ~name:"mystery") file
+  let (`Dir _, `Pack pack, `Name name) = Res_id.analyze_filename file in
+  Res.load ~id:(Res_id.create ~pack ~name) file
   |> Deferred.Or_error.ok_exn
   >>| fun res ->
   let p fmt = ksprintf (fun str -> Printf.printf "%s\n%!" str) fmt in
   let pn fmt = ksprintf (fun str -> Printf.printf "%s" str) fmt in
+  let print_lines ~prefix text =
+    List.iter (String.split_lines text) ~f:(fun line ->
+      p "%s%s" prefix line)
+  in
+  p "res-id: %s/%s" pack name;
   match Res.data res with
   | `Mesh mesh ->
-    p "Mesh";
+    p "data: Mesh";
     p " - vertices: %d" (Float_array.length (Res.Mesh.positions mesh) / 3);
     if verbose then begin
       pn "    ";
@@ -35,9 +41,19 @@ let identify_res ~verbose ~file =
       Int_array.iteri (Res.Mesh.indices mesh) ~f:(fun _idx idx ->
         pn "%s " (Int32.to_string idx));
       p "";
-    end;
-  | `Program _program ->
-    p "Program"
+    end
+  | `Program program ->
+    p "data: Program";
+    let vertex = Res.Program.vertex program in
+    p " - vertex shader: %d chars, %d lines"
+      (String.length vertex) (List.length (String.split_lines vertex));
+    if verbose then
+      print_lines ~prefix:"   > " vertex;
+    let fragment = Res.Program.fragment program in
+    p " - fragment shader: %d chars, %d lines"
+      (String.length fragment) (List.length (String.split_lines fragment));
+    if verbose then
+      print_lines ~prefix:"   > " fragment
 ;;
 
 module Flag = struct

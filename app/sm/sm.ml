@@ -12,10 +12,8 @@ let run_render_test () =
 
 let run_render_mesh mesh_file program_file () =
   let load_res_exn file =
-    let dir = Filename.dirname file in
+    let (`Dir dir, `Pack pack, `Name name) = Res_id.analyze_filename file in
     Res_db.add_pack ~dir;
-    let pack = Filename.basename dir in
-    let name = Filename.(chop_extension (basename file)) in
     Res_db.load
       ~id:(Res_id.create ~pack ~name)
       ~cache_until:`Don't_cache

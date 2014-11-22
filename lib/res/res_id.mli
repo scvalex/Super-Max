@@ -17,3 +17,7 @@ val name : t -> string
 val pack  : t -> string
 
 val filename : t -> string
+
+val analyze_filename :
+  string
+  -> ([`Dir of string] * [`Pack of string] * [`Name of string])
