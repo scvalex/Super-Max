@@ -1,1 +1,1 @@
-let pi = 3.14;;
+let log = Log.log

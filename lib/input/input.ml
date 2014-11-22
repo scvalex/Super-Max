@@ -1,6 +1,8 @@
 open Core.Std
-(* open Async.Std *)
+open Platform_lib.Std
 open Sdl_lib.Std
+
+let log = log `Input;;
 
 module Snapshot = struct
   type t = {
@@ -20,8 +22,8 @@ module Snapshot = struct
     match event with
     | `Quit ->
       { t with pressed = Set.add t.pressed Key.quit; }
-    | `Unknown _str ->
-      (* Log.Global.info "Unknown SDL event: %s" str; *)
+    | `Unknown str ->
+      log "Unknown SDL event: %s" str;
       t
   ;;
 end
