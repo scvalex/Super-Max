@@ -28,6 +28,10 @@ let on_ui_thread t ui =
   In_thread.run ~thread:t.thread (Ui.to_f ui)
 ;;
 
+let with_sdl_window t f =
+  Ui.create (fun () -> f t.window)
+;;
+
 let with_renderer f =
   let thread =
     Or_error.ok_exn
