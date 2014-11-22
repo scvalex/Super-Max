@@ -15,6 +15,7 @@ type event =
   [ `Quit
   | `Unknown of string
   | `Key of ([`Down | `Up] * key)
+  | `Mouse_move of (int * int)
   ] with sexp
 
 val init : unit -> unit

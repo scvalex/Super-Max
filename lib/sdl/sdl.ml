@@ -57,6 +57,23 @@ module Sdl = struct
       seal t;;
     end
 
+    module Mouse_motion = struct
+      type t
+      let t : t structure typ = structure "SDL_MouseMotionEvent"
+
+      let _ = field t "type" uint32_t;;
+      let _ = field t "timestamp" uint32_t;;
+      let _ = field t "windowID" uint32_t;;
+      let _ = field t "which" uint32_t;;
+      let _ = field t "state" uint32_t;;
+      let x = field t "x" int32_t;;
+      let y = field t "y" int32_t;;
+      let _ = field t "xrel" int32_t;;
+      let _ = field t "yrel" int32_t;;
+
+      seal t;;
+    end
+
     type t
     let t : t union typ = union "SDL_Event"
 
@@ -65,6 +82,8 @@ module Sdl = struct
     let window = field t "window" Window.t;;
 
     let key = field t "key" Keyboard.t;;
+
+    let motion = field t "motion" Mouse_motion.t;;
 
     let _padding = field t "padding" (array 56 uint8_t);;
 
@@ -151,6 +170,7 @@ type event =
   [ `Quit
   | `Unknown of string
   | `Key of ([`Down | `Up] * key)
+  | `Mouse_move of (int * int)
   ] with sexp
 
 let init () =
@@ -215,7 +235,13 @@ let interpret_event event =
       in
       `Key (dir, sym)
     end
-  | n     -> `Unknown (sprintf "unknown event type: %d" n)
+  | 0x400 ->
+    let motion_event = getf event Event.motion in
+    let x = Int32.to_int (getf motion_event Event.Mouse_motion.x) in
+    let y = Int32.to_int (getf motion_event Event.Mouse_motion.y) in
+    `Mouse_move (x, y)
+  | n ->
+    `Unknown (sprintf "unknown event type: %d" n)
 ;;
 
 let poll_event () =

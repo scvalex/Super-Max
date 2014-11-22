@@ -6,12 +6,14 @@ let log = log `Input;;
 
 module Snapshot = struct
   type t = {
-    pressed : Key.Set.t;
-  }
+    pressed        : Key.Set.t;
+    mouse_position : (int * int);
+  } with fields
 
   let create () =
     let pressed = Key.Set.empty in
-    { pressed; }
+    let mouse_position = (0, 0) in
+    { pressed; mouse_position; }
   ;;
 
   let pressed t key =
@@ -25,15 +27,18 @@ module Snapshot = struct
     | `Unknown str ->
       log "Unknown SDL event: %s" str;
       t
-    | `Key (dir, key) ->
-      match Key.of_sdl_key key with
-      | None ->
-        log "Unknown SDL key: %s" (Sexp.to_string_mach (Sdl.sexp_of_event event));
-        t
-      | Some key ->
-        match dir with
-        | `Down -> { t with pressed = Set.add t.pressed key; }
-        | `Up   -> { t with pressed = Set.remove t.pressed key; }
+    | `Key (dir, key) -> begin
+        match Key.of_sdl_key key with
+        | None ->
+          log "Unknown SDL key: %s" (Sexp.to_string_mach (Sdl.sexp_of_event event));
+          t
+        | Some key ->
+          match dir with
+          | `Down -> { t with pressed = Set.add t.pressed key; }
+          | `Up   -> { t with pressed = Set.remove t.pressed key; }
+      end
+    | `Mouse_move (x, y) ->
+      { t with mouse_position = (x, y); }
   ;;
 end
 
