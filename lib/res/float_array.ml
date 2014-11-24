@@ -1,6 +1,8 @@
 open Core.Std let _ = _squelch_unused_module_warning_
 open Bigarray.Array1
 
+(* CR scvalex: Abstract this and [Int_array] somehow. *)
+
 type t = (float, Bigarray.float32_elt, Bigarray.c_layout) Bigarray.Array1.t
 
 let create size =

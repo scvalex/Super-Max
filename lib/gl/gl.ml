@@ -492,10 +492,10 @@ let bind_vertex_array vao =
   |> Or_error.ok_exn ~here:_here_
 ;;
 
-let draw_elements draw_mode ~indices ~count =
+let draw_elements draw_mode ~indices:(`Bytes offset) ~count =
   let draw_mode = Draw_mode.to_int draw_mode in
-  let type_ = 0x1401 in
-  let indices_ptr = to_voidp (bigarray_start array1 indices) in
+  let type_ = 0x1405 in  (* GL_UNSINGED_INT *)
+  let indices_ptr = ptr_of_raw_address (Int64.of_int offset) in
   draw_elements (UInt32.of_int draw_mode) (Int32.of_int count)
     (UInt32.of_int type_) indices_ptr
   |> Or_error.ok_exn ~here:_here_

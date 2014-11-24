@@ -165,14 +165,18 @@ let render_mesh t ~mesh ~program =
     let position_buffer_object = Gl.gen_buffer () in
     Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
       Gl.buffer_data `Array_buffer (Res.Mesh.positions mesh) `Static_draw);
+    let indices_buffer_object = Gl.gen_buffer () in
+    Gl.with_bound_buffer `Element_array_buffer indices_buffer_object ~f:(fun () ->
+      Gl.buffer_data `Element_array_buffer (Res.Mesh.indices mesh) `Static_draw);
     Gl.clear_color 0.01 0.01 0.01 1.0;
     Gl.clear `Color_buffer_bit;
     Gl.with_used_program program ~f:(fun () ->
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
-        Gl.with_vertex_attrib_array 0 ~f:(fun () ->
-          Gl.vertex_attrib_pointer 0 ~size:3 `Float ~normalize:false ~stride:0;
-          Gl.draw_elements `Triangles
-            ~indices:(Res.Mesh.indices mesh)
-            ~count:(Int_array.length (Res.Mesh.indices mesh)))));
+        Gl.with_bound_buffer `Element_array_buffer indices_buffer_object ~f:(fun () ->
+          Gl.with_vertex_attrib_array 0 ~f:(fun () ->
+            Gl.vertex_attrib_pointer 0 ~size:3 `Float ~normalize:false ~stride:0;
+            Gl.draw_elements `Triangles
+              ~indices:(`Bytes 0)
+              ~count:(Int_array.length (Res.Mesh.indices mesh))))));
     Sdl.gl_swap_window t.window)
 ;;

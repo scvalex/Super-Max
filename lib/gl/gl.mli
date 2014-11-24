@@ -71,7 +71,7 @@ val gen_buffer : unit -> buffer
 
 val buffer_data :
   buffer_target
-  -> Float_array.t
+  -> (_, _, Bigarray.c_layout) Bigarray.Array1.t
   -> [ `Stream_draw | `Stream_read | `Stream_copy
      | `Static_draw | `Static_read | `Static_copy
      | `Dynamic_draw | `Dynamic_read | `Dynamic_copy ]
@@ -113,7 +113,7 @@ val bind_vertex_array : vertex_array_object -> unit
 
 val draw_elements :
   draw_mode
-  -> indices : Int_array.t
+  -> indices : [`Bytes of int]
   -> count : int
   -> unit
 
