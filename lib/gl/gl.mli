@@ -117,6 +117,12 @@ val draw_elements :
   -> count : int
   -> unit
 
+val enable : [ `Cull_face ] -> unit
+
+val cull_face : [ `Front | `Back | `Front_and_back ] -> unit
+
+val front_face : [ `Clockwise | `Counter_clockwise ] -> unit
+
 module Debug : sig
   val stats : unit -> string
 end

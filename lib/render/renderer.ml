@@ -48,6 +48,9 @@ let with_renderer f =
     (* CR scvalex: What's this all about? *)
     let vao = Gl.gen_vertex_array () in
     Gl.bind_vertex_array vao;
+    Gl.enable `Cull_face;
+    Gl.cull_face `Back;
+    Gl.front_face `Counter_clockwise;
     (window, gl_context))
   >>= fun (window, gl_context) ->
   let program_cache = Res_id.Table.create () in

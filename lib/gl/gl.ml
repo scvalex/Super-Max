@@ -220,6 +220,18 @@ module Gl = struct
       (gl_enum_t @-> int32_t @-> gl_enum_t @-> ptr void
        @-> returning void_or_error)
   ;;
+
+  let enable =
+    foreign "glEnable" (gl_enum_t @-> returning void_or_error)
+  ;;
+
+  let cull_face =
+    foreign "glCullFace" (gl_enum_t @-> returning void_or_error)
+  ;;
+
+  let front_face =
+    foreign "glFrontFace" (gl_enum_t @-> returning void_or_error)
+  ;;
 end
 
 include Gl
@@ -486,6 +498,36 @@ let draw_elements draw_mode ~indices ~count =
   let indices_ptr = to_voidp (bigarray_start array1 indices) in
   draw_elements (UInt32.of_int draw_mode) (Int32.of_int count)
     (UInt32.of_int type_) indices_ptr
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let enable cap =
+  let cap =
+    match cap with
+    | `Cull_face -> 0x0B44
+  in
+  enable (UInt32.of_int cap)
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let cull_face mode =
+  let mode =
+    match mode with
+    | `Front          -> 0x0404
+    | `Back           -> 0x0405
+    | `Front_and_back -> 0x0408
+  in
+  cull_face (UInt32.of_int mode)
+  |> Or_error.ok_exn ~here:_here_
+;;
+
+let front_face mode =
+  let mode =
+    match mode with
+    | `Clockwise         -> 0x0900
+    | `Counter_clockwise -> 0x0901
+  in
+  front_face (UInt32.of_int mode)
   |> Or_error.ok_exn ~here:_here_
 ;;
 
