@@ -50,7 +50,7 @@ let with_renderer f =
     Gl.bind_vertex_array vao;
     Gl.enable `Cull_face;
     Gl.cull_face `Back;
-    Gl.front_face `Counter_clockwise;
+    Gl.front_face `Clockwise;
     (window, gl_context))
   >>= fun (window, gl_context) ->
   let program_cache = Res_id.Table.create () in
