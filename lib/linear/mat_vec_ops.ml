@@ -1,5 +1,4 @@
 open Core.Std let _ = _squelch_unused_module_warning_
-open Types_intf
 
 module V = Vec
 module M = Mat

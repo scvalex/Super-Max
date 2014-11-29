@@ -1,5 +1,4 @@
 open Core.Std
-open Types_intf
 
 val ( |* ) : Vec.t -> float -> Vec.t
 
