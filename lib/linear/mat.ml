@@ -28,3 +28,12 @@ let of_rows r0 r1 r2 r3 =
     ~m30:r3.(0) ~m31:r3.(1) ~m32:r3.(2) ~m33:r3.(3)
     ()
 ;;
+
+let to_array t =
+  let array = Bigarray.Array1.create Bigarray.Float32 Bigarray.c_layout 16 in
+  array.{0} <- t.m00; array.{1} <- t.m10; array.{2} <- t.m20; array.{3} <- t.m30;
+  array.{4} <- t.m01; array.{5} <- t.m11; array.{6} <- t.m21; array.{7} <- t.m31;
+  array.{8} <- t.m02; array.{9} <- t.m12; array.{10} <- t.m22; array.{11} <- t.m32;
+  array.{12} <- t.m03; array.{13} <- t.m13; array.{14} <- t.m23; array.{15} <- t.m33;
+  array
+;;
