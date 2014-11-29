@@ -1,5 +1,6 @@
 open Core.Std
 open Async.Std
+open Linear_lib.Std
 
 module X = Xml_helper
 module Q = Xml_helper.Query
@@ -86,7 +87,7 @@ let extract_mesh ~source ~source_id =
       List.map words ~f:Float.of_string
     in
     let positions =
-      Float_array.of_array (Array.of_list positions)
+      Rarray.Float.of_array (Array.of_list positions)
     in
     let indices =
       let input_count =
@@ -101,7 +102,7 @@ let extract_mesh ~source ~source_id =
       List.filteri indices ~f:(fun idx _ -> Int.(idx mod input_count = 0))
     in
     let indices =
-      Int_array.of_array (Array.of_list indices)
+      Rarray.Int.of_array (Array.of_list indices)
     in
     (positions, indices))
 ;;

@@ -1,5 +1,5 @@
 open Core_kernel.Std
-open Res_lib.Std
+open Linear_lib.Std
 
 (** https://www.opengl.org/sdk/docs/man3/ *)
 
@@ -71,7 +71,7 @@ val gen_buffer : unit -> buffer
 
 val buffer_data :
   buffer_target
-  -> (_, _, Bigarray.c_layout) Bigarray.Array1.t
+  -> ('a, 'b) Rarray.t
   -> [ `Stream_draw | `Stream_read | `Stream_copy
      | `Static_draw | `Static_read | `Static_copy
      | `Dynamic_draw | `Dynamic_read | `Dynamic_copy ]

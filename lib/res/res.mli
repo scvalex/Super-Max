@@ -1,14 +1,15 @@
 open Core.Std
 open Async.Std
+open Linear_lib.Std
 
 module Mesh : sig
   type t
 
   val id : t -> Res_id.t
 
-  val positions : t -> Float_array.t
+  val positions : t -> Rarray.Float.t
 
-  val indices : t -> Int_array.t
+  val indices : t -> Rarray.Int.t
 end
 
 module Program : sig
@@ -37,8 +38,8 @@ val id : t -> Res_id.t
 val create_mesh :
   ?source : string
   -> ?source_id : string
-  -> positions : Float_array.t
-  -> indices : Int_array.t
+  -> positions : Rarray.Float.t
+  -> indices : Rarray.Int.t
   -> Res_id.t
   -> t
 

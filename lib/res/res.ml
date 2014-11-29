@@ -1,5 +1,6 @@
 open Core.Std
 open Async.Std
+open Linear_lib.Std
 
 module Metadata = struct
   type t = {
@@ -19,8 +20,8 @@ end
 module Mesh = struct
   type t = {
     id        : Res_id.t;
-    positions : Float_array.t;
-    indices   : Int_array.t;
+    positions : Rarray.Float.t;
+    indices   : Rarray.Int.t;
   } with fields
 
   let create = Fields.create;;
@@ -50,12 +51,12 @@ type t = {
 } with fields
 
 let create_mesh ?source ?source_id ~positions ~indices id =
-  if Int.(Float_array.length positions mod 3 <> 0) then
+  if Int.(Rarray.length positions mod 3 <> 0) then
     failwithf "positions length not a multiple of 3" ();
   let metadata =
     Metadata.create ?source ?source_id ()
-      ~positions_count:(Float_array.length positions / 3)
-      ~indices_length:(Int_array.length indices)
+      ~positions_count:(Rarray.length positions / 3)
+      ~indices_length:(Rarray.length indices)
   in
   let data = `Mesh (Mesh.create ~positions ~indices ~id) in
   { metadata; data; }
@@ -105,8 +106,8 @@ let load ~id file =
             Option.value_exn ~here:_here_
               (Metadata.indices_length metadata)
           in
-          let positions = Float_array.create (3 * positions_count) in
-          let indices = Int_array.create indices_length in
+          let positions = Rarray.Float.create (3 * positions_count) in
+          let indices = Rarray.Int.create indices_length in
           let data = `Mesh (Mesh.create ~positions ~indices ~id) in
           Some ({ metadata; data; }, 0, 0)
         | (None, Chunk.Metadata (`Program, metadata)) ->
@@ -119,8 +120,9 @@ let load ~id file =
         | (Some (t, next_position, next_index), Chunk.Positions positions) -> begin
             match t.data with
             | `Mesh mesh ->
+              let mesh_positions = Rarray.data (Mesh.positions mesh) in
               for idx = 0 to Array.length positions - 1 do
-                (Mesh.positions mesh).{next_position + idx} <- positions.(idx)
+                mesh_positions.{next_position + idx} <- positions.(idx)
               done;
               Some (t, next_position + Array.length positions, next_index)
             | _ ->
@@ -129,8 +131,9 @@ let load ~id file =
         | (Some (t, next_position, next_index), Chunk.Indices indices) -> begin
             match t.data with
             | `Mesh mesh ->
+              let mesh_indicies = Rarray.data (Mesh.indices mesh) in
               for idx = 0 to Array.length indices - 1 do
-                (Mesh.indices mesh).{next_index + idx} <- indices.(idx)
+                mesh_indicies.{next_index + idx} <- indices.(idx)
               done;
               Some (t, next_position, next_index + Array.length indices)
             | _ ->
@@ -188,14 +191,14 @@ let save t file =
           end
         in
         loop 0
-          ~array:(Mesh.positions mesh)
-          ~length:(Float_array.length (Mesh.positions mesh))
+          ~array:(Rarray.data (Mesh.positions mesh))
+          ~length:(Rarray.length (Mesh.positions mesh))
           ~pack:(fun buf -> Chunk.Positions buf)
           ~dummy:0.0
         >>= fun () ->
         loop 0
-          ~array:(Mesh.indices mesh)
-          ~length:(Int_array.length (Mesh.indices mesh))
+          ~array:(Rarray.data (Mesh.indices mesh))
+          ~length:(Rarray.length (Mesh.indices mesh))
           ~pack:(fun buf -> Chunk.Indices buf)
           ~dummy:(Int32.of_int_exn 0)
       | `Program program ->

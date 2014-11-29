@@ -1,3 +1,3 @@
-((libraries ( gl res sdl ))
+((libraries ( gl linear res sdl ))
  (external_libraries ( async core))
  )

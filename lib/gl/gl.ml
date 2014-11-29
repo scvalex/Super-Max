@@ -1,9 +1,9 @@
 (** https://www.opengl.org/sdk/docs/man3/ *)
 
 open Core_kernel.Std
-open Res_lib.Std
 open Ctypes
 open Foreign
+open Linear_lib.Std
 
 module UInt32 = Unsigned.UInt32
 
@@ -415,10 +415,10 @@ let buffer_data target array usage =
     | `Dynamic_read -> 0x88E9
     | `Dynamic_copy -> 0x88EA
   in
-  let array_ptr = to_voidp (bigarray_start array1 array) in
+  let array_ptr = to_voidp (bigarray_start array1 (Rarray.data array)) in
   buffer_data
     (UInt32.of_int target)
-    (Signed.Long.of_int (Float_array.size_bytes array))
+    (Signed.Long.of_int (Rarray.size_bytes array))
     array_ptr
     (UInt32.of_int usage)
   |> Or_error.ok_exn ~here:_here_

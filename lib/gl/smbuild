@@ -1,4 +1,4 @@
-((libraries ( res ))
+((libraries ( linear ))
  (external_libraries ( core_kernel ctypes ctypes.foreign ))
  (foreign_libraries ( GL ))
  )

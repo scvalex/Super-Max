@@ -3,6 +3,7 @@ open Async.Std
 open Sdl_lib.Std
 open Gl_lib.Std
 open Res_lib.Std
+open Linear_lib.Std
 
 module Ui : sig
   type 'a t
@@ -101,7 +102,7 @@ let compile_and_link_program_exn ~vertex ~fragment =
 let test t =
   on_ui_thread t (Ui.create (fun () ->
     let vertex_positions =
-      Float_array.of_array
+      Rarray.Float.of_array
         [| 0.75; 0.75; 0.0
          ; 0.75; -0.75; 0.0
          ; -0.75; -0.75; 0.0
@@ -176,6 +177,6 @@ let render_mesh t ~mesh ~program =
             Gl.vertex_attrib_pointer 0 ~size:3 `Float ~normalize:false ~stride:0;
             Gl.draw_elements `Triangles
               ~indices:(`Bytes 0)
-              ~count:(Int_array.length (Res.Mesh.indices mesh))))));
+              ~count:(Rarray.length (Res.Mesh.indices mesh))))));
     Sdl.gl_swap_window t.window)
 ;;

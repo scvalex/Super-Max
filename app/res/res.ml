@@ -1,6 +1,7 @@
 open Core.Std
 open Async.Std
 open Res_lib.Std
+open Linear_lib.Std
 
 let extract_mesh ~source ~source_id ~target_id =
   Extract.extract_mesh ~source ~source_id ~target_id
@@ -28,17 +29,17 @@ let identify_res ~verbose ~file =
   match Res.data res with
   | `Mesh mesh ->
     p "data: Mesh";
-    p " - vertices: %d" (Float_array.length (Res.Mesh.positions mesh) / 3);
+    p " - vertices: %d" (Rarray.length (Res.Mesh.positions mesh) / 3);
     if verbose then begin
       pn "    ";
-      Float_array.iteri (Res.Mesh.positions mesh) ~f:(fun idx pos ->
+      Rarray.iteri (Res.Mesh.positions mesh) ~f:(fun idx pos ->
         pn "%.2f%s" pos (if Int.(idx mod 3 = 2) then ", " else " "));
       p "";
     end;
-    p " - indices:  %d" (Int_array.length (Res.Mesh.indices mesh));
+    p " - indices:  %d" (Rarray.length (Res.Mesh.indices mesh));
     if verbose then begin
       pn "    ";
-      Int_array.iteri (Res.Mesh.indices mesh) ~f:(fun _idx idx ->
+      Rarray.iteri (Res.Mesh.indices mesh) ~f:(fun _idx idx ->
         pn "%s " (Int32.to_string idx));
       p "";
     end
