@@ -45,7 +45,6 @@ let with_renderer f =
     Sdl.gl_set_attribute `Depthsize 24;
     let window = Sdl.create_window ~title:"Rock" in
     let gl_context = Sdl.gl_create_context window in
-    (* CR scvalex: What's this all about? *)
     let vao = Gl.gen_vertex_array () in
     Gl.bind_vertex_array vao;
     Gl.enable `Cull_face;
