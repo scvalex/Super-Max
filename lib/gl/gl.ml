@@ -446,12 +446,6 @@ let use_program program =
   |> Or_error.ok_exn ~here:_here_
 ;;
 
-let with_used_program program ~f =
-  use_program (Some program);
-  Exn.protect ~f
-    ~finally:(fun () -> use_program None)
-;;
-
 let enable_vertex_attrib_array idx =
   enable_vertex_attrib_array (UInt32.of_int idx)
   |> Or_error.ok_exn ~here:_here_

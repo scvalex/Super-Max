@@ -19,7 +19,18 @@ end = struct
   let to_f t = t;;
 end
 
-module Program = struct
+module Program : sig
+  type t
+
+  val create : Gl.program -> t
+
+  val use :
+    t
+    -> f : (unit -> 'a)
+    -> 'a
+
+  val get_uniform_location : t -> string -> Gl.uniform
+end = struct
   type t = {
     gl_program : Gl.program;
     uniforms   : Gl.uniform String.Table.t;
@@ -28,6 +39,12 @@ module Program = struct
   let create gl_program =
     let uniforms = String.Table.create () in
     { gl_program; uniforms; }
+  ;;
+
+  let use t ~f =
+    Gl.use_program (Some t.gl_program);
+    Exn.protect ~f
+      ~finally:(fun () -> Gl.use_program None)
   ;;
 
   let get_uniform_location t name =
@@ -156,7 +173,7 @@ void main() {
       Gl.buffer_data `Array_buffer vertex_positions `Static_draw);
     Gl.clear_color 0.1 0.1 0.1 1.0;
     Gl.clear `Color_buffer_bit;
-    Gl.with_used_program (Program.gl_program program) ~f:(fun () ->
+    Program.use program ~f:(fun () ->
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
         Gl.with_vertex_attrib_array 0 ~f:(fun () ->
           Gl.vertex_attrib_pointer 0 ~size:3 `Float ~normalize:false ~stride:0;
@@ -193,7 +210,7 @@ let render_mesh t ~mesh ~program =
     Gl.clear_color 0.01 0.01 0.01 1.0;
     Gl.clear `Color_buffer_bit;
     let _ = Program.get_uniform_location program "perspectiveMatrix" in
-    Gl.with_used_program (Program.gl_program program) ~f:(fun () ->
+    Program.use program ~f:(fun () ->
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
         Gl.with_bound_buffer `Element_array_buffer indices_buffer_object ~f:(fun () ->
           Gl.with_vertex_attrib_array 0 ~f:(fun () ->

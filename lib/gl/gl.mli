@@ -85,10 +85,7 @@ val with_bound_buffer :
   -> f : (unit -> 'a)
   -> 'a
 
-val with_used_program :
-  program
-  -> f : (unit -> 'a)
-  -> 'a
+val use_program : program option -> unit
 
 val with_vertex_attrib_array :
   int
