@@ -60,7 +60,8 @@ let run_render_mesh mesh_file program_file () =
       else loop camera
     in
     let camera =
-      Camera.translate ~z:4.0
+      (* CR scvalex: Why is this 2.2 and not 1.2? *)
+      Camera.translate ~z:2.2
         (Camera.create ())
     in
     loop camera)

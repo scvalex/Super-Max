@@ -245,6 +245,10 @@ module Gl = struct
       (program_t @-> string @-> returning (something_or_error uniform_t))
   ;;
 
+  let uniform_1f =
+    foreign "glUniform1f" (uniform_t @-> float @-> returning void_or_error)
+  ;;
+
   let uniform_matrix_4fv =
     foreign "glUniformMatrix4fv"
       (uniform_t @-> uint32_t @-> uchar @-> ptr float @-> returning void_or_error)
@@ -550,6 +554,11 @@ let get_uniform_location program name =
   if Int32.(uniform = of_int (-1))
   then failwithf "failed to get uniform location for %s" name ()
   else uniform
+;;
+
+let uniform uniform value =
+  uniform_1f uniform value
+  |> Or_error.ok_exn ~here:_here_
 ;;
 
 let uniform_matrix uniform mat =

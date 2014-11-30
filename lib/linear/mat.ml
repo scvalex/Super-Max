@@ -46,10 +46,12 @@ let to_array t =
   array
 ;;
 
-let perspective ~scale ~z_near ~z_far =
+let perspective ~z_near ~z_far =
   create
-    ~m00:scale ~m11:scale
-    ~m22:((z_far +. z_near) /. (z_near -. z_far))
+    (* CR scvalex: Why does the cube seem elongated when I use z_near here? *)
+    (* ~m00:(2.0 *. z_near) ~m11:(2.0 *. z_near) *)
+    ~m00:1.0 ~m11:1.0
+    ~m22:((z_near +. z_near) /. (z_near -. z_far))
     ~m23:(2.0 *. z_near *. z_far /. (z_near -. z_far))
     ~m32:(-. 1.0)
     ()

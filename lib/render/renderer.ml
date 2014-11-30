@@ -4,7 +4,6 @@ open Sdl_lib.Std
 open Gl_lib.Std
 open Res_lib.Std
 open Linear_lib.Std
-open Platform_lib.Std
 
 module Ui : sig
   type 'a t
@@ -33,7 +32,7 @@ module Program : sig
   val set_uniform :
     t
     -> string
-    -> [`Matrix of Mat.t]
+    -> [`Matrix of Mat.t | `Float of float]
     -> unit
 end = struct
   type t = {
@@ -67,6 +66,8 @@ end = struct
     match data with
     | `Matrix mat ->
       Gl.uniform_matrix location mat
+    | `Float value ->
+      Gl.uniform location value
   ;;
 end
 
@@ -223,13 +224,15 @@ let render_mesh t ~mesh ~program ~camera =
       Gl.buffer_data `Element_array_buffer (Res.Mesh.indices mesh) `Static_draw);
     Gl.clear_color 0.01 0.01 0.01 1.0;
     Gl.clear `Color_buffer_bit;
-    let perspective_matrix = Mat.perspective ~scale:1.0 ~z_near:0.1 ~z_far:10.0 in
+    let z_near = 0.1 in
+    let z_far = 10.0 in
+    let perspective_matrix = Mat.perspective ~z_near ~z_far in
     let camera_matrix = Camera.transformation camera in
     Program.use program ~f:(fun () ->
       Program.set_uniform program "perspectiveMatrix" (`Matrix perspective_matrix);
       Program.set_uniform program "cameraMatrix" (`Matrix camera_matrix);
-      log `Renderer "camera_matrix = %s" (Mat.to_string camera_matrix);
-      log `Renderer "perspective_matrix = %s" (Mat.to_string perspective_matrix);
+      Program.set_uniform program "zNear" (`Float z_near);
+      Program.set_uniform program "zFar" (`Float z_far);
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
         Gl.with_bound_buffer `Element_array_buffer indices_buffer_object ~f:(fun () ->
           Gl.with_vertex_attrib_array 0 ~f:(fun () ->

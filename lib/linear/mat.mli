@@ -21,8 +21,11 @@ val of_rows : float array -> float array -> float array -> float array -> t
 (** [to_array] gives the elements in column-major order. *)
 val to_array : t -> (float, Bigarray.float32_elt, Bigarray.c_layout) Bigarray.Array1.t
 
+(** [perspective] is a perspective projection matrix.
+
+    0 <= [z_near] <= [z_far]
+*)
 val perspective :
-  scale : float
-  -> z_near : float
+  z_near : float
   -> z_far : float
   -> t
