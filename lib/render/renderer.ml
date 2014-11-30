@@ -142,15 +142,16 @@ let test t =
   on_ui_thread t (Ui.create (fun () ->
     let vertex_positions =
       Rarray.Float.of_array
-        [| 0.75; 0.75; 0.0
+        [| -0.75; -0.75; 0.0
          ; 0.75; -0.75; 0.0
-         ; -0.75; -0.75; 0.0
+         ; 0.75; 0.75; 0.0
         |]
     in
     let vertex_shader_code =
       "#version 330
 
 layout(location = 0) in vec3 position;
+
 void main() {
   gl_Position = vec4(position.xyz, 1.0);
 }"
@@ -159,6 +160,7 @@ void main() {
       "#version 330
 
 out vec4 outputColor;
+
 void main() {
   outputColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }"
