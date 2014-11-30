@@ -10,8 +10,11 @@ include Comparable.S with type t := t
 include Sexpable.S with type t := t
 include Stringable.S with type t := t
 
-val escape : t
-
-val quit : t
-
 val of_sdl_key : Sdl.key -> t option
+
+val escape : t
+val quit : t
+val down : t
+val up : t
+val left : t
+val right : t

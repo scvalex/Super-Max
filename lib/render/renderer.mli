@@ -22,4 +22,5 @@ val render_mesh :
   t
   -> mesh : Res.Mesh.t
   -> program : Res.Program.t
+  -> camera : Camera.t
   -> unit Ui.t

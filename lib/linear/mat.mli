@@ -10,6 +10,8 @@ val create :
   -> unit
   -> t
 
+val to_string : t -> string
+
 val zero : t
 
 val id : t

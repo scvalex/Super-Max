@@ -4,6 +4,7 @@ open Sdl_lib.Std
 open Gl_lib.Std
 open Res_lib.Std
 open Linear_lib.Std
+open Platform_lib.Std
 
 module Ui : sig
   type 'a t
@@ -100,7 +101,7 @@ let with_renderer f =
     Gl.bind_vertex_array vao;
     Gl.enable `Cull_face;
     Gl.cull_face `Back;
-    Gl.front_face `Counter_clockwise;
+    Gl.front_face `Clockwise;
     (window, gl_context))
   >>= fun (window, gl_context) ->
   let program_cache = Res_id.Table.create () in
@@ -153,9 +154,9 @@ let test t =
   on_ui_thread t (Ui.create (fun () ->
     let vertex_positions =
       Rarray.Float.of_array
-        [| -0.75; -0.75; 0.0
+        [| 0.75; 0.75; 0.0
          ; 0.75; -0.75; 0.0
-         ; 0.75; 0.75; 0.0
+         ; -0.75; -0.75; 0.0
         |]
     in
     let vertex_shader_code =
@@ -211,7 +212,7 @@ let compiled_program t program =
     program
 ;;
 
-let render_mesh t ~mesh ~program =
+let render_mesh t ~mesh ~program ~camera =
   Ui.create (fun () ->
     let program = compiled_program t program in
     let position_buffer_object = Gl.gen_buffer () in
@@ -222,9 +223,13 @@ let render_mesh t ~mesh ~program =
       Gl.buffer_data `Element_array_buffer (Res.Mesh.indices mesh) `Static_draw);
     Gl.clear_color 0.01 0.01 0.01 1.0;
     Gl.clear `Color_buffer_bit;
-    let perspective_matrix = Mat.perspective ~scale:1.0 ~z_near:0.5 ~z_far:3.0 in
+    let perspective_matrix = Mat.perspective ~scale:1.0 ~z_near:0.1 ~z_far:10.0 in
+    let camera_matrix = Camera.transformation camera in
     Program.use program ~f:(fun () ->
       Program.set_uniform program "perspectiveMatrix" (`Matrix perspective_matrix);
+      Program.set_uniform program "cameraMatrix" (`Matrix camera_matrix);
+      log `Renderer "camera_matrix = %s" (Mat.to_string camera_matrix);
+      log `Renderer "perspective_matrix = %s" (Mat.to_string perspective_matrix);
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
         Gl.with_bound_buffer `Element_array_buffer indices_buffer_object ~f:(fun () ->
           Gl.with_vertex_attrib_array 0 ~f:(fun () ->

@@ -3,6 +3,7 @@ open Core.Std
 module Tag : sig
   type t =
     [ `Input
+    | `Renderer
     ] with sexp
 end
 

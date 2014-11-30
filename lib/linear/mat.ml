@@ -12,6 +12,14 @@ let create ?(m00 = 0.0) ?(m01 = 0.0) ?(m02 = 0.0) ?(m03 = 0.0)
     m30; m31; m32; m33; }
 ;;
 
+let to_string t =
+  sprintf "(%.2f %.2f %.2f %.2f)(%.2f %.2f %.2f %.2f)(%.2f %.2f %.2f %.2f)(%.2f %.2f %.2f %.2f)"
+    t.m00 t.m01 t.m02 t.m03
+    t.m10 t.m11 t.m12 t.m13
+    t.m20 t.m21 t.m22 t.m23
+    t.m30 t.m31 t.m32 t.m33
+;;
+
 let zero =
   create ()
 ;;

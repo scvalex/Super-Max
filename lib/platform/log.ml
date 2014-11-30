@@ -6,6 +6,7 @@ module Tag = struct
   module T = struct
     type t =
       [ `Input
+      | `Renderer
       ] with sexp, compare
   end
 

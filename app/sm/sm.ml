@@ -33,20 +33,33 @@ let run_render_mesh mesh_file program_file () =
       | `Program program -> program
       | _                -> failwithf "Not a program: %s" program_file ()
     in
-    Renderer.on_ui_thread renderer
-      (Renderer.render_mesh renderer ~program ~mesh)
-    >>= fun () ->
-    let rec loop () =
+    let rec loop camera =
+      Renderer.on_ui_thread renderer
+        (Renderer.render_mesh renderer ~program ~mesh ~camera)
+      >>= fun () ->
       Clock.after (sec 0.1)
       >>= fun () ->
       Renderer.on_ui_thread renderer
         (Renderer.with_sdl_window renderer Input.process_events)
       >>= fun snapshot ->
+      let camera =
+        let if_pressed key value ~d =
+          if Input.Snapshot.pressed snapshot key
+          then value +. d
+          else value
+        in
+        let (x, y, z) = Camera.position camera in
+        let z = if_pressed Key.up z ~d:(-. 0.1) in
+        let z = if_pressed Key.down z ~d:0.1 in
+        let x = if_pressed Key.left x ~d:(-. 0.1) in
+        let x = if_pressed Key.right x ~d:0.1 in
+        Camera.set_position camera (x, y, z)
+      in
       if Input.Snapshot.pressed snapshot Key.quit
       then Deferred.unit
-      else loop ()
+      else loop camera
     in
-    loop ())
+    loop (Camera.create ()))
 ;;
 
 let main () =
