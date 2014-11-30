@@ -29,7 +29,11 @@ module Program : sig
     -> f : (unit -> 'a)
     -> 'a
 
-  val get_uniform_location : t -> string -> Gl.uniform
+  val set_uniform :
+    t
+    -> string
+    -> [`Matrix of Mat.t]
+    -> unit
 end = struct
   type t = {
     gl_program : Gl.program;
@@ -55,6 +59,13 @@ end = struct
       let location = Gl.get_uniform_location t.gl_program name in
       Hashtbl.set t.uniforms ~key:name ~data:location;
       location
+  ;;
+
+  let set_uniform t name data =
+    let location = get_uniform_location t name in
+    match data with
+    | `Matrix mat ->
+      Gl.uniform_matrix location mat
   ;;
 end
 
@@ -211,8 +222,9 @@ let render_mesh t ~mesh ~program =
       Gl.buffer_data `Element_array_buffer (Res.Mesh.indices mesh) `Static_draw);
     Gl.clear_color 0.01 0.01 0.01 1.0;
     Gl.clear `Color_buffer_bit;
-    let _ = Program.get_uniform_location program "perspectiveMatrix" in
+    let perspective_matrix = Mat.perspective ~scale:1.0 ~z_near:0.5 ~z_far:3.0 in
     Program.use program ~f:(fun () ->
+      Program.set_uniform program "perspectiveMatrix" (`Matrix perspective_matrix);
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
         Gl.with_bound_buffer `Element_array_buffer indices_buffer_object ~f:(fun () ->
           Gl.with_vertex_attrib_array 0 ~f:(fun () ->

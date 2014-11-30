@@ -124,6 +124,8 @@ val front_face : [ `Clockwise | `Counter_clockwise ] -> unit
 
 val get_uniform_location : program -> string -> uniform
 
+val uniform_matrix : uniform -> Mat.t -> unit
+
 module Debug : sig
   val stats : unit -> string
 end

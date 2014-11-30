@@ -244,6 +244,11 @@ module Gl = struct
     foreign "glGetUniformLocation"
       (program_t @-> string @-> returning (something_or_error uniform_t))
   ;;
+
+  let uniform_matrix_4fv =
+    foreign "glUniformMatrix4fv"
+      (uniform_t @-> uint32_t @-> uchar @-> ptr float @-> returning void_or_error)
+  ;;
 end
 
 include Gl
@@ -545,6 +550,12 @@ let get_uniform_location program name =
   if Int32.(uniform = of_int (-1))
   then failwithf "failed to get uniform location for %s" name ()
   else uniform
+;;
+
+let uniform_matrix uniform mat =
+  let array_ptr = bigarray_start array1 (Mat.to_array mat) in
+  uniform_matrix_4fv uniform (UInt32.of_int 1) (Unsigned.UChar.of_int 0) array_ptr
+  |> Or_error.ok_exn ~here:_here_
 ;;
 
 module Debug = struct
