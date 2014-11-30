@@ -59,7 +59,11 @@ let run_render_mesh mesh_file program_file () =
       then Deferred.unit
       else loop camera
     in
-    loop (Camera.create ()))
+    let camera =
+      Camera.translate ~z:4.0
+        (Camera.create ())
+    in
+    loop camera)
 ;;
 
 let main () =
