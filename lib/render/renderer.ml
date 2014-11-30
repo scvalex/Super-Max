@@ -19,10 +19,32 @@ end = struct
   let to_f t = t;;
 end
 
+module Program = struct
+  type t = {
+    gl_program : Gl.program;
+    uniforms   : Gl.uniform String.Table.t;
+  } with fields
+
+  let create gl_program =
+    let uniforms = String.Table.create () in
+    { gl_program; uniforms; }
+  ;;
+
+  let get_uniform_location t name =
+    match Hashtbl.find t.uniforms name with
+    | Some location ->
+      location
+    | None ->
+      let location = Gl.get_uniform_location t.gl_program name in
+      Hashtbl.set t.uniforms ~key:name ~data:location;
+      location
+  ;;
+end
+
 type t = {
   thread        : In_thread.Helper_thread.t;
   window        : Sdl.window;
-  program_cache : Gl.program Res_id.Table.t;
+  program_cache : Program.t Res_id.Table.t;
 }
 
 let on_ui_thread t ui =
@@ -96,7 +118,7 @@ let compile_and_link_program_exn ~vertex ~fragment =
   let program = link_program [ vertex_shader; fragment_shader ] in
   Gl.delete_shader vertex_shader;
   Gl.delete_shader fragment_shader;
-  program
+  Program.create program
 ;;
 
 let test t =
@@ -134,7 +156,7 @@ void main() {
       Gl.buffer_data `Array_buffer vertex_positions `Static_draw);
     Gl.clear_color 0.1 0.1 0.1 1.0;
     Gl.clear `Color_buffer_bit;
-    Gl.with_used_program program ~f:(fun () ->
+    Gl.with_used_program (Program.gl_program program) ~f:(fun () ->
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
         Gl.with_vertex_attrib_array 0 ~f:(fun () ->
           Gl.vertex_attrib_pointer 0 ~size:3 `Float ~normalize:false ~stride:0;
@@ -170,7 +192,8 @@ let render_mesh t ~mesh ~program =
       Gl.buffer_data `Element_array_buffer (Res.Mesh.indices mesh) `Static_draw);
     Gl.clear_color 0.01 0.01 0.01 1.0;
     Gl.clear `Color_buffer_bit;
-    Gl.with_used_program program ~f:(fun () ->
+    let _ = Program.get_uniform_location program "perspectiveMatrix" in
+    Gl.with_used_program (Program.gl_program program) ~f:(fun () ->
       Gl.with_bound_buffer `Array_buffer position_buffer_object ~f:(fun () ->
         Gl.with_bound_buffer `Element_array_buffer indices_buffer_object ~f:(fun () ->
           Gl.with_vertex_attrib_array 0 ~f:(fun () ->

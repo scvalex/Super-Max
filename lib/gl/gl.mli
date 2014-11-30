@@ -25,6 +25,8 @@ type vertex_array_object
 
 type draw_mode = [ `Triangles ] with sexp
 
+type uniform
+
 val clear_color : float -> float -> float -> float -> unit
 
 val clear :
@@ -122,6 +124,8 @@ val enable : [ `Cull_face ] -> unit
 val cull_face : [ `Front | `Back | `Front_and_back ] -> unit
 
 val front_face : [ `Clockwise | `Counter_clockwise ] -> unit
+
+val get_uniform_location : program -> string -> uniform
 
 module Debug : sig
   val stats : unit -> string

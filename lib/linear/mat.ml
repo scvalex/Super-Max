@@ -37,3 +37,12 @@ let to_array t =
   array.{12} <- t.m03; array.{13} <- t.m13; array.{14} <- t.m23; array.{15} <- t.m33;
   array
 ;;
+
+let perspective ~scale ~z_near ~z_far =
+  create
+    ~m00:scale ~m11:scale
+    ~m22:((z_far +. z_near) /. (z_near -. z_far))
+    ~m23:(2.0 *. z_near *. z_far /. (z_near -. z_far))
+    ~m32:(-. 1.0)
+    ()
+;;

@@ -39,19 +39,22 @@ end
 let stats = Stats.create ();;
 
 module Gl = struct
-  type shader = Unsigned.uint32
+  type shader = UInt32.t
   let shader_t = uint32_t
 
-  type program = Unsigned.uint32
+  type program = UInt32.t
   let program_t = uint32_t
 
-  type buffer = Unsigned.uint32
+  type buffer = UInt32.t
   let buffer_t = uint32_t
 
   let gl_enum_t = uint32_t
 
-  type vertex_array_object = Unsigned.uint32
+  type vertex_array_object = UInt32.t
   let vertex_array_t = uint32_t
+
+  type uniform = Int32.t
+  let uniform_t = int32_t
 
   let write_never _ =
     failwith "write_never"
@@ -96,13 +99,17 @@ module Gl = struct
     view ~read ~write:write_never t
   ;;
 
-  let void_or_error =
-    let read () =
+  let something_or_error something =
+    let read x =
       match get_error () with
-      | None     -> Ok ()
+      | None     -> Ok x
       | Some err -> Error err
     in
-    view ~read ~write:write_never void
+    view ~read ~write:write_never something
+  ;;
+
+  let void_or_error =
+    something_or_error void
   ;;
 
   let nonzero_uint32_t t =
@@ -231,6 +238,11 @@ module Gl = struct
 
   let front_face =
     foreign "glFrontFace" (gl_enum_t @-> returning void_or_error)
+  ;;
+
+  let get_uniform_location =
+    foreign "glGetUniformLocation"
+      (program_t @-> string @-> returning (something_or_error uniform_t))
   ;;
 end
 
@@ -529,6 +541,16 @@ let front_face mode =
   in
   front_face (UInt32.of_int mode)
   |> Or_error.ok_exn ~here:_here_
+;;
+
+let get_uniform_location program name =
+  let uniform =
+    Or_error.ok_exn ~here:_here_
+      (get_uniform_location program name)
+  in
+  if Int32.(uniform = of_int (-1))
+  then failwithf "failed to get uniform location for %s" name ()
+  else uniform
 ;;
 
 module Debug = struct
