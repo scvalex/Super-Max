@@ -1,0 +1,14 @@
+super-max
+=========
+
+> A catch-all for game-related projects
+
+Build
+-----
+
+Install OCaml, Jenga, and the dependencies listed below.  Run `jenga`
+in the top-level directory.
+
+### Dependencies
+
+${dep_list}

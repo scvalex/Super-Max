@@ -12,15 +12,50 @@ let scheme ~dir =
   in
   let rules =
     if Path.(the_root = dir)
-    then
-      everything_under_rules ~dir ~subdirs:["app"; "lib"; "assets"]
-    else
+    then begin
+      everything_under_targets ~dir ~subdirs:["app"; "lib"; "assets"]
+      *>>| fun sub_targets ->
+      let readme = dir ^/ "README.md" in
+      let readme_rule =
+        let make_readme =
+          Dep.List.concat_map ["app"; "lib"] ~f:(fun subdir ->
+            Dep.subdirs ~dir:(dir ^/ subdir))
+          *>>= fun dirs ->
+          Ocaml.External_deps.extract ~dirs
+          *>>= fun deps ->
+          Dep.contents (dir ^/ "README.md.in")
+          *>>| fun text ->
+          let format_libs libs =
+            String.concat ~sep:", " (List.map libs ~f:(fun lib -> "`" ^ lib ^ "`"))
+          in
+          let substitute_dep_list = function
+            | "dep_list" ->
+              String.concat ~sep:"\n"
+                [ "  - OCaml libraries: " ^
+                  format_libs (Ocaml.External_deps.external_libraries deps)
+                ; "  - other libraries: " ^
+                  format_libs (Ocaml.External_deps.foreign_libraries deps)
+                ]
+            | name ->
+              name
+          in
+          let buf = Bigbuffer.create 1024 in
+          Bigbuffer.add_substitute buf substitute_dep_list text;
+          Action.save (Bigbuffer.contents buf) ~target:readme
+        in
+        Rule.create ~targets:[readme] make_readme
+      in
+      [ readme_rule
+      ; Rule.default ~dir (Dep.path readme :: List.map sub_targets ~f:Dep.path)
+      ]
+    end else begin
       match Path.(to_string (dirname dir)) with
       | "app"      -> Ocaml.app_rules ~dir
       | "lib"      -> Ocaml.lib_rules ~dir
       | "liblinks" -> Ocaml.liblinks_rules ~dir
       | "assets"   -> Assets.asset_rules ~dir
       | _          -> nothing_to_build_rules ~dir
+    end
   in
   Scheme.exclude is_smbuild
     (Scheme.rules_dep rules)

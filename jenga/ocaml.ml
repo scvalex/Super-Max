@@ -500,3 +500,46 @@ let lib_rules ~dir =
 let liblinks_rules ~dir =
   Dep.return (Liblinks.rules ~lib:(Lib.of_suffixed_name (basename dir)))
 ;;
+
+module External_deps : sig
+  type t
+
+  val extract : dirs : Path.t list -> t Dep.t
+
+  val external_libraries : t -> string list
+
+  val foreign_libraries : t -> string list
+end = struct
+  type t = {
+    external_libraries : string list;
+    foreign_libraries  : string list;
+  } with fields
+
+  let extract ~dirs =
+    Dep.all (List.map dirs ~f:(fun dir ->
+      Smbuild.with_smbuild ~dir ~if_missing:(Dep.return ([], [])) (fun smbuild ->
+        Dep.return Smbuild.(external_libraries smbuild, foreign_libraries smbuild))))
+    *>>| fun deps ->
+    let external_libraries = pp_packages in
+    let foreign_libraries = [] in
+    let t = { external_libraries; foreign_libraries; } in
+    let t =
+      List.fold_left ~init:t deps ~f:(fun t (external_libraries, foreign_libraries) ->
+        { external_libraries = t.external_libraries @ external_libraries;
+          foreign_libraries = t.foreign_libraries @ foreign_libraries;
+        })
+    in
+    let filter_suffixes ~suffixes packages =
+      List.fold_left ~init:packages suffixes ~f:(fun packages suffix ->
+        List.map packages ~f:(fun package ->
+          match String.chop_suffix package ~suffix with
+          | None         -> package
+          | Some package -> package))
+    in
+    let dedup strs = String.Set.(to_list (of_list strs)) in
+    { external_libraries = dedup (filter_suffixes ~suffixes:[".syntax"; ".foreign"]
+                                    t.external_libraries);
+      foreign_libraries = dedup t.foreign_libraries;
+    }
+  ;;
+end

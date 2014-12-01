@@ -6,5 +6,10 @@ super-max
 Build
 -----
 
-Install OCaml, OPAM, and Jenga.  Run `jenga` in the top-level
-directory and install any missing OCaml packages and libraries.
+Install OCaml, Jenga, and the dependencies listed below.  Run `jenga`
+in the top-level directory.
+
+### Dependencies
+
+  - OCaml libraries: `async`, `bin_prot`, `camlp4`, `comparelib`, `core`, `core_kernel`, `ctypes`, `fieldslib`, `herelib`, `sexplib`, `variantslib`, `xml-light`
+  - other libraries: `GL`, `SDL2`
