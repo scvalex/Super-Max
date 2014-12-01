@@ -164,7 +164,11 @@ module Smbuild : sig
 
   val load : dir : Path.t -> t Dep.t
 
-  val exists : dir : Path.t -> bool Dep.t
+  val with_smbuild :
+    dir : Path.t
+    -> if_missing : 'a Dep.t
+    -> (t -> 'a Dep.t)
+    -> 'a Dep.t
 
   val libraries : t -> Lib.t list
 
@@ -184,8 +188,17 @@ end = struct
     t_of_sexp (Sexp.of_string (String.strip smbuild))
   ;;
 
-  let exists ~dir =
+  let with_smbuild ~dir ~if_missing f =
     Dep.file_exists (dir ^/ "smbuild")
+    *>>= fun smbuild_present ->
+    if smbuild_present
+    then begin
+      load ~dir
+      *>>= fun smbuild ->
+      f smbuild
+    end else begin
+      if_missing
+    end
   ;;
 
   let libraries t =
@@ -453,12 +466,7 @@ let compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack =
 ;;
 
 let app_rules ~dir =
-  Smbuild.exists ~dir
-  *>>= fun smbuild_present ->
-  if smbuild_present
-  then begin
-    Smbuild.load ~dir
-    *>>= fun smbuild ->
+  Smbuild.with_smbuild ~dir ~if_missing:(nothing_to_build_rules ~dir) (fun smbuild ->
     let external_libraries = Smbuild.external_libraries smbuild in
     let foreign_libraries = Smbuild.foreign_libraries smbuild in
     let libraries = Smbuild.libraries smbuild in
@@ -470,19 +478,11 @@ let app_rules ~dir =
         ; link_exe_rule ~dir ~libraries ~external_libraries ~foreign_libraries ~exe names
         ]
       ; compile_mls_rules
-      ]
-  end else begin
-    nothing_to_build_rules ~dir
-  end
+      ])
 ;;
 
 let lib_rules ~dir =
-  Smbuild.exists ~dir
-  *>>= fun smbuild_present ->
-  if smbuild_present
-  then begin
-    Smbuild.load ~dir
-    *>>= fun smbuild ->
+  Smbuild.with_smbuild ~dir ~if_missing:(nothing_to_build_rules ~dir) (fun smbuild ->
     let external_libraries = Smbuild.external_libraries smbuild in
     let foreign_libraries = Smbuild.foreign_libraries smbuild in
     let libraries = Smbuild.libraries smbuild in
@@ -494,10 +494,7 @@ let lib_rules ~dir =
       [ [ Rule.default ~dir [Dep.path lib_cmxa] ]
       ; link_lib_rules ~dir ~external_libraries ~foreign_libraries ~lib_cmxa ~lib names
       ; compile_mls_rules
-      ]
-  end else begin
-    nothing_to_build_rules ~dir
-  end
+      ])
 ;;
 
 let liblinks_rules ~dir =
