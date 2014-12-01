@@ -1,6 +1,6 @@
 (* https://wiki.libsdl.org/CategoryAPI *)
 
-open Core_kernel.Std
+open Core.Std
 open Ctypes
 open Foreign
 

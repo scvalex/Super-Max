@@ -1,4 +1,4 @@
-open Core_kernel.Std
+open Core.Std
 open Linear_lib.Std
 
 (** https://www.opengl.org/sdk/docs/man3/ *)

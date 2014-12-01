@@ -1,6 +1,6 @@
 (** https://www.opengl.org/sdk/docs/man3/ *)
 
-open Core_kernel.Std
+open Core.Std
 open Ctypes
 open Foreign
 open Linear_lib.Std

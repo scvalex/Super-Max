@@ -1,4 +1,4 @@
 ((libraries ( ))
- (external_libraries ( core_kernel ctypes ctypes.foreign ))
+ (external_libraries ( core ctypes ctypes.foreign ))
  (foreign_libraries ( SDL2 ))
  )
