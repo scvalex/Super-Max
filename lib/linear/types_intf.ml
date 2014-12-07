@@ -11,8 +11,7 @@ end
 
 module Vec = struct
   type t = {
-    (* CR scvalex: Get rid of w. *)
-    x : float; y : float; z : float; w : float;
+    x : float; y : float; z : float;
   } with fields, sexp, bin_io
 end
 

@@ -8,7 +8,6 @@ let ( |* ) v s =
     x = v.V.x *. s;
     y = v.V.y *. s;
     z = v.V.z *. s;
-    w = v.V.w *. s;
   }
 ;;
 
@@ -18,10 +17,9 @@ let ( *| ) s v =
 
 let ( ||*| ) m v =
   { Vec.
-    x = m.M.m00 *. v.V.x +. m.M.m01 *. v.V.y +. m.M.m02 *. v.V.z +. m.M.m03 *. v.V.w;
-    y = m.M.m10 *. v.V.x +. m.M.m11 *. v.V.y +. m.M.m12 *. v.V.z +. m.M.m13 *. v.V.w;
-    z = m.M.m20 *. v.V.x +. m.M.m21 *. v.V.y +. m.M.m22 *. v.V.z +. m.M.m23 *. v.V.w;
-    w = m.M.m30 *. v.V.x +. m.M.m31 *. v.V.y +. m.M.m32 *. v.V.z +. m.M.m33 *. v.V.w;
+    x = m.M.m00 *. v.V.x +. m.M.m01 *. v.V.y +. m.M.m02 *. v.V.z;
+    y = m.M.m10 *. v.V.x +. m.M.m11 *. v.V.y +. m.M.m12 *. v.V.z;
+    z = m.M.m20 *. v.V.x +. m.M.m21 *. v.V.y +. m.M.m22 *. v.V.z;
   }
 ;;
 
