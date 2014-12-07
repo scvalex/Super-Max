@@ -13,3 +13,11 @@ let to_string t =
 let zero =
   create 0.0 0.0 0.0
 ;;
+
+let norm_sq t =
+  t.x *. t.x +. t.y *. t.y +. t.z *. t.z
+;;
+
+let norm t =
+  sqrt (norm_sq t)
+;;

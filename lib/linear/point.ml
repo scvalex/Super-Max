@@ -13,3 +13,16 @@ let to_string t =
 let origin =
   create 0.0 0.0 0.0 0.0
 ;;
+
+let normalize t =
+  if Float.(t.w = 1.0)
+  then
+    t
+  else
+    {
+      x = t.x /. t.w;
+      y = t.y /. t.w;
+      z = t.z /. t.w;
+      w = 1.0;
+    }
+;;

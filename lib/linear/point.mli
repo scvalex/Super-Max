@@ -8,3 +8,4 @@ val to_string : t -> string
 
 val origin : t
 
+val normalize : t -> t

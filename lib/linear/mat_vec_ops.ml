@@ -2,6 +2,7 @@ open Core.Std let _ = _squelch_unused_module_warning_
 
 module V = Vec
 module M = Mat
+module P = Point
 
 let ( |* ) v s =
   { Vec.
@@ -46,4 +47,40 @@ let ( ||*|| ) a b =
   ; m32 = a.m30 *. b.m02 +. a.m31 *. b.m12 +. a.m32 *. b.m22 +. a.m33 *. b.m32
   ; m33 = a.m30 *. b.m03 +. a.m31 *. b.m13 +. a.m32 *. b.m23 +. a.m33 *. b.m33
   }
+;;
+
+let ( .-. ) a b =
+  let a = P.normalize a in
+  let b = P.normalize b in
+  { Vec.
+    x = a.P.x -. b.P.x;
+    y = a.P.y -. b.P.y;
+    z = a.P.z -. b.P.z;
+  }
+;;
+
+let ( .+ ) a b =
+  let a = P.normalize a in
+  { Point.
+    x = a.P.x +. b.V.x;
+    y = a.P.y +. b.V.y;
+    z = a.P.z +. b.V.z;
+    w = 1.0;
+  }
+;;
+
+let mix a b p =
+  let a = P.normalize a in
+  let b = P.normalize b in
+  let pn = 1.0 -. p in
+  { Point.
+    x = pn *. a.P.x +. p *. b.P.x;
+    y = pn *. a.P.y +. p *. b.P.y;
+    z = pn *. a.P.z +. p *. b.P.z;
+    w = 1.0;
+  }
+;;
+
+let dot a b =
+  a.V.x *. b.V.x +. a.V.y *. b.V.y +. a.V.z +. b.V.z;
 ;;
