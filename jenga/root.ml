@@ -42,9 +42,9 @@ let top_level_rules ~dir =
 ;;
 
 let scheme ~dir =
-  let is_smbuild path =
+  let is_mlbuild path =
     match basename path with
-    | "smbuild"  -> true
+    | "mlbuild"  -> true
     | "resbuild" -> true
     | _          -> false
   in
@@ -60,7 +60,7 @@ let scheme ~dir =
       | "assets"   -> Assets.asset_rules ~dir
       | _          -> nothing_to_build_rules ~dir
   in
-  Scheme.exclude is_smbuild
+  Scheme.exclude is_mlbuild
     (Scheme.rules_dep rules)
 ;;
 

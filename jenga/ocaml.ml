@@ -159,12 +159,12 @@ let split_into_words str =
   List.filter ~f:non_blank (String.split ~on:'\ ' str)
 ;;
 
-module Smbuild : sig
+module Mlbuild : sig
   type t
 
   val load : dir : Path.t -> t Dep.t
 
-  val with_smbuild :
+  val with_mlbuild :
     dir : Path.t
     -> if_missing : 'a Dep.t
     -> (t -> 'a Dep.t)
@@ -183,19 +183,19 @@ end = struct
   } with sexp
 
   let load ~dir =
-    Dep.contents (dir ^/ "smbuild")
-    *>>| fun smbuild ->
-    t_of_sexp (Sexp.of_string (String.strip smbuild))
+    Dep.contents (dir ^/ "mlbuild")
+    *>>| fun mlbuild ->
+    t_of_sexp (Sexp.of_string (String.strip mlbuild))
   ;;
 
-  let with_smbuild ~dir ~if_missing f =
-    Dep.file_exists (dir ^/ "smbuild")
-    *>>= fun smbuild_present ->
-    if smbuild_present
+  let with_mlbuild ~dir ~if_missing f =
+    Dep.file_exists (dir ^/ "mlbuild")
+    *>>= fun mlbuild_present ->
+    if mlbuild_present
     then begin
       load ~dir
-      *>>= fun smbuild ->
-      f smbuild
+      *>>= fun mlbuild ->
+      f mlbuild
     end else begin
       if_missing
     end
@@ -310,9 +310,9 @@ let toposort_deps ~dir targets =
 
 let transitive_libraries ~libraries =
   let rec loop ~found lib =
-    Smbuild.load ~dir:(Lib.dir lib)
-    *>>= fun smbuild ->
-    let libraries = Smbuild.libraries smbuild in
+    Mlbuild.load ~dir:(Lib.dir lib)
+    *>>= fun mlbuild ->
+    let libraries = Mlbuild.libraries mlbuild in
     if List.exists libraries ~f:(List.mem found) then
       failwith ("Dependency cycle in library deps for " ^ Lib.name lib);
     Dep.all (List.map libraries ~f:(loop ~found:(lib :: found)))
@@ -326,15 +326,15 @@ let transitive_libraries ~libraries =
 
 let library_deps ~libraries =
   Dep.all (List.map libraries ~f:(fun lib ->
-    Smbuild.load ~dir:(Lib.dir lib)
-    *>>| fun smbuild ->
-    (lib, smbuild)))
-  *>>| fun smbuilds ->
+    Mlbuild.load ~dir:(Lib.dir lib)
+    *>>| fun mlbuild ->
+    (lib, mlbuild)))
+  *>>| fun mlbuilds ->
   let (deps, external_libraries) =
-    List.fold_left ~init:([], []) smbuilds
-      ~f:(fun (deps, ext) (lib, smbuild) ->
-        ((Lib.name lib, List.map ~f:Lib.name (Smbuild.libraries smbuild)) :: deps,
-         ext @ Smbuild.external_libraries smbuild))
+    List.fold_left ~init:([], []) mlbuilds
+      ~f:(fun (deps, ext) (lib, mlbuild) ->
+        ((Lib.name lib, List.map ~f:Lib.name (Mlbuild.libraries mlbuild)) :: deps,
+         ext @ Mlbuild.external_libraries mlbuild))
   in
   (String.Table.of_alist_exn deps,
    `External external_libraries)
@@ -466,10 +466,10 @@ let compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack =
 ;;
 
 let app_rules ~dir =
-  Smbuild.with_smbuild ~dir ~if_missing:(nothing_to_build_rules ~dir) (fun smbuild ->
-    let external_libraries = Smbuild.external_libraries smbuild in
-    let foreign_libraries = Smbuild.foreign_libraries smbuild in
-    let libraries = Smbuild.libraries smbuild in
+  Mlbuild.with_mlbuild ~dir ~if_missing:(nothing_to_build_rules ~dir) (fun mlbuild ->
+    let external_libraries = Mlbuild.external_libraries mlbuild in
+    let foreign_libraries = Mlbuild.foreign_libraries mlbuild in
+    let libraries = Mlbuild.libraries mlbuild in
     let exe = dir ^/ (basename dir) ^ ".exe" in
     compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack:None
     *>>| fun (names, compile_mls_rules) ->
@@ -482,10 +482,10 @@ let app_rules ~dir =
 ;;
 
 let lib_rules ~dir =
-  Smbuild.with_smbuild ~dir ~if_missing:(nothing_to_build_rules ~dir) (fun smbuild ->
-    let external_libraries = Smbuild.external_libraries smbuild in
-    let foreign_libraries = Smbuild.foreign_libraries smbuild in
-    let libraries = Smbuild.libraries smbuild in
+  Mlbuild.with_mlbuild ~dir ~if_missing:(nothing_to_build_rules ~dir) (fun mlbuild ->
+    let external_libraries = Mlbuild.external_libraries mlbuild in
+    let foreign_libraries = Mlbuild.foreign_libraries mlbuild in
+    let libraries = Mlbuild.libraries mlbuild in
     let lib = Lib.of_name (basename dir) in
     let lib_cmxa = dir ^/ Lib.suffixed_name lib ^ ".cmxa" in
     compile_mls_in_dir_rules ~dir ~libraries ~external_libraries ~for_pack:(Some lib)
@@ -517,8 +517,8 @@ end = struct
 
   let extract ~dirs =
     Dep.all (List.map dirs ~f:(fun dir ->
-      Smbuild.with_smbuild ~dir ~if_missing:(Dep.return ([], [])) (fun smbuild ->
-        Dep.return Smbuild.(external_libraries smbuild, foreign_libraries smbuild))))
+      Mlbuild.with_mlbuild ~dir ~if_missing:(Dep.return ([], [])) (fun mlbuild ->
+        Dep.return Mlbuild.(external_libraries mlbuild, foreign_libraries mlbuild))))
     *>>| fun deps ->
     let external_libraries = pp_packages in
     let foreign_libraries = [] in
