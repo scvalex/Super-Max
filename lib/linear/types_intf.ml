@@ -20,3 +20,9 @@ module Point = struct
     x : float; y : float; z : float; w : float;
   } with fields, sexp, bin_io
 end
+
+module Quat = struct
+  type t = {
+    s : float; i : float; j : float; k : float;
+  } with fields, sexp, bin_io
+end
