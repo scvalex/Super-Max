@@ -7,10 +7,6 @@ type t with sexp
     axis. *)
 val create : unit -> t
 
-val position : t -> (float * float * float)
-
-val set_position : t -> (float * float * float) -> t
-
 val translate :
   ?x : float
   -> ?y : float

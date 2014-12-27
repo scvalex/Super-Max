@@ -48,12 +48,13 @@ let run_render_mesh mesh_file program_file () =
           then value +. d
           else value
         in
-        let (x, y, z) = Camera.position camera in
+        let z = 0.0 in
         let z = if_pressed Key.up z ~d:(-. 0.1) in
         let z = if_pressed Key.down z ~d:0.1 in
+        let x = 0.0 in
         let x = if_pressed Key.left x ~d:(-. 0.1) in
         let x = if_pressed Key.right x ~d:0.1 in
-        Camera.set_position camera (x, y, z)
+        Camera.translate camera ~x ~z
       in
       if Input.Snapshot.pressed snapshot Key.quit
       then Deferred.unit

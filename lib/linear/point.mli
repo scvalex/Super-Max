@@ -9,3 +9,10 @@ val to_string : t -> string
 val origin : t
 
 val normalize : t -> t
+
+val translate :
+  ?x : float
+  -> ?y : float
+  -> ?z : float
+  -> t
+  -> t
