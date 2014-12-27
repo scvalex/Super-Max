@@ -23,6 +23,6 @@ end
 
 module Quat = struct
   type t = {
-    s : float; i : float; j : float; k : float;
+    s : float; x : float; y : float; z : float;
   } with fields, sexp, bin_io
 end
