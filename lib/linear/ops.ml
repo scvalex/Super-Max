@@ -69,6 +69,14 @@ let ( .+ ) a b =
   }
 ;;
 
+let ( |*% ) v q =
+  Quat.(to_vec (of_vec v * q))
+;;
+
+let ( %*| ) q v =
+  v |*% q
+;;
+
 let mix a b p =
   let a = P.normalize a in
   let b = P.normalize b in
@@ -83,4 +91,14 @@ let mix a b p =
 
 let dot a b =
   a.V.x *. b.V.x +. a.V.y *. b.V.y +. a.V.z +. b.V.z;
+;;
+
+let rotation ~about:v ~rad:f =
+  let sf = sin (f /. 2.0) in
+  { Quat.
+    s = cos (f /. 2.0);
+    x = sf *. v.V.x;
+    y = sf *. v.V.y;
+    z = sf *. v.V.z;
+  }
 ;;

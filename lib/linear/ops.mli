@@ -14,6 +14,15 @@ val ( .-. ) : Point.t -> Point.t -> Vec.t
 
 val ( .+ ) : Point.t -> Vec.t -> Point.t
 
+val ( |*% ) : Vec.t -> Quat.t -> Vec.t
+
+val ( %*| ) : Quat.t -> Vec.t -> Vec.t
+
 val mix : Point.t -> Point.t -> float -> Point.t
 
 val dot : Vec.t -> Vec.t -> float
+
+val rotation :
+  about : Vec.t
+  -> rad : float
+  -> Quat.t
