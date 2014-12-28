@@ -11,7 +11,7 @@ let to_string t =
 ;;
 
 let origin =
-  create 0.0 0.0 0.0 0.0
+  create 0.0 0.0 0.0 1.0
 ;;
 
 let normalize t =

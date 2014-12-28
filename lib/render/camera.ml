@@ -1,10 +1,13 @@
 open Core.Std
 open Linear_lib.Std
+open Platform_lib.Std
+
+let log = log `Camera;;
 
 type t = {
   position    : Point.t;
   orientation : (float * float * float);
-} with fields, sexp
+} with compare, fields, sexp
 
 let create () =
   let position = Point.origin in
@@ -14,7 +17,11 @@ let create () =
 
 let translate ?x ?y ?z t =
   let position = Point.translate t.position ?x ?y ?z in
-  { t with position; }
+  let t' = { t with position; } in
+  (* CR scvalex: Prettify this output. *)
+  if Int.(<>) (compare t t') 0 then
+    log "Camera: %s" (Sexp.to_string_mach (sexp_of_t t'));
+  t'
 ;;
 
 let reorient ?(pitch = 0.0) ?(yaw = 0.0) ?(roll = 0.0) t =

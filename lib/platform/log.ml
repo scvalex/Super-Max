@@ -8,6 +8,7 @@ module Tag = struct
     type t =
       [ `Input
       | `Renderer
+      | `Camera
       ] with sexp, compare
   end
 

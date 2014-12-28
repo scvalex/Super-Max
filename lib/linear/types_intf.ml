@@ -12,17 +12,17 @@ end
 module Vec = struct
   type t = {
     x : float; y : float; z : float;
-  } with fields, sexp, bin_io
+  } with compare, fields, sexp, bin_io
 end
 
 module Point = struct
   type t = {
     x : float; y : float; z : float; w : float;
-  } with fields, sexp, bin_io
+  } with compare, fields, sexp, bin_io
 end
 
 module Quat = struct
   type t = {
     s : float; x : float; y : float; z : float;
-  } with fields, sexp, bin_io
+  } with compare, fields, sexp, bin_io
 end

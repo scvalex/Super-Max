@@ -4,6 +4,7 @@ module Tag : sig
   type t =
     [ `Input
     | `Renderer
+    | `Camera
     ] with sexp
 end
 
