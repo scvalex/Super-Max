@@ -6,9 +6,8 @@ let ( *>>= ) = Dep.bind;;
 
 let ( *>>| ) = Dep.map;;
 
-let message fmt =
-  ksprintf (fun str ->
-    print_endline ("!!jengaroot.ml: " ^ str)) fmt
+let message str =
+  print_endline ("!!jengaroot.ml: " ^ str)
 ;;
 let _ = message;;
 
