@@ -66,7 +66,7 @@ module Liblinks = struct
         let relative_source =
           Path.reach_from ~dir:liblinks_dir source
         in
-        Action.shell ~dir:liblinks_dir
+        Action.process ~dir:liblinks_dir
           ~prog:"ln" ~args:["-sf"; relative_source; "."]
       in
       Rule.create ~targets:[liblinks_dir ^/ file] link_file)
@@ -119,7 +119,7 @@ let ocamlopt ~dir ~external_libraries ~foreign_libraries ~for_pack
   let syntax_args =
     ["-syntax"; "camlp4o"]
   in
-  Action.shell ~dir ~prog:"ocamlfind"
+  Action.process ~dir ~prog:"ocamlfind"
     ~args:(List.concat [ ["ocamlopt"]; args; packages_args; pack_args; include_args
                        ; foreign_args; warning_args; syntax_args
                        ])
@@ -132,7 +132,7 @@ let ocamldep ~dir ~args =
   let syntax_args =
     ["-syntax"; "camlp4o"]
   in
-  Action.shell ~dir ~prog:"ocamlfind"
+  Action.process ~dir ~prog:"ocamlfind"
     ~args:(List.concat [ ["ocamldep"]; args; packages_args; syntax_args
                        ])
 ;;

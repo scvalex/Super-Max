@@ -96,7 +96,7 @@ let build_res ~dir res =
   | Res.Mesh mesh ->
     Dep.path (dir ^/ Res.Mesh.source mesh)
     *>>| fun () ->
-    Action.shell ~dir ~prog:(Path.reach_from ~dir res_exe)
+    Action.process ~dir ~prog:(Path.reach_from ~dir res_exe)
       ~args:[ "extract"; "mesh"
             ; "-source"; Res.Mesh.source mesh
             ; "-source-id"; Res.Mesh.source_id mesh
@@ -108,7 +108,7 @@ let build_res ~dir res =
       ; Dep.path (dir ^/ Res.Program.fragment program)
       ]
     *>>| fun () ->
-    Action.shell ~dir ~prog:(Path.reach_from ~dir res_exe)
+    Action.process ~dir ~prog:(Path.reach_from ~dir res_exe)
       ~args:[ "extract"; "program"
             ; "-vertex"; Res.Program.vertex program
             ; "-fragment"; Res.Program.fragment program
