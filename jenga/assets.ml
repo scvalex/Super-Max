@@ -32,7 +32,7 @@ module Res : sig
 
   val target : t -> dir : Path.t -> Path.t
 end = struct
-  module Id = String_id.Make(struct let module_name = "Res.Id" end)
+  module Id = String_id.Make(struct let module_name = "Res.Id" end)()
 
   module Mesh = struct
     type t = {

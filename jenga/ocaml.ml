@@ -16,7 +16,7 @@ module Lib : sig
 
   val dir : t -> Path.t
 end = struct
-  include String_id.Make(struct let module_name = "Jengaroot.Lib" end)
+  include String_id.Make(struct let module_name = "Jengaroot.Lib" end)()
 
   let name = to_string;;
 
