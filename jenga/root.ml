@@ -37,7 +37,9 @@ let top_level_rules ~dir =
     Rule.create ~targets:[readme] make_readme
   in
   [ readme_rule
-  ; Rule.default ~dir (Dep.path readme :: List.map sub_targets ~f:Dep.path)
+  ; Rule.default ~dir (Dep.path readme
+                       :: List.map sub_targets ~f:(fun dir ->
+                           Dep.alias (Alias.create ~dir "DEFAULT")))
   ]
 ;;
 
