@@ -85,3 +85,6 @@
 [submodule "packages/ocaml-ctypes"]
 	path = packages/ocaml-ctypes
 	url = https://github.com/ocamllabs/ocaml-ctypes.git
+[submodule "packages/async_extended"]
+	path = packages/async_extended
+	url = https://github.com/janestreet/async_extended.git
